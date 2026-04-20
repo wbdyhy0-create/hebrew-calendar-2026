@@ -371,7 +371,10 @@ export function Calendar() {
 
     const compute = () => {
       const cw = Math.max(1, container.clientWidth);
-      const naturalW = Math.max(1, content.scrollWidth || content.clientWidth || content.offsetWidth);
+      // Use layout width rather than scrollWidth.
+      // `scrollWidth` is affected by non-wrapping lines (e.g. zmanim clocks),
+      // which makes auto-fit “fight” font-size sliders and look like nothing changes.
+      const naturalW = Math.max(1, content.clientWidth || content.offsetWidth || content.scrollWidth);
       const next = cw / naturalW;
       if (!Number.isFinite(next) || next <= 0) return;
       setAutoFitScale((prev) => (Math.abs(prev - next) < 0.01 ? prev : next));
