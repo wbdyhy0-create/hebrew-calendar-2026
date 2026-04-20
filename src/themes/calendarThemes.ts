@@ -12,8 +12,8 @@ const CELL_TYPO_LADDER: Pick<
   CalendarSettings,
   'gregDayFontPx' | 'hebDayFontPx' | 'eventTitleFontPx' | 'shabbatTimesFontPx'
 > = {
-  gregDayFontPx: 17,
-  hebDayFontPx: 15,
+  gregDayFontPx: 1,
+  hebDayFontPx: 1,
   eventTitleFontPx: 1,
   shabbatTimesFontPx: 1,
 };

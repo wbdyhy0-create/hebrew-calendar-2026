@@ -2802,7 +2802,7 @@ export function Calendar() {
                   className="pointer-events-none absolute left-1 right-1 z-[12] mx-auto max-w-[calc(100%-0.5rem)] rounded border border-amber-300/90 bg-amber-50/95 px-1 py-0.5 text-center leading-tight text-amber-950 shadow-sm"
                   style={{
                     top: datesEndPx + 2,
-                    fontSize: Math.max(9, Math.round(Number(settings.eventTitleFontPx) * 0.55)),
+                    fontSize: Math.max(1, Math.round(Number(settings.eventTitleFontPx) * 0.55)),
                   }}
                   title="לפי אזור הזמן Asia/Jerusalem (מסד IANA). זמני Hebcal: ירושלים (780 מ׳) ותל אביב (0 מ׳), לפי ההגדרות בפאנל «זמנים»."
                 >
@@ -3027,8 +3027,8 @@ export function Calendar() {
                             className="mb-1 space-y-0.5 text-center font-semibold leading-tight text-slate-900 break-words"
                             style={{
                               fontSize: Math.min(
-                                Math.max(10, Number(settings.eventTitleFontPx) || 12),
-                                Math.max(11, Number(settings.shabbatTimesFontPx) || 11) + 4,
+                                Math.max(1, Number(settings.eventTitleFontPx) || 1),
+                                Math.max(1, Number(settings.shabbatTimesFontPx) || 1) + 4,
                               ),
                             }}
                           >
