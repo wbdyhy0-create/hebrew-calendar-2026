@@ -792,10 +792,17 @@ export function Calendar() {
                   type="button"
                   onClick={() => {
                     // Explicit save (even though we auto-save) for user confidence
-                    saveSettings(settings);
-                    saveOverrides(overrides);
-                    setSaveFlash('נשמר');
-                    window.setTimeout(() => setSaveFlash(null), 1200);
+                    const okSettings = saveSettings(settings);
+                    const okOverrides = saveOverrides(overrides);
+                    if (okSettings && okOverrides) {
+                      setSaveFlash('נשמר');
+                      window.setTimeout(() => setSaveFlash(null), 1200);
+                      return;
+                    }
+                    setSaveFlash(
+                      'לא נשמר: האחסון בדפדפן מלא/חסום (בד״כ בגלל תמונות). נסה להסיר תמונות או לנקות נתוני אתר.',
+                    );
+                    window.setTimeout(() => setSaveFlash(null), 5200);
                   }}
                   className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800"
                 >

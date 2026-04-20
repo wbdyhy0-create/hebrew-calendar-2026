@@ -136,11 +136,12 @@ export function loadOverrides(): OverridesMap {
   }
 }
 
-export function saveOverrides(map: OverridesMap) {
+export function saveOverrides(map: OverridesMap): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }
 

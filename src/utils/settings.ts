@@ -438,11 +438,12 @@ export function loadSettings(): CalendarSettings {
   }
 }
 
-export function saveSettings(s: CalendarSettings) {
+export function saveSettings(s: CalendarSettings): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }
 
