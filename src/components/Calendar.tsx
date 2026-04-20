@@ -1075,7 +1075,7 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={8}
+                min={1}
                 max={40}
                 value={settings.gregDayFontPx}
                 onChange={(e) =>
@@ -1092,7 +1092,7 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={8}
+                min={1}
                 max={40}
                 value={settings.hebDayFontPx}
                 onChange={(e) =>
