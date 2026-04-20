@@ -220,10 +220,10 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
   fontSizePx: 14,
   fontWeight: 600,
-  gregDayFontPx: 1,
-  hebDayFontPx: 1,
-  eventTitleFontPx: 1,
-  shabbatTimesFontPx: 1,
+  gregDayFontPx: 14,
+  hebDayFontPx: 12,
+  eventTitleFontPx: 10,
+  shabbatTimesFontPx: 9,
   showParsha: true,
   shabbatTimesSource: 'hebcal',
   zmanimCity: 'Jerusalem',
@@ -280,8 +280,8 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
 };
 
 // Bump cache version to force a clean reset when data gets inconsistent.
-// v3: default typography sliders were changed (event/zmanim can start at 1px).
-const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v3';
+// v4: font slider defaults changed from 1px to readable sizes (14/12/10/9px).
+const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v4';
 
 export function loadSettings(): CalendarSettings {
   try {
@@ -363,6 +363,18 @@ export function loadSettings(): CalendarSettings {
       merged.hebDayFontPx === 6 &&
       merged.eventTitleFontPx === 6 &&
       merged.shabbatTimesFontPx === 6
+    ) {
+      merged.gregDayFontPx = DEFAULT_SETTINGS.gregDayFontPx;
+      merged.hebDayFontPx = DEFAULT_SETTINGS.hebDayFontPx;
+      merged.eventTitleFontPx = DEFAULT_SETTINGS.eventTitleFontPx;
+      merged.shabbatTimesFontPx = DEFAULT_SETTINGS.shabbatTimesFontPx;
+    }
+    // ברירת מחדל ישנה: 1px — מחליפים בסולם קריא.
+    if (
+      merged.gregDayFontPx === 1 &&
+      merged.hebDayFontPx === 1 &&
+      merged.eventTitleFontPx === 1 &&
+      merged.shabbatTimesFontPx === 1
     ) {
       merged.gregDayFontPx = DEFAULT_SETTINGS.gregDayFontPx;
       merged.hebDayFontPx = DEFAULT_SETTINGS.hebDayFontPx;
