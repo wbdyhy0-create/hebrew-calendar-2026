@@ -27,7 +27,8 @@ export async function downloadPdfFromHtml(
   container.style.left = '0';
   container.style.top = '0';
   container.style.width = `${widthMm}mm`;
-  if (!opts?.multiPage) container.style.height = `${heightMm}mm`;
+  container.style.height = `${heightMm}mm`;
+  container.style.minHeight = `${heightMm}mm`;
   container.style.background = '#ffffff';
   container.style.opacity = '0';
   container.style.pointerEvents = 'none';
@@ -279,10 +280,8 @@ export async function downloadPdfFromHtml(
       if (root) {
         // Force full-page box in the clone so the background fills the capture.
         root.style.setProperty('width', `${widthMm}mm`, 'important');
-        if (!opts?.multiPage) {
-          root.style.setProperty('height', 'auto', 'important');
-          root.style.setProperty('min-height', `${heightMm}mm`, 'important');
-        }
+        root.style.setProperty('height', `${heightMm}mm`, 'important');
+        root.style.setProperty('min-height', `${heightMm}mm`, 'important');
       }
 
       // Some CSS features can trip html2canvas parsers in certain builds/browsers.
@@ -340,14 +339,15 @@ export async function downloadPdfFromHtml(
       // Avoid `transform: scale()` during capture: html2canvas lays out by DOM boxes,
       // and transform scale can visually move content without affecting layout.
       // Use `zoom` so the scaled size participates in layout and stays centered.
-      scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((z) => {
-        const raw = getComputedStyle(z).getPropertyValue('--layoutScale').trim();
-        const s = Number(raw);
-        const scale = Number.isFinite(s) && s > 0 ? s : 1;
-        z.style.setProperty('transform', 'none', 'important');
-        (z.style as any).zoom = String(scale);
-        z.style.setProperty('width', 'max-content', 'important');
-        z.style.setProperty('max-width', '100%', 'important');
+      scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((el) => {
+        const rawScale = el.style.getPropertyValue('--layoutScale');
+        const scale = parseFloat(rawScale) || 1;
+        el.style.removeProperty('--layoutScale');
+        (el.style as any).zoom = String(scale);
+        el.style.width = '100%';
+        el.style.transform = 'none';
+        el.style.margin = '0';
+        el.style.boxSizing = 'border-box';
       });
 
       // Center the zoom wrapper within the page.
