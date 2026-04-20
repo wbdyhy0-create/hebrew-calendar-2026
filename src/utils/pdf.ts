@@ -244,8 +244,15 @@ export async function downloadPdfFromHtml(
       const w = canvas.width;
       const h = canvas.height;
       if (!w || !h) throw new Error(`Blank canvas (${label}): zero size ${w}x${h}.`);
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return; // can't verify; assume ok
+      let img: ImageData;
+      try {
+        img = ctx.getImageData(0, 0, w, h);
+      } catch {
+        return;
+      }
+      const data = img.data;
       const samplePoints = [
         [Math.floor(w * 0.1), Math.floor(h * 0.1)],
         [Math.floor(w * 0.5), Math.floor(h * 0.2)],
@@ -256,8 +263,8 @@ export async function downloadPdfFromHtml(
       for (const [sx, sy] of samplePoints) {
         const x = Math.min(w - 1, Math.max(0, sx));
         const y = Math.min(h - 1, Math.max(0, sy));
-        const d = ctx.getImageData(x, y, 1, 1).data;
-        const [r, g, b, a] = [d[0]!, d[1]!, d[2]!, d[3]!];
+        const i = (y * w + x) * 4;
+        const [r, g, b, a] = [data[i]!, data[i + 1]!, data[i + 2]!, data[i + 3]!];
         // Treat fully transparent or non-white as non-blank.
         if (a !== 255) return;
         if (r !== 255 || g !== 255 || b !== 255) return;
@@ -269,7 +276,7 @@ export async function downloadPdfFromHtml(
       const w = canvas.width;
       const h = canvas.height;
       if (!w || !h) return canvas;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
       if (!ctx) return canvas;
 
       let img: ImageData;
