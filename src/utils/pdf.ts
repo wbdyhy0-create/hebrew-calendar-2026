@@ -352,6 +352,15 @@ export async function downloadPdfFromHtml(
       const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
       const scope = root ?? clonedDoc.body;
 
+      if (root) {
+        // Force full-page box in the clone so the background fills the capture.
+        root.style.setProperty('width', `${widthMm}mm`, 'important');
+        if (!opts?.multiPage) {
+          root.style.setProperty('height', 'auto', 'important');
+          root.style.setProperty('min-height', `${heightMm}mm`, 'important');
+        }
+      }
+
       // Some CSS features can trip html2canvas parsers in certain builds/browsers.
       // Remove backdrop filters and other effects in the clone.
       scope.querySelectorAll<HTMLElement>('*').forEach((n) => {
@@ -498,16 +507,13 @@ export async function downloadPdfFromHtml(
       const canvasRaw = await renderElementToCanvas(el, i);
       const canvas = trimCanvasWhitespace(canvasRaw);
 
-      // Fit captured image into the PDF content box while preserving aspect ratio,
-      // and center it. We trim whitespace from the canvas, so aspect-fit won't “drift”.
-      const imgPxW = canvas.width || 1;
-      const imgPxH = canvas.height || 1;
-      const imgRatio = imgPxW / imgPxH;
-      const boxRatio = contentW / contentH;
-      const drawW = imgRatio > boxRatio ? contentW : contentH * imgRatio;
-      const drawH = imgRatio > boxRatio ? contentW / imgRatio : contentH;
-      const x = marginMm + (contentW - drawW) / 2;
-      const y = marginMm + (contentH - drawH) / 2;
+      // Draw to fill the PDF content box. We trim whitespace from the canvas and add padding,
+      // so this should preserve the frame without “left drift” while ensuring the background
+      // fills the page (no white strips).
+      const drawW = contentW;
+      const drawH = contentH;
+      const x = marginMm;
+      const y = marginMm;
 
       if (i > 0) doc.addPage();
       wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
