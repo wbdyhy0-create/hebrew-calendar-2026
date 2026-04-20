@@ -1,0 +1,10 @@
+---
+description: Always commit + push changes after successful work
+alwaysApply: true
+---
+
+# Always commit + push after changes
+
+- After implementing a requested change and verifying it works (build/tests where applicable), **stage, commit, and push** without asking for confirmation.
+- Use a clear commit message describing intent.
+- If a commit fails (hooks/quoting/etc), fix the issue and retry, then push.
