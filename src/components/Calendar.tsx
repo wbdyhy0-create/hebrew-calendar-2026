@@ -1109,7 +1109,7 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={9}
+                min={1}
                 max={18}
                 value={settings.eventTitleFontPx}
                 onChange={(e) =>
@@ -1126,7 +1126,7 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={8}
+                min={1}
                 max={14}
                 value={settings.shabbatTimesFontPx}
                 onChange={(e) =>
@@ -1137,6 +1137,25 @@ export function Calendar() {
                 }
               />
             </label>
+
+            <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div className="text-xs font-bold text-slate-700 mb-2">תצוגה מקדימה (לבדיקת סליידרים)</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-lg border border-slate-200 bg-white p-2">
+                  <div className="text-[11px] font-semibold text-slate-600 mb-1">שם אירוע</div>
+                  <div style={{ fontSize: settings.eventTitleFontPx }} className="font-bold text-slate-800">
+                    ערב פסח
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white p-2">
+                  <div className="text-[11px] font-semibold text-slate-600 mb-1">זמני שבת</div>
+                  <div style={{ fontSize: settings.shabbatTimesFontPx }} className="text-slate-800">
+                    <div className="font-extrabold text-slate-900 whitespace-nowrap">כניסת השבת:</div>
+                    <HebcalZmanimLine jer="18:22" ta="18:20" />
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <label className="text-sm text-slate-700">
               משקל
