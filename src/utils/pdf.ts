@@ -460,7 +460,6 @@ export async function downloadPdfFromHtml(
           return await html2canvas(el, {
             scale,
             useCORS: true,
-            letterRendering: true,
             backgroundColor: '#ffffff',
             windowWidth: windowWidthPx,
             windowHeight: windowHeightPx,
@@ -478,7 +477,6 @@ export async function downloadPdfFromHtml(
             scale: 1, // foreignObject is already expensive; keep it stable
             useCORS: true,
             foreignObjectRendering: true,
-            letterRendering: true,
             backgroundColor: '#ffffff',
             windowWidth: windowWidthPx,
             windowHeight: windowHeightPx,
