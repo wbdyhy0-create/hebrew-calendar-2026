@@ -394,14 +394,12 @@ export async function downloadPdfFromHtml(
       const canvas = await renderElementToCanvas(el, i);
 
       // Fit captured image into the PDF content box while preserving aspect ratio.
-      const imgPxW = canvas.width || 1;
-      const imgPxH = canvas.height || 1;
-      const imgRatio = imgPxW / imgPxH;
-      const boxRatio = contentW / contentH;
-      const drawW = imgRatio > boxRatio ? contentW : contentH * imgRatio;
-      const drawH = imgRatio > boxRatio ? contentW / imgRatio : contentH;
-      const x = marginMm + (contentW - drawW) / 2;
-      const y = marginMm + (contentH - drawH) / 2;
+      // Fill the content box exactly. Some capture modes can introduce extra whitespace
+      // inside the canvas which would otherwise look “shifted” when aspect-fitting.
+      const drawW = contentW;
+      const drawH = contentH;
+      const x = marginMm;
+      const y = marginMm;
 
       if (i > 0) doc.addPage();
       wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
