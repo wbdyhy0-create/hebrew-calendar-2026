@@ -129,6 +129,24 @@ export async function downloadPdfFromHtml(
   const marginMmRaw = Number(settings.pdfMarginMm);
   const marginMm = Number.isFinite(marginMmRaw) ? Math.max(0, marginMmRaw) : 0;
 
+  function wrapPdfStage<T>(stage: string, fn: () => T): T {
+    try {
+      return fn();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new Error(`PDF: stage "${stage}" failed. ${msg}`);
+    }
+  }
+
+  async function wrapPdfStageAsync<T>(stage: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new Error(`PDF: stage "${stage}" failed. ${msg}`);
+    }
+  }
+
   function addImageToPdfSafe(
     doc: jsPDF,
     canvas: HTMLCanvasElement,
@@ -202,11 +220,13 @@ export async function downloadPdfFromHtml(
     const contentW = Math.max(1, pageW - marginMm * 2);
     const contentH = Math.max(1, pageH - marginMm * 2);
 
-    const doc = new jsPDF({
-      unit: 'mm',
-      format: jsPdfFormat,
-      orientation: jsPdfOrientation,
-      compress: true,
+    const doc = wrapPdfStage('jsPDF ctor', () => {
+      return new jsPDF({
+        unit: 'mm',
+        format: jsPdfFormat,
+        orientation: jsPdfOrientation,
+        compress: true,
+      });
     });
 
     const nodes: HTMLElement[] = opts?.multiPage
@@ -217,90 +237,96 @@ export async function downloadPdfFromHtml(
 
     for (let i = 0; i < nodes.length; i++) {
       const el = nodes[i]!;
-      const canvas = await html2canvas(el, {
-        scale,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        windowWidth: windowWidthPx,
-        windowHeight: windowHeightPx,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc) => {
-          const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
-          const scope = root ?? clonedDoc.body;
+      const canvas = await wrapPdfStageAsync(`html2canvas (page ${i + 1}/${nodes.length})`, async () => {
+        return await html2canvas(el, {
+          scale,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          windowWidth: windowWidthPx,
+          windowHeight: windowHeightPx,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
+            const scope = root ?? clonedDoc.body;
 
-          // Precise PDF auto-fit: compute a cell height that makes the grid touch the bottom.
-          if (root && settings.layoutAutoFitToCanvas) {
-            root.classList.add('pdfAutoFit');
-            const canvasEl = root.querySelector('.canvas') as HTMLElement | null;
-            const gridEl = root.querySelector('.grid') as HTMLElement | null;
-            const dowEl = root.querySelector('.dow') as HTMLElement | null;
-            if (canvasEl && gridEl && dowEl) {
-              const canvasRect = canvasEl.getBoundingClientRect();
-              const gridRect = gridEl.getBoundingClientRect();
-              const padB = Number.parseFloat(getComputedStyle(canvasEl).paddingBottom || '0') || 0;
-              const dowH = dowEl.getBoundingClientRect().height || 0;
-              const children = Array.from(gridEl.children);
-              const total = children.length;
-              const weeks = Math.max(5, Math.min(6, Math.round((total - 7) / 7) || 6));
-              const avail = Math.max(120, canvasRect.height - (gridRect.top - canvasRect.top) - padB);
-              // Use `ceil` to avoid leaving a visible gap at the bottom due to rounding.
-              // This may slightly overfill (by <1 row worth of pixels), which is preferable
-              // for “fill the page” PDF output.
-              const cellH = Math.max(60, Math.ceil((avail - dowH) / weeks));
-              root.style.setProperty('--pdfAutoCellHeightPx', `${cellH}px`);
-              // Important: `grid-auto-rows` would also apply to the weekday row (dow) and create
-              // a big visual gap before the first week. Use explicit rows instead.
-              gridEl.style.gridAutoRows = 'unset';
-              gridEl.style.gridTemplateRows = `${Math.round(dowH)}px repeat(${weeks}, ${cellH}px)`;
+            // Precise PDF auto-fit: compute a cell height that makes the grid touch the bottom.
+            if (root && settings.layoutAutoFitToCanvas) {
+              root.classList.add('pdfAutoFit');
+              const canvasEl = root.querySelector('.canvas') as HTMLElement | null;
+              const gridEl = root.querySelector('.grid') as HTMLElement | null;
+              const dowEl = root.querySelector('.dow') as HTMLElement | null;
+              if (canvasEl && gridEl && dowEl) {
+                const canvasRect = canvasEl.getBoundingClientRect();
+                const gridRect = gridEl.getBoundingClientRect();
+                const padB = Number.parseFloat(getComputedStyle(canvasEl).paddingBottom || '0') || 0;
+                const dowH = dowEl.getBoundingClientRect().height || 0;
+                const children = Array.from(gridEl.children);
+                const total = children.length;
+                const weeks = Math.max(5, Math.min(6, Math.round((total - 7) / 7) || 6));
+                const avail = Math.max(120, canvasRect.height - (gridRect.top - canvasRect.top) - padB);
+                // Use `ceil` to avoid leaving a visible gap at the bottom due to rounding.
+                // This may slightly overfill (by <1 row worth of pixels), which is preferable
+                // for “fill the page” PDF output.
+                const cellH = Math.max(60, Math.ceil((avail - dowH) / weeks));
+                root.style.setProperty('--pdfAutoCellHeightPx', `${cellH}px`);
+                // Important: `grid-auto-rows` would also apply to the weekday row (dow) and create
+                // a big visual gap before the first week. Use explicit rows instead.
+                gridEl.style.gridAutoRows = 'unset';
+                gridEl.style.gridTemplateRows = `${Math.round(dowH)}px repeat(${weeks}, ${cellH}px)`;
+              }
             }
-          }
 
-          if (root && !opts?.multiPage) {
-            root.style.setProperty('overflow', 'visible', 'important');
-            root.style.setProperty('height', 'auto', 'important');
-            root.style.setProperty('min-height', `${heightMm}mm`, 'important');
-          }
-          scope.querySelectorAll<HTMLElement>('.canvas').forEach((c) => {
-            c.style.setProperty('overflow', 'visible', 'important');
-            if (!opts?.multiPage) {
-              c.style.setProperty('height', 'auto', 'important');
-              c.style.setProperty('min-height', `${heightMm}mm`, 'important');
+            if (root && !opts?.multiPage) {
+              root.style.setProperty('overflow', 'visible', 'important');
+              root.style.setProperty('height', 'auto', 'important');
+              root.style.setProperty('min-height', `${heightMm}mm`, 'important');
             }
-          });
+            scope.querySelectorAll<HTMLElement>('.canvas').forEach((c) => {
+              c.style.setProperty('overflow', 'visible', 'important');
+              if (!opts?.multiPage) {
+                c.style.setProperty('height', 'auto', 'important');
+                c.style.setProperty('min-height', `${heightMm}mm`, 'important');
+              }
+            });
 
-          // Force grid layout and centered headers in the clone before capture.
-          scope.querySelectorAll<HTMLElement>('.grid').forEach((grid) => {
-            grid.style.display = 'grid';
-            grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
-            grid.style.width = '100%';
-            grid.style.direction = 'rtl';
-            (grid.style as any).alignContent = 'center';
-          });
+            // Force grid layout and centered headers in the clone before capture.
+            scope.querySelectorAll<HTMLElement>('.grid').forEach((grid) => {
+              grid.style.display = 'grid';
+              grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+              grid.style.width = '100%';
+              grid.style.direction = 'rtl';
+              (grid.style as any).alignContent = 'center';
+            });
 
-          scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
-            dow.style.display = 'flex';
-            dow.style.alignItems = 'center';
-            dow.style.justifyContent = 'center';
-          });
+            scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
+              dow.style.display = 'flex';
+              dow.style.alignItems = 'center';
+              dow.style.justifyContent = 'center';
+            });
 
-          scope
-            .querySelectorAll<HTMLElement>('.headerMinimal, .headerRightBlockShell, .headerCenteredPillShell')
-            .forEach((hb) => {
+            scope
+              .querySelectorAll<HTMLElement>('.headerMinimal, .headerRightBlockShell, .headerCenteredPillShell')
+              .forEach((hb) => {
+                hb.style.setProperty('display', 'block', 'important');
+                hb.style.setProperty('position', 'relative', 'important');
+              });
+            scope.querySelectorAll<HTMLElement>('.headerBar.headerWysiwyg').forEach((hb) => {
               hb.style.setProperty('display', 'block', 'important');
               hb.style.setProperty('position', 'relative', 'important');
             });
-          scope.querySelectorAll<HTMLElement>('.headerBar.headerWysiwyg').forEach((hb) => {
-            hb.style.setProperty('display', 'block', 'important');
-            hb.style.setProperty('position', 'relative', 'important');
-          });
-          scope.querySelectorAll<HTMLElement>('.headerBar:not(.headerWysiwyg)').forEach((hb) => {
-            hb.style.setProperty('display', 'grid', 'important');
-            hb.style.setProperty('grid-template-columns', 'minmax(0, 1fr) auto minmax(0, 1fr)', 'important');
-            hb.style.setProperty('align-items', 'center', 'important');
-            hb.style.setProperty('position', 'relative', 'important');
-          });
-        },
+            scope.querySelectorAll<HTMLElement>('.headerBar:not(.headerWysiwyg)').forEach((hb) => {
+              hb.style.setProperty('display', 'grid', 'important');
+              hb.style.setProperty(
+                'grid-template-columns',
+                'minmax(0, 1fr) auto minmax(0, 1fr)',
+                'important',
+              );
+              hb.style.setProperty('align-items', 'center', 'important');
+              hb.style.setProperty('position', 'relative', 'important');
+            });
+          },
+        });
       });
 
       // Fit captured image into the PDF content box while preserving aspect ratio.
@@ -314,10 +340,14 @@ export async function downloadPdfFromHtml(
       const y = marginMm + (contentH - drawH) / 2;
 
       if (i > 0) doc.addPage();
-      addImageToPdfSafe(doc, canvas, x, y, drawW, drawH, i);
+      wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
+        addImageToPdfSafe(doc, canvas, x, y, drawW, drawH, i);
+      });
     }
 
-    doc.save(filename);
+    wrapPdfStage('jsPDF save()', () => {
+      doc.save(filename);
+    });
   }
 
   try {
