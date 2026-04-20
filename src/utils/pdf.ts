@@ -287,7 +287,8 @@ export async function downloadPdfFromHtml(
         return canvas;
       }
       const data = img.data;
-      const stride = 8; // tradeoff: speed vs precision
+      // Scan stride: keep fairly small so we don't miss thin borders (frame lines).
+      const stride = 4; // tradeoff: speed vs precision
 
       const isInkAt = (x: number, y: number) => {
         const i = (y * w + x) * 4;
@@ -296,7 +297,9 @@ export async function downloadPdfFromHtml(
         const r = data[i]!;
         const g = data[i + 1]!;
         const b = data[i + 2]!;
-        return !(r === 255 && g === 255 && b === 255);
+        // Treat near-white as whitespace too, but keep borders/shadows.
+        // (Anti-aliased edges can contain very light pixels; don't crop them away.)
+        return !(r >= 252 && g >= 252 && b >= 252);
       };
 
       let left = 0;
@@ -325,8 +328,8 @@ export async function downloadPdfFromHtml(
       // If we didn't find any ink (shouldn't happen because we check blank earlier), return as-is.
       if (left >= right || top >= bottom) return canvas;
 
-      // Add a tiny padding to avoid cutting anti-aliased edges.
-      const pad = 2;
+      // Add padding to avoid cutting frame/border anti-aliasing.
+      const pad = 12;
       left = Math.max(0, left - pad);
       top = Math.max(0, top - pad);
       right = Math.min(w - 1, right + pad);
