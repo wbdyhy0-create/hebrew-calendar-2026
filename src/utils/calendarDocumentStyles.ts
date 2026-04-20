@@ -457,10 +457,6 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
           /* Chrome supports zoom and keeps glyphs sharp compared to transform */
           zoom: var(--layoutScale, 1) !important;
         }
-        /* Hide background photo in print — keeps PDF clean and avoids bitmap bleed */
-        .printRoot {
-          background-image: none !important;
-        }
         /* Fix absolute-positioned elements inside cells after zoom reset.
            zoom changes the containing-block size so midWrap/times positions
            must be recalculated explicitly. */
