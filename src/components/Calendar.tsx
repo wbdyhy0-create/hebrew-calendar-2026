@@ -361,13 +361,8 @@ export function Calendar() {
   const effectiveVisualScale =
     (settings.layoutAutoFitToCanvas ? autoFitScale : 1) *
     (resolveCalendarLayoutZoomPercent(settings) / 100);
-  const scaledPx = (px: number) => {
-    const s =
-      Number.isFinite(effectiveVisualScale) && effectiveVisualScale > 0
-        ? effectiveVisualScale
-        : 1;
-    return px / s;
-  };
+  // scaledPx: direct px, transform:scale on container handles visual sizing
+  const scaledPx = (px: number) => Math.max(1, Number(px) || 1);
 
   useEffect(() => {
     if (!settings.layoutAutoFitToCanvas) {
@@ -3457,4 +3452,3 @@ export function Calendar() {
     </section>
   );
 }
-
