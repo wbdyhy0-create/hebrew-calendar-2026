@@ -265,6 +265,79 @@ export async function downloadPdfFromHtml(
       throw new Error(`Blank canvas (${label}): rendered all-white sample.`);
     }
 
+    function trimCanvasWhitespace(canvas: HTMLCanvasElement): HTMLCanvasElement {
+      const w = canvas.width;
+      const h = canvas.height;
+      if (!w || !h) return canvas;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return canvas;
+
+      let img: ImageData;
+      try {
+        img = ctx.getImageData(0, 0, w, h);
+      } catch {
+        // If browser blocks pixel read for any reason, skip trimming.
+        return canvas;
+      }
+      const data = img.data;
+      const stride = 8; // tradeoff: speed vs precision
+
+      const isInkAt = (x: number, y: number) => {
+        const i = (y * w + x) * 4;
+        const a = data[i + 3]!;
+        if (a === 0) return false;
+        const r = data[i]!;
+        const g = data[i + 1]!;
+        const b = data[i + 2]!;
+        return !(r === 255 && g === 255 && b === 255);
+      };
+
+      let left = 0;
+      let right = w - 1;
+      let top = 0;
+      let bottom = h - 1;
+
+      const hasInkInCol = (x: number) => {
+        for (let y = 0; y < h; y += stride) {
+          if (isInkAt(x, y)) return true;
+        }
+        return false;
+      };
+      const hasInkInRow = (y: number) => {
+        for (let x = 0; x < w; x += stride) {
+          if (isInkAt(x, y)) return true;
+        }
+        return false;
+      };
+
+      while (left < right && !hasInkInCol(left)) left++;
+      while (right > left && !hasInkInCol(right)) right--;
+      while (top < bottom && !hasInkInRow(top)) top++;
+      while (bottom > top && !hasInkInRow(bottom)) bottom--;
+
+      // If we didn't find any ink (shouldn't happen because we check blank earlier), return as-is.
+      if (left >= right || top >= bottom) return canvas;
+
+      // Add a tiny padding to avoid cutting anti-aliased edges.
+      const pad = 2;
+      left = Math.max(0, left - pad);
+      top = Math.max(0, top - pad);
+      right = Math.min(w - 1, right + pad);
+      bottom = Math.min(h - 1, bottom + pad);
+
+      const tw = Math.max(1, right - left + 1);
+      const th = Math.max(1, bottom - top + 1);
+      if (tw === w && th === h) return canvas;
+
+      const out = document.createElement('canvas');
+      out.width = tw;
+      out.height = th;
+      const octx = out.getContext('2d');
+      if (!octx) return canvas;
+      octx.drawImage(canvas, left, top, tw, th, 0, 0, tw, th);
+      return out;
+    }
+
     const buildOnClone = () => (clonedDoc: Document) => {
       const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
       const scope = root ?? clonedDoc.body;
@@ -410,7 +483,8 @@ export async function downloadPdfFromHtml(
 
     for (let i = 0; i < nodes.length; i++) {
       const el = nodes[i]!;
-      const canvas = await renderElementToCanvas(el, i);
+      const canvasRaw = await renderElementToCanvas(el, i);
+      const canvas = trimCanvasWhitespace(canvasRaw);
 
       // Fit captured image into the PDF content box while preserving aspect ratio.
       // Fill the content box exactly. Some capture modes can introduce extra whitespace
