@@ -417,7 +417,19 @@ export async function downloadPdfFromHtml(
           // ignore
         }
         z.style.setProperty('transform', 'none', 'important');
-        z.style.setProperty('transform-origin', 'top right', 'important');
+        // Keep scaled content centered instead of drifting.
+        z.style.setProperty('transform-origin', 'top left', 'important');
+        z.style.setProperty('display', 'block', 'important');
+        z.style.setProperty('width', '100%', 'important');
+        z.style.setProperty('margin-left', 'auto', 'important');
+        z.style.setProperty('margin-right', 'auto', 'important');
+      });
+
+      // Center the zoom wrapper within the page.
+      scope.querySelectorAll<HTMLElement>('.layoutStage').forEach((st) => {
+        st.style.setProperty('display', 'flex', 'important');
+        st.style.setProperty('justify-content', 'center', 'important');
+        st.style.setProperty('align-items', 'center', 'important');
       });
 
       scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
@@ -496,15 +508,12 @@ export async function downloadPdfFromHtml(
       // Fit captured image into the PDF content box while preserving aspect ratio.
       // Fill the content box exactly. Some capture modes can introduce extra whitespace
       // inside the canvas which would otherwise look “shifted” when aspect-fitting.
-      // Prefer aspect-fit to preserve geometry, but center it in the content box.
-      const imgPxW = canvas.width || 1;
-      const imgPxH = canvas.height || 1;
-      const imgRatio = imgPxW / imgPxH;
-      const boxRatio = contentW / contentH;
-      const drawW = imgRatio > boxRatio ? contentW : contentH * imgRatio;
-      const drawH = imgRatio > boxRatio ? contentW / imgRatio : contentH;
-      const x = marginMm + (contentW - drawW) / 2;
-      const y = marginMm + (contentH - drawH) / 2;
+      // Draw to fill the content box; trimming removes most internal whitespace,
+      // and this avoids apparent left/right drift.
+      const drawW = contentW;
+      const drawH = contentH;
+      const x = marginMm;
+      const y = marginMm;
 
       if (i > 0) doc.addPage();
       wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
