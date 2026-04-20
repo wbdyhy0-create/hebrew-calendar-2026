@@ -22,11 +22,16 @@ export async function downloadPdfFromHtml(
 
   const container = document.createElement('div');
   container.style.position = 'fixed';
-  container.style.left = '-100000px';
+  // Keep the render target inside the viewport; some html2canvas modes can return a blank canvas
+  // when the element is positioned far off-screen.
+  container.style.left = '0';
   container.style.top = '0';
   container.style.width = `${widthMm}mm`;
   if (!opts?.multiPage) container.style.height = `${heightMm}mm`;
   container.style.background = '#ffffff';
+  container.style.opacity = '0';
+  container.style.pointerEvents = 'none';
+  container.style.zIndex = '-1';
   /* overflow:hidden חותך transform/אותיות מעל הקנבס ב־html2canvas */
   container.style.overflow = 'visible';
   container.setAttribute('dir', parsed.documentElement.getAttribute('dir') ?? 'rtl');
@@ -235,6 +240,31 @@ export async function downloadPdfFromHtml(
 
     const scale = Math.min(3, Math.max(1, Math.round(Number(settings.pdfHtml2CanvasScale) || 2)));
 
+    function assertCanvasNotBlank(canvas: HTMLCanvasElement, label: string) {
+      const w = canvas.width;
+      const h = canvas.height;
+      if (!w || !h) throw new Error(`Blank canvas (${label}): zero size ${w}x${h}.`);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return; // can't verify; assume ok
+      const samplePoints = [
+        [Math.floor(w * 0.1), Math.floor(h * 0.1)],
+        [Math.floor(w * 0.5), Math.floor(h * 0.2)],
+        [Math.floor(w * 0.5), Math.floor(h * 0.5)],
+        [Math.floor(w * 0.8), Math.floor(h * 0.5)],
+        [Math.floor(w * 0.9), Math.floor(h * 0.9)],
+      ] as const;
+      for (const [sx, sy] of samplePoints) {
+        const x = Math.min(w - 1, Math.max(0, sx));
+        const y = Math.min(h - 1, Math.max(0, sy));
+        const d = ctx.getImageData(x, y, 1, 1).data;
+        const [r, g, b, a] = [d[0]!, d[1]!, d[2]!, d[3]!];
+        // Treat fully transparent or non-white as non-blank.
+        if (a !== 255) return;
+        if (r !== 255 || g !== 255 || b !== 255) return;
+      }
+      throw new Error(`Blank canvas (${label}): rendered all-white sample.`);
+    }
+
     const buildOnClone = () => (clonedDoc: Document) => {
       const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
       const scope = root ?? clonedDoc.body;
@@ -325,7 +355,7 @@ export async function downloadPdfFromHtml(
 
       // Strategy A: default renderer (best fidelity).
       try {
-        return await wrapPdfStageAsync(`${stageBase} [default]`, async () => {
+        const canvas = await wrapPdfStageAsync(`${stageBase} [default]`, async () => {
           return await html2canvas(el, {
             scale,
             useCORS: true,
@@ -337,9 +367,11 @@ export async function downloadPdfFromHtml(
             onclone,
           });
         });
+        assertCanvasNotBlank(canvas, `${stageBase} [default]`);
+        return canvas;
       } catch {
         // Strategy B: foreignObject renderer is less strict with CSS parsing in some environments.
-        return await wrapPdfStageAsync(`${stageBase} [foreignObjectRendering]`, async () => {
+        const canvas = await wrapPdfStageAsync(`${stageBase} [foreignObjectRendering]`, async () => {
           return await html2canvas(el, {
             scale: 1, // foreignObject is already expensive; keep it stable
             useCORS: true,
@@ -352,6 +384,8 @@ export async function downloadPdfFromHtml(
             onclone,
           } as any);
         });
+        assertCanvasNotBlank(canvas, `${stageBase} [foreignObjectRendering]`);
+        return canvas;
       }
     }
 
