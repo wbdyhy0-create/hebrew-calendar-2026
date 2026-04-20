@@ -305,9 +305,16 @@ export async function downloadPdfFromHtml(
   }
 
   try {
-    // Prefer explicit html2canvas -> jsPDF pipeline to match on-screen layout/alignment.
-    // Keeps layout stable by using `onclone` before capture.
-    await renderWithHtml2CanvasThenPdf();
+    try {
+      // Prefer explicit html2canvas -> jsPDF pipeline to match on-screen layout/alignment.
+      // Keeps layout stable by using `onclone` before capture.
+      await renderWithHtml2CanvasThenPdf();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Always wrap so the UI message is consistent and includes context,
+      // even if the failure happens before `addImageToPdfSafe`.
+      throw new Error(`PDF: export failed. ${msg}`);
+    }
   } finally {
     container.remove();
     tempStyles.forEach((style) => style.remove());
