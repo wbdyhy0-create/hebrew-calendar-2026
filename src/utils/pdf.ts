@@ -425,7 +425,8 @@ export async function downloadPdfFromHtml(
         z.style.setProperty('transform-origin', 'center center', 'important');
         // Nudge only the calendar content (not the background).
         // Use mm units so the shift is stable across capture pixel densities.
-        z.style.setProperty('transform', `translateX(6mm) scale(${scale})`, 'important');
+        // (Helps keep the left frame inside the PDF page.)
+        z.style.setProperty('transform', `translateX(12mm) scale(${scale})`, 'important');
         z.style.setProperty('backface-visibility', 'hidden', 'important');
       });
 
