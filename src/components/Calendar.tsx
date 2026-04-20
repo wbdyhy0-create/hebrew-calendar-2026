@@ -408,6 +408,10 @@ export function Calendar() {
     settings.pdfOrientation,
     settings.pdfCustomWidthMm,
     settings.pdfCustomHeightMm,
+    settings.gregDayFontPx,
+    settings.hebDayFontPx,
+    settings.eventTitleFontPx,
+    settings.shabbatTimesFontPx,
   ]);
 
   const pdfPageMm = useMemo(
@@ -2671,31 +2675,48 @@ export function Calendar() {
                   borderRadius: cellRadiusPx ? `${cellRadiusPx}px` : undefined,
                   cursor: settings.enableManualEdits ? 'pointer' : undefined,
                 }}
-                onClick={() => {
+                onClick={(e) => {
+                  // Only open picker when clicking the empty cell background (not image drag/delete).
+                  if (e.target !== e.currentTarget) return;
                   if (!settings.enableManualEdits) return;
                   pickImageForCell(m.gKey);
                 }}
               >
                 {manual?.imageDataUrl ? (
                   <>
-                    <img
-                      src={manual.imageDataUrl}
-                      alt=""
-                      className="absolute inset-0 h-full w-full"
+                    <div
+                      className="absolute inset-0"
                       style={{
-                        objectFit: manual.imageFit ?? 'cover',
-                        objectPosition: `calc(50% + ${(Number(manual.imageOffsetX) || 0).toFixed(
+                        backgroundImage: `url(${manual.imageDataUrl})`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: manual.imageFit ?? 'cover',
+                        backgroundPosition: `calc(50% + ${(Number(manual.imageOffsetX) || 0).toFixed(
                           1,
                         )}px) calc(50% + ${(Number(manual.imageOffsetY) || 0).toFixed(1)}px)`,
                         opacity:
                           typeof manual.imageOpacity === 'number' ? manual.imageOpacity : 1,
                         cursor: settings.enableManualEdits ? 'grab' : undefined,
                       }}
-                      draggable={false}
-                      onPointerDown={(e) => startImageDrag(m.gKey, e)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startImageDrag(m.gKey, e);
+                      }}
                       onPointerMove={moveImageDrag}
-                      onPointerUp={endImageDrag}
-                      onPointerCancel={endImageDrag}
+                      onPointerUp={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        endImageDrag(e);
+                      }}
+                      onPointerCancel={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        endImageDrag(e);
+                      }}
                     />
                     <button
                       type="button"
@@ -2794,20 +2815,19 @@ export function Calendar() {
             >
               {manual?.imageDataUrl ? (
                 <>
-                  <img
-                    src={manual.imageDataUrl}
-                    alt=""
-                    className="absolute inset-0 h-full w-full"
+                  <div
+                    className="absolute inset-0"
                     style={{
-                      objectFit: manual.imageFit ?? 'cover',
-                      objectPosition: `calc(50% + ${(Number(manual.imageOffsetX) || 0).toFixed(
+                      backgroundImage: `url(${manual.imageDataUrl})`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: manual.imageFit ?? 'cover',
+                      backgroundPosition: `calc(50% + ${(Number(manual.imageOffsetX) || 0).toFixed(
                         1,
                       )}px) calc(50% + ${(Number(manual.imageOffsetY) || 0).toFixed(1)}px)`,
                       opacity:
                         typeof manual.imageOpacity === 'number' ? manual.imageOpacity : 1,
                       cursor: settings.enableManualEdits ? 'grab' : undefined,
                     }}
-                    draggable={false}
                     onPointerDown={(e) => startImageDrag(m.gKey, e)}
                     onPointerMove={moveImageDrag}
                     onPointerUp={endImageDrag}
