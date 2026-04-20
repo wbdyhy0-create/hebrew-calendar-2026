@@ -403,26 +403,16 @@ export async function downloadPdfFromHtml(
 
       // Avoid `transform: scale()` during capture. Transforms can cause subpixel glyph issues
       // (looks like “scrambled” text) and can introduce apparent horizontal drift.
-      // Use `zoom` for the same scale when possible.
+      // Instead, center the element and scale around its center, so the layout stays centered.
       scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((z) => {
-        try {
-          const raw = getComputedStyle(z).getPropertyValue('--layoutScale').trim();
-          const s = Number(raw);
-          if (Number.isFinite(s) && s > 0) {
-            // Reset CSS variable so downstream rules that reference it won't double-scale.
-            z.style.setProperty('--layoutScale', '1');
-            (z.style as any).zoom = String(s);
-          }
-        } catch {
-          // ignore
-        }
-        z.style.setProperty('transform', 'none', 'important');
-        // Keep scaled content centered instead of drifting.
-        z.style.setProperty('transform-origin', 'top left', 'important');
-        z.style.setProperty('display', 'block', 'important');
-        z.style.setProperty('width', '100%', 'important');
-        z.style.setProperty('margin-left', 'auto', 'important');
-        z.style.setProperty('margin-right', 'auto', 'important');
+        const raw = getComputedStyle(z).getPropertyValue('--layoutScale').trim();
+        const s = Number(raw);
+        const scale = Number.isFinite(s) && s > 0 ? s : 1;
+        // Reset CSS variable so we control scaling explicitly.
+        z.style.setProperty('--layoutScale', '1');
+        z.style.setProperty('transform-origin', 'center center', 'important');
+        z.style.setProperty('transform', `scale(${scale})`, 'important');
+        z.style.setProperty('backface-visibility', 'hidden', 'important');
       });
 
       // Center the zoom wrapper within the page.
@@ -470,6 +460,7 @@ export async function downloadPdfFromHtml(
           return await html2canvas(el, {
             scale,
             useCORS: true,
+            letterRendering: true,
             backgroundColor: '#ffffff',
             windowWidth: windowWidthPx,
             windowHeight: windowHeightPx,
@@ -487,6 +478,7 @@ export async function downloadPdfFromHtml(
             scale: 1, // foreignObject is already expensive; keep it stable
             useCORS: true,
             foreignObjectRendering: true,
+            letterRendering: true,
             backgroundColor: '#ffffff',
             windowWidth: windowWidthPx,
             windowHeight: windowHeightPx,
