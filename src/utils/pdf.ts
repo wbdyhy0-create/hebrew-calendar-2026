@@ -423,7 +423,9 @@ export async function downloadPdfFromHtml(
         // Reset CSS variable so we control scaling explicitly.
         z.style.setProperty('--layoutScale', '1');
         z.style.setProperty('transform-origin', 'center center', 'important');
-        z.style.setProperty('transform', `scale(${scale})`, 'important');
+        // Nudge only the calendar content (not the background).
+        // Use mm units so the shift is stable across capture pixel densities.
+        z.style.setProperty('transform', `translateX(6mm) scale(${scale})`, 'important');
         z.style.setProperty('backface-visibility', 'hidden', 'important');
       });
 
@@ -510,12 +512,9 @@ export async function downloadPdfFromHtml(
       // Draw to fill the PDF content box. We trim whitespace from the canvas and add padding,
       // so this should preserve the frame without “left drift” while ensuring the background
       // fills the page (no white strips).
-      // Small horizontal nudge: the captured layout can be slightly left-heavy due to RTL/layout
-      // rounding differences between live DOM and canvas capture.
-      const nudgeXmm = 6;
-      const drawW = Math.max(1, contentW - nudgeXmm);
+      const drawW = contentW;
       const drawH = contentH;
-      const x = marginMm + nudgeXmm;
+      const x = marginMm;
       const y = marginMm;
 
       if (i > 0) doc.addPage();
