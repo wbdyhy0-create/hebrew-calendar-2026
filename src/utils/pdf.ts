@@ -422,28 +422,6 @@ export async function downloadPdfFromHtml(
         st.style.setProperty('align-items', 'center', 'important');
       });
 
-      // Ensure the *calendar content* (header + grid) is centered within the canvas.
-      // In some layouts, wrappers are full-width (100%), so flex-centering the stage alone
-      // doesn't center the visible grid; it can appear “stuck” to the left edge.
-      scope.querySelectorAll<HTMLElement>('.canvas').forEach((c) => {
-        c.style.setProperty('display', 'flex', 'important');
-        c.style.setProperty('flex-direction', 'column', 'important');
-        c.style.setProperty('align-items', 'center', 'important');
-      });
-      scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
-        w.style.setProperty('width', '100%', 'important');
-        w.style.setProperty('display', 'flex', 'important');
-        w.style.setProperty('justify-content', 'center', 'important');
-      });
-      scope
-        .querySelectorAll<HTMLElement>(
-          '.chromeJoined, .grid, .headerBar, .headerMinimal, .headerRightBlockShell, .headerCenteredPillShell',
-        )
-        .forEach((n) => {
-          n.style.setProperty('margin-left', 'auto', 'important');
-          n.style.setProperty('margin-right', 'auto', 'important');
-        });
-
       scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
         dow.style.display = 'flex';
         dow.style.alignItems = 'center';
@@ -517,15 +495,16 @@ export async function downloadPdfFromHtml(
       const canvasRaw = await renderElementToCanvas(el, i);
       const canvas = trimCanvasWhitespace(canvasRaw);
 
-      // Fit captured image into the PDF content box while preserving aspect ratio.
-      // Fill the content box exactly. Some capture modes can introduce extra whitespace
-      // inside the canvas which would otherwise look “shifted” when aspect-fitting.
-      // Draw to fill the content box; trimming removes most internal whitespace,
-      // and this avoids apparent left/right drift.
-      const drawW = contentW;
-      const drawH = contentH;
-      const x = marginMm;
-      const y = marginMm;
+      // Fit captured image into the PDF content box while preserving aspect ratio,
+      // and center it. We trim whitespace from the canvas, so aspect-fit won't “drift”.
+      const imgPxW = canvas.width || 1;
+      const imgPxH = canvas.height || 1;
+      const imgRatio = imgPxW / imgPxH;
+      const boxRatio = contentW / contentH;
+      const drawW = imgRatio > boxRatio ? contentW : contentH * imgRatio;
+      const drawH = imgRatio > boxRatio ? contentW / imgRatio : contentH;
+      const x = marginMm + (contentW - drawW) / 2;
+      const y = marginMm + (contentH - drawH) / 2;
 
       if (i > 0) doc.addPage();
       wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
