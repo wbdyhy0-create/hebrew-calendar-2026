@@ -510,9 +510,12 @@ export async function downloadPdfFromHtml(
       // Draw to fill the PDF content box. We trim whitespace from the canvas and add padding,
       // so this should preserve the frame without “left drift” while ensuring the background
       // fills the page (no white strips).
-      const drawW = contentW;
+      // Small horizontal nudge: the captured layout can be slightly left-heavy due to RTL/layout
+      // rounding differences between live DOM and canvas capture.
+      const nudgeXmm = 6;
+      const drawW = Math.max(1, contentW - nudgeXmm);
       const drawH = contentH;
-      const x = marginMm;
+      const x = marginMm + nudgeXmm;
       const y = marginMm;
 
       if (i > 0) doc.addPage();
