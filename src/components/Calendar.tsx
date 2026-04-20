@@ -532,6 +532,40 @@ export function Calendar() {
     ],
   };
 
+  const compressImageToDataUrl = async (file: File): Promise<string | null> => {
+    try {
+      // Conservative defaults to keep localStorage under quota (images are base64).
+      const maxEdgePx = 900;
+      const quality = 0.82;
+
+      const bmp = await createImageBitmap(file);
+      const w = bmp.width || 1;
+      const h = bmp.height || 1;
+      const scale = Math.min(1, maxEdgePx / Math.max(w, h));
+      const outW = Math.max(1, Math.round(w * scale));
+      const outH = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(bmp, 0, 0, outW, outH);
+
+      // Prefer webp (smaller), fall back to jpeg.
+      const tryWebp = canvas.toDataURL('image/webp', quality);
+      if (typeof tryWebp === 'string' && tryWebp.startsWith('data:image/webp')) return tryWebp;
+      const jpg = canvas.toDataURL('image/jpeg', quality);
+      if (typeof jpg === 'string' && jpg.startsWith('data:image/jpeg')) return jpg;
+      // As a last resort, keep original read (may exceed quota).
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <section
       dir="rtl"
@@ -551,30 +585,58 @@ export function Calendar() {
           const key = pendingImageKey;
           const file = e.target.files?.[0];
           if (!key || !file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            const dataUrl = String(reader.result ?? '');
-            if (!dataUrl.startsWith('data:image/')) return;
-            setOverrides((prev) => {
-              const copy = { ...prev };
-              const storeKey = recurringOverrideKeyFromIsoDate(key);
-              const existing = resolveDayTextOverride(copy, key) ?? copy[storeKey];
-              copy[storeKey] = {
-                centerLines: Array.isArray(existing?.centerLines) ? existing!.centerLines : [],
-                centerOffsetX: existing?.centerOffsetX ?? 0,
-                centerOffsetY: existing?.centerOffsetY ?? 0,
-                centerAlign: existing?.centerAlign ?? 'center',
-                imageDataUrl: dataUrl,
-                imageFit: existing?.imageFit ?? 'cover',
-                imageOpacity: typeof existing?.imageOpacity === 'number' ? existing!.imageOpacity : 1,
-                imageOffsetX: existing?.imageOffsetX ?? 0,
-                imageOffsetY: existing?.imageOffsetY ?? 0,
-              };
-              if (/^\d{4}-\d{2}-\d{2}$/.test(key)) delete copy[key];
-              return copy;
-            });
-          };
-          reader.readAsDataURL(file);
+          (async () => {
+            const compressed = await compressImageToDataUrl(file);
+            if (compressed && compressed.startsWith('data:image/')) {
+              setOverrides((prev) => {
+                const copy = { ...prev };
+                const storeKey = recurringOverrideKeyFromIsoDate(key);
+                const existing = resolveDayTextOverride(copy, key) ?? copy[storeKey];
+                copy[storeKey] = {
+                  centerLines: Array.isArray(existing?.centerLines) ? existing!.centerLines : [],
+                  centerOffsetX: existing?.centerOffsetX ?? 0,
+                  centerOffsetY: existing?.centerOffsetY ?? 0,
+                  centerAlign: existing?.centerAlign ?? 'center',
+                  imageDataUrl: compressed,
+                  imageFit: existing?.imageFit ?? 'cover',
+                  imageOpacity:
+                    typeof existing?.imageOpacity === 'number' ? existing!.imageOpacity : 1,
+                  imageOffsetX: existing?.imageOffsetX ?? 0,
+                  imageOffsetY: existing?.imageOffsetY ?? 0,
+                };
+                if (/^\d{4}-\d{2}-\d{2}$/.test(key)) delete copy[key];
+                return copy;
+              });
+              return;
+            }
+
+            // Fallback: read original (may exceed quota).
+            const reader = new FileReader();
+            reader.onload = () => {
+              const dataUrl = String(reader.result ?? '');
+              if (!dataUrl.startsWith('data:image/')) return;
+              setOverrides((prev) => {
+                const copy = { ...prev };
+                const storeKey = recurringOverrideKeyFromIsoDate(key);
+                const existing = resolveDayTextOverride(copy, key) ?? copy[storeKey];
+                copy[storeKey] = {
+                  centerLines: Array.isArray(existing?.centerLines) ? existing!.centerLines : [],
+                  centerOffsetX: existing?.centerOffsetX ?? 0,
+                  centerOffsetY: existing?.centerOffsetY ?? 0,
+                  centerAlign: existing?.centerAlign ?? 'center',
+                  imageDataUrl: dataUrl,
+                  imageFit: existing?.imageFit ?? 'cover',
+                  imageOpacity:
+                    typeof existing?.imageOpacity === 'number' ? existing!.imageOpacity : 1,
+                  imageOffsetX: existing?.imageOffsetX ?? 0,
+                  imageOffsetY: existing?.imageOffsetY ?? 0,
+                };
+                if (/^\d{4}-\d{2}-\d{2}$/.test(key)) delete copy[key];
+                return copy;
+              });
+            };
+            reader.readAsDataURL(file);
+          })();
         }}
       />
       {inspect.key !== 'none' &&
@@ -799,10 +861,17 @@ export function Calendar() {
                       window.setTimeout(() => setSaveFlash(null), 1200);
                       return;
                     }
+                    if (okSettings && !okOverrides) {
+                      setSaveFlash(
+                        'ההגדרות נשמרו, אבל התמונות/עריכות לא נשמרו (האחסון בדפדפן מלא/חסום). נסה להסיר תמונות או להקטין אותן.',
+                      );
+                      window.setTimeout(() => setSaveFlash(null), 6200);
+                      return;
+                    }
                     setSaveFlash(
                       'לא נשמר: האחסון בדפדפן מלא/חסום (בד״כ בגלל תמונות). נסה להסיר תמונות או לנקות נתוני אתר.',
                     );
-                    window.setTimeout(() => setSaveFlash(null), 5200);
+                    window.setTimeout(() => setSaveFlash(null), 6200);
                   }}
                   className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800"
                 >
