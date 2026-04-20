@@ -236,8 +236,6 @@ export async function downloadPdfFromHtml(
         },
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
-
       // Fit captured image into the PDF content box while preserving aspect ratio.
       const imgPxW = canvas.width || 1;
       const imgPxH = canvas.height || 1;
@@ -249,7 +247,17 @@ export async function downloadPdfFromHtml(
       const y = marginMm + (contentH - drawH) / 2;
 
       if (i > 0) doc.addPage();
-      doc.addImage(imgData, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
+      // jsPDF's dataURL parsing can throw obscure errors (e.g. reading `type` of undefined).
+      // Prefer passing the canvas directly; fall back to PNG dataURL when needed.
+      try {
+        doc.addImage(canvas as unknown as HTMLCanvasElement, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
+      } catch {
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        if (!imgData || typeof imgData !== 'string') {
+          throw new Error('PDF export failed: html2canvas returned an invalid image.');
+        }
+        doc.addImage(imgData, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
+      }
     }
 
     doc.save(filename);
