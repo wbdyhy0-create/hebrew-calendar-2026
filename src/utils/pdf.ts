@@ -358,10 +358,10 @@ export async function downloadPdfFromHtml(
       });
 
       scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
-        w.style.setProperty('width', 'max-content', 'important');
-        w.style.setProperty('max-width', '100%', 'important');
-        w.style.setProperty('margin-left', 'auto', 'important');
-        w.style.setProperty('margin-right', 'auto', 'important');
+        w.style.setProperty('width', '100%', 'important');
+        w.style.setProperty('box-sizing', 'border-box', 'important');
+        w.style.removeProperty('margin-left');
+        w.style.removeProperty('margin-right');
       });
 
       scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
