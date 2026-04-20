@@ -419,14 +419,17 @@ export async function downloadPdfFromHtml(
       scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((z) => {
         const raw = getComputedStyle(z).getPropertyValue('--layoutScale').trim();
         const s = Number(raw);
-        const scale = Number.isFinite(s) && s > 0 ? s : 1;
+        const scaleRaw = Number.isFinite(s) && s > 0 ? s : 1;
+        // Extra fit factor for PDF so the left edge never clips.
+        const fitScale = 0.965;
+        const scale = scaleRaw * fitScale;
         // Reset CSS variable so we control scaling explicitly.
         z.style.setProperty('--layoutScale', '1');
         z.style.setProperty('transform-origin', 'center center', 'important');
         // Nudge only the calendar content (not the background).
         // Use mm units so the shift is stable across capture pixel densities.
         // (Helps keep the left frame inside the PDF page.)
-        z.style.setProperty('transform', `translateX(12mm) scale(${scale})`, 'important');
+        z.style.setProperty('transform', `translateX(14mm) scale(${scale})`, 'important');
         z.style.setProperty('backface-visibility', 'hidden', 'important');
       });
 
