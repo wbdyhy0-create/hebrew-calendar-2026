@@ -208,7 +208,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerHebMonthRadiusPx: 999,
   headerHebMonthPaddingXPx: 16,
   headerHebMonthPaddingYPx: 8,
-  headerHebMonthFontWeight: 800,
+  headerHebMonthFontWeight: 400,
   headerGregMonthTextColor: '#0F172A',
   headerGregMonthBorderColor: '#E2E8F0',
   headerGregMonthBorderWidthPx: 0,
@@ -219,7 +219,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   fontFamily:
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
   fontSizePx: 14,
-  fontWeight: 600,
+  fontWeight: 400,
   gregDayFontPx: 14,
   hebDayFontPx: 12,
   eventTitleFontPx: 10,

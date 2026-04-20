@@ -19,7 +19,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
     if (this.state.error) {
       return (
         <main className="min-h-screen bg-white p-6" dir="rtl">
-          <h1 className="text-lg font-bold text-red-700">שגיאה בטעינת הלוח</h1>
+          <h1 className="text-lg font-normal text-red-700">שגיאה בטעינת הלוח</h1>
           <pre className="mt-4 max-w-3xl overflow-auto rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 whitespace-pre-wrap">
             {this.state.error.message}
           </pre>

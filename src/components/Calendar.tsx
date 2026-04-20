@@ -661,11 +661,11 @@ export function Calendar() {
             top: Math.min(window.innerHeight - 220, inspect.y + 14),
           }}
         >
-          <div className="text-xs font-semibold text-slate-700 mb-2">עריכה מהירה</div>
+          <div className="text-xs font-normal text-slate-700 mb-2">עריכה מהירה</div>
           <div className="flex flex-col gap-3">
             {INSPECT_ACTIONS[inspect.key].map((sec) => (
               <div key={sec.title} className="rounded-lg border border-slate-200 bg-white/80 p-2">
-                <div className="text-[11px] font-bold text-slate-700 mb-2">{sec.title}</div>
+                <div className="text-[11px] font-normal text-slate-700 mb-2">{sec.title}</div>
                 <div className="flex flex-col gap-2">
                   {sec.items.map((a) => (
                     <button
@@ -852,7 +852,7 @@ export function Calendar() {
         <div className="relative mb-4 flex max-h-[min(92vh,940px)] flex-col rounded-xl border border-slate-200 bg-white/95 shadow-sm sm:max-h-[min(88vh,900px)]">
           <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
-              <div className="font-semibold text-slate-900">עיצוב</div>
+              <div className="font-normal text-slate-900">עיצוב</div>
               <div className="flex flex-wrap items-center gap-2">
                 {saveFlash ? (
                   <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md">
@@ -904,7 +904,7 @@ export function Calendar() {
               id="settings-anchor-themes"
               className="sm:col-span-2 lg:col-span-3 scroll-mt-24 rounded-lg border border-violet-100 bg-violet-50/50 p-3"
             >
-              <div className="text-sm font-semibold text-slate-900">ערכות עיצוב מוכנות</div>
+              <div className="text-sm font-normal text-slate-900">ערכות עיצוב מוכנות</div>
               <p className="mt-1 text-xs text-slate-600">
                 12 סגנונות לפס הכותרת והטבלה. תמונות רקע, זמנים ו־PDF נשמרים מהגדרות נפרדות.
               </p>
@@ -918,7 +918,7 @@ export function Calendar() {
                 </button>
                 <span className="text-xs text-slate-500">
                   נבחר:{' '}
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-normal text-slate-700">
                     {settings.designThemeId === 'default'
                       ? 'ברירת מחדל'
                       : getThemeEntry(settings.designThemeId)?.nameHe ?? settings.designThemeId}
@@ -1273,7 +1273,7 @@ export function Calendar() {
                     className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                     style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                   >
-                    <div className="font-extrabold text-slate-900 whitespace-nowrap">
+                    <div className="font-normal text-slate-900 whitespace-nowrap">
                       כניסת השבת:
                     </div>
                     <HebcalZmanimLine jer="18:22" ta="18:20" />
@@ -3059,7 +3059,7 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                 >
-                  <div className="font-extrabold text-slate-900 whitespace-nowrap">
+                  <div className="font-normal text-slate-900 whitespace-nowrap">
                     {m.isShabbat
                       ? 'יציאת השבת:'
                       : isYomKippurDay(m.titles) || isRoshHashanaDay(m.titles)
@@ -3085,7 +3085,7 @@ export function Calendar() {
                   ) : null}
                   {(m.havdalahJer || m.havdalahTA) ? (
                     <div className="space-y-0.5">
-                      <div className="font-extrabold text-slate-900 whitespace-nowrap">
+                      <div className="font-normal text-slate-900 whitespace-nowrap">
                         {isPesachI || isSheviShelPesach ? 'יציאת החג:' : 'יציאת השבת:'}
                       </div>
                       <HebcalZmanimLine jer={m.havdalahJer} ta={m.havdalahTA} />
@@ -3104,7 +3104,7 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                 >
-                  <div className="font-extrabold text-slate-900 whitespace-nowrap">
+                  <div className="font-normal text-slate-900 whitespace-nowrap">
                     {isYomKippurDay(m.titles) || isRoshHashanaDay(m.titles)
                       ? 'יציאה:'
                       : 'יציאת החג:'}

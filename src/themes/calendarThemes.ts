@@ -33,7 +33,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'seamless',
       fontFamily: SERIF_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(180deg,#faf6ef 0%,#ebe1d0 100%)',
       headerBarBorderColor: '#8b7355',
       headerBarBorderWidthPx: 2,
@@ -66,7 +66,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     cellBorder: 'rounded',
     patch: patch({
       fontFamily: SERIF_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(90deg,#fff1f7 0%,#fce7f3 100%)',
       headerBarBorderColor: '#f472b6',
       headerBarTitleColor: '#831843',
@@ -100,7 +100,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'minimal_text',
       fontFamily: SANS_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: '#ffffff',
       headerBarBorderColor: '#e2e8f0',
       headerBarBorderWidthPx: 1,
@@ -137,7 +137,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     cellBorder: 'thin',
     patch: patch({
       fontFamily: SERIF_STACK,
-      fontWeight: 700,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(90deg,#115e59 0%,#0f766e 50%,#0d9488 100%)',
       headerBarBorderColor: '#ca8a04',
       headerBarTitleColor: '#fefce8',
@@ -173,7 +173,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'right_block',
       fontFamily: CLASSIC_STACK,
-      fontWeight: 700,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(180deg,#1e293b 0%,#312e81 100%)',
       headerBarBorderColor: '#ca8a04',
       headerBarTitleColor: '#fefce8',
@@ -208,7 +208,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'centered_pill',
       fontFamily: SANS_STACK,
-      fontWeight: 700,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(90deg,#fef9c3 0%,#fce7f3 50%,#dbeafe 100%)',
       headerBarBorderColor: '#f472b6',
       headerBarTitleColor: '#7c2d12',
@@ -242,7 +242,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'seamless',
       fontFamily: CLASSIC_STACK,
-      fontWeight: 700,
+      fontWeight: 400,
       headerBarHeightPx: 92,
       headerHebMonthFontPx: 28,
       headerGregMonthFontPx: 18,
@@ -281,7 +281,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     cellBorder: 'thin',
     patch: patch({
       fontFamily: SANS_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(90deg,#ecfccb 0%,#d9f99d 100%)',
       headerBarBorderColor: '#4d7c0f',
       headerBarTitleColor: '#14532d',
@@ -312,7 +312,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     cellBorder: 'thin',
     patch: patch({
       fontFamily: SANS_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(180deg,#0f172a 0%,#1e293b 100%)',
       headerBarBorderColor: '#334155',
       headerBarTitleColor: '#f8fafc',
@@ -348,7 +348,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'right_block',
       fontFamily: SANS_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(90deg,#09090b 0%,#18181b 100%)',
       headerBarBorderColor: '#ca8a04',
       headerBarTitleColor: '#fafaf9',
@@ -383,7 +383,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     patch: patch({
       headerLayoutStyle: 'centered_pill',
       fontFamily: SERIF_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'linear-gradient(120deg,#f0f9ff 0%,#fdf2f8 100%)',
       headerBarBorderColor: '#7dd3fc',
       headerBarTitleColor: '#0c4a6e',
@@ -415,7 +415,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     cellBorder: 'rounded',
     patch: patch({
       fontFamily: HAND_STACK,
-      fontWeight: 600,
+      fontWeight: 400,
       headerBarBg: 'repeating-linear-gradient(0deg,#fffbeb,#fffbeb 23px,#fef3c7 23px,#fef3c7 24px)',
       headerBarBorderColor: '#d6d3d1',
       headerBarTitleColor: '#44403c',

@@ -246,7 +246,7 @@ export function buildPrintableMonthHtml(
               ? 'כניסת החג'
               : 'כניסת השבת';
         times.push(
-          `<div class="nowrap"><b>${candleLabel}:</b></div>` +
+          `<div class="nowrap">${candleLabel}:</div>` +
             hebcalJerTaPairHtml(
               esc(evJer.candleLighting),
               taCandle ? esc(taCandle) : '—',
@@ -263,7 +263,7 @@ export function buildPrintableMonthHtml(
           const taHav = evTA?.havdalah;
           const havLabel = isPesachI || isSheviShelPesach ? 'יציאת החג' : 'יציאת השבת';
           times.push(
-            `<div class="nowrap"><b>${havLabel}:</b></div>` +
+            `<div class="nowrap">${havLabel}:</div>` +
               hebcalJerTaPairHtml(
                 esc(evJer.havdalah),
                 taHav ? esc(taHav) : '—',
@@ -279,7 +279,7 @@ export function buildPrintableMonthHtml(
       ) {
         const taHav = evTA?.havdalah;
         times.push(
-          `<div class="nowrap"><b>${isYomKippurDay(titles) || isRoshHashanaDay(titles) ? 'יציאה' : 'יציאת החג'}:</b></div>` +
+          `<div class="nowrap">${isYomKippurDay(titles) || isRoshHashanaDay(titles) ? 'יציאה' : 'יציאת החג'}:</div>` +
             hebcalJerTaPairHtml(
               esc(evJer.havdalah),
               taHav ? esc(taHav) : '—',

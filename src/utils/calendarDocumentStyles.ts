@@ -314,7 +314,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow:visible;
       }
       .headerRightMain{
-        font-weight:800;
+        font-weight:${settings.fontWeight};
         font-size:${titlePx}px;
         color:${settings.headerBarTitleColor};
         white-space:normal;
@@ -383,7 +383,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow:visible;
       }
       .headerPillCatalogMain{
-        font-weight:800;
+        font-weight:${settings.fontWeight};
         font-size:${pillMain}px;
         color:${settings.headerBarTitleColor};
         max-width:100%;
@@ -567,7 +567,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow: visible;
       }
       .headerBar:not(.headerWysiwyg) .main{
-        font-weight:800;
+        font-weight:${settings.fontWeight};
         font-size:${titlePx}px;
         color:${settings.headerBarTitleColor};
         white-space:normal;
@@ -618,7 +618,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow:visible;
       }
       .headerBar.headerWysiwyg .main{
-        font-weight:800;
+        font-weight:${settings.fontWeight};
         font-size:${titlePx}px;
         color:${settings.headerBarTitleColor};
         white-space:normal;
@@ -700,7 +700,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow:visible;
       }
       .headerMinimal .minimalMain{
-        font-weight:800;
+        font-weight:${settings.fontWeight};
         font-size:${minMain}px;
         color:${settings.headerBarTitleColor};
         max-width:100%;
@@ -715,7 +715,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         word-break:break-word;
         overflow:visible;
       }
-      .headerMinimal .minimalHeb{ font-weight:800; font-size:${minHeb}px; color:${settings.headerHebMonthTextColor}; margin-top:10px;}
+      .headerMinimal .minimalHeb{ font-weight:${settings.fontWeight}; font-size:${minHeb}px; color:${settings.headerHebMonthTextColor}; margin-top:10px;}
       .headerMinimal .minimalGreg{ font-size:${minGreg}px; color:${settings.headerGregMonthTextColor}; margin-top:4px;}
       `
           : ''
@@ -768,8 +768,8 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         align-items:center;
         z-index: 3;
       }
-      .topRight .heb{ font-size:${settings.hebDayFontPx}px; font-weight:700; color:#0f172a; line-height:1; }
-      .topRight .greg{ font-size:${settings.gregDayFontPx}px; font-weight:700; color:#334155; line-height:1; }
+      .topRight .heb{ font-size:${settings.hebDayFontPx}px; font-weight:${settings.fontWeight}; color:#0f172a; line-height:1; }
+      .topRight .greg{ font-size:${settings.gregDayFontPx}px; font-weight:${settings.fontWeight}; color:#334155; line-height:1; }
       .dstBanner{
         position:absolute;
         left:6px;
@@ -779,7 +779,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         text-align:center;
         font-size: max(9px, calc(${settings.eventTitleFontPx}px * 0.55));
         line-height:1.15;
-        font-weight:650;
+        font-weight:${settings.fontWeight};
         color:#78350f;
         background: rgba(254,243,199,0.95);
         border:1px solid rgba(251,191,36,0.85);
@@ -815,7 +815,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       .mid{
         width:100%;
         font-size:${settings.eventTitleFontPx}px;
-        font-weight:700;
+        font-weight:${settings.fontWeight};
         color: rgba(15,23,42,0.80);
       }
       .mid .ln{ line-height: 1.15; }
@@ -826,7 +826,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow-wrap: anywhere;
       }
       .mid .ln:nth-child(1){ color: rgba(15,23,42,0.88); }
-      .mid .ln:nth-child(n+2){ color: rgba(51,65,85,0.92); font-weight:650; }
+      .mid .ln:nth-child(n+2){ color: rgba(51,65,85,0.92); font-weight:${settings.fontWeight}; }
       .mid .blank{ opacity:0.5; }
       .times{
         position:absolute;
@@ -841,7 +841,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         line-height:1.2;
         box-sizing:border-box;
       }
-      .times .fastTitle{ font-weight:900; color:#0f172a; margin-bottom:2px; }
+      .times .fastTitle{ font-weight:${settings.fontWeight}; color:#0f172a; margin-bottom:2px; }
       .nowrap{ white-space:nowrap; }
 
       .pdfMode, .pdfMode * { box-sizing: border-box; }

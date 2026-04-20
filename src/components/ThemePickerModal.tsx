@@ -24,7 +24,7 @@ export function ThemePickerModal({ open, currentThemeId, onClose, onSelectTheme 
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h2 id="theme-picker-title" className="text-lg font-bold text-slate-900">
+            <h2 id="theme-picker-title" className="text-lg font-normal text-slate-900">
               ערכות עיצוב
             </h2>
             <p className="mt-1 text-sm text-slate-600">
@@ -82,7 +82,7 @@ export function ThemePickerModal({ open, currentThemeId, onClose, onSelectTheme 
                   style={{ background: t.previewCss }}
                 />
                 <div className="flex flex-1 flex-col gap-0.5 p-2.5">
-                  <div className="text-sm font-bold text-slate-900">{t.nameHe}</div>
+                  <div className="text-sm font-normal text-slate-900">{t.nameHe}</div>
                   <div className="text-[11px] leading-snug text-slate-600">{t.blurbHe}</div>
                 </div>
               </button>

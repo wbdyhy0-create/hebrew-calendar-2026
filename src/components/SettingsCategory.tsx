@@ -13,7 +13,7 @@ type Props = {
 export function SettingsCategory({ icon, title, children }: Props) {
   return (
     <details className="rounded-lg border border-slate-200 bg-slate-50/30 shadow-sm open:bg-white open:shadow-md">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none hover:bg-slate-100/80 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-normal text-slate-900 outline-none hover:bg-slate-100/80 [&::-webkit-details-marker]:hidden">
         <span className="text-base leading-none select-none" aria-hidden>
           {icon}
         </span>

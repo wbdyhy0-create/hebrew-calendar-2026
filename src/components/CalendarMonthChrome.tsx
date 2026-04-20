@@ -149,7 +149,7 @@ function HeaderBarClassic({
           titlesContent={
             <>
               <div
-                className="break-words font-bold leading-snug tracking-tight"
+                className="break-words font-normal leading-snug tracking-tight"
                 style={{
                   color: settings.headerBarTitleColor,
                   fontSize: resolveHeaderBarPrimaryTitleFontPx(settings),
@@ -191,7 +191,7 @@ function HeaderBarClassic({
         >
           <div className="flex flex-col items-end gap-0.5">
             <div
-              className="break-words text-right font-bold leading-snug tracking-tight"
+              className="break-words text-right font-normal leading-snug tracking-tight"
               style={{
                 color: settings.headerBarTitleColor,
                 fontSize: resolveHeaderBarPrimaryTitleFontPx(settings),
@@ -337,7 +337,7 @@ export function CalendarMonthChrome({
             }}
           >
             <div
-              className="font-bold tracking-tight"
+              className="font-normal tracking-tight"
               style={{
                 color: settings.headerBarTitleColor,
                 fontSize: resolveMinimalMainTitleFontPx(settings),
@@ -361,7 +361,7 @@ export function CalendarMonthChrome({
             }}
           >
             <div
-              className="mt-4 font-extrabold"
+              className="mt-4 font-normal"
               style={{
                 color: settings.headerHebMonthTextColor,
                 fontSize: resolveMinimalHebrewMonthFontPx(settings),
@@ -430,7 +430,7 @@ export function CalendarMonthChrome({
               }}
             >
               <div
-                className="max-w-full break-words font-bold leading-snug tracking-tight"
+                className="max-w-full break-words font-normal leading-snug tracking-tight"
                 style={{
                   color: settings.headerBarTitleColor,
                   fontSize: resolveHeaderBarPrimaryTitleFontPx(settings),
@@ -505,7 +505,7 @@ export function CalendarMonthChrome({
             }}
           >
             <div
-              className="max-w-full break-words font-bold tracking-tight"
+              className="max-w-full break-words font-normal tracking-tight"
               style={{
                 color: settings.headerBarTitleColor,
                 fontSize: resolveCenteredPillCatalogTitleFontPx(settings),
