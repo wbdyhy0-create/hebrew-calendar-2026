@@ -403,6 +403,11 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
   return `
       @page { size: ${pageWidthMm}mm ${pageHeightMm}mm; margin: ${settings.pdfMarginMm}mm; }
       html, body { margin:0; padding:0; width:100%; height:100%; }
+      *{
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+      }
       body {
         font-family:${settings.fontFamily};
         font-size:${settings.fontSizePx}px;
@@ -413,6 +418,11 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         print-color-adjust: exact;
       }
       @media print{
+        *{
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
         /* Force crisp, non-stretched glyphs in Chrome print */
         *{
           text-rendering: optimizeLegibility !important;
