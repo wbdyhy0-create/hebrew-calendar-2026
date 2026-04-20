@@ -164,17 +164,20 @@ export async function downloadPdfFromHtml(
       },
     ];
 
-    let lastErr: unknown = undefined;
+    const failures: Array<{ label: string; message: string }> = [];
     for (const a of attempts) {
       try {
         a.run();
         return;
       } catch (e) {
-        lastErr = e;
+        const msg = e instanceof Error ? e.message : String(e);
+        failures.push({ label: a.label, message: msg });
       }
     }
-    const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
-    throw new Error(`PDF: jsPDF addImage failed (${msg})`);
+    const details = failures
+      .map((f) => `${f.label}: ${f.message}`)
+      .join(' | ');
+    throw new Error(`PDF: jsPDF addImage failed after ${failures.length} attempts. ${details}`);
   }
 
   async function renderWithHtml2CanvasThenPdf() {
