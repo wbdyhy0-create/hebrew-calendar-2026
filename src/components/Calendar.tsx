@@ -361,8 +361,18 @@ export function Calendar() {
   const effectiveVisualScale =
     (settings.layoutAutoFitToCanvas ? autoFitScale : 1) *
     (resolveCalendarLayoutZoomPercent(settings) / 100);
-  // scaledPx: direct px, transform:scale on container handles visual sizing
-  const scaledPx = (px: number) => Math.max(1, Number(px) || 1);
+  const scaledPx = (px: number) => {
+    const s =
+      Number.isFinite(effectiveVisualScale) && effectiveVisualScale > 0
+        ? effectiveVisualScale
+        : 1;
+    return px / s;
+  };
+  const cellFontScale =
+    Number(settings.fontSizePx) > 0
+      ? Number(settings.fontSizePx) / Number(DEFAULT_SETTINGS.fontSizePx || 14)
+      : 1;
+  const cellScaledPx = (px: number) => scaledPx(px * cellFontScale);
 
   useEffect(() => {
     if (!settings.layoutAutoFitToCanvas) {
@@ -1236,13 +1246,13 @@ export function Calendar() {
                   <div className="absolute right-2 top-2 z-10 flex items-center gap-1 text-right text-slate-900">
                     <span
                       className="font-semibold text-slate-600"
-                      style={{ fontSize: scaledPx(settings.gregDayFontPx), lineHeight: 1 }}
+                      style={{ fontSize: cellScaledPx(settings.gregDayFontPx), lineHeight: 1 }}
                     >
                       14
                     </span>
                     <span
                       className="font-semibold"
-                      style={{ fontSize: scaledPx(settings.hebDayFontPx), lineHeight: 1 }}
+                      style={{ fontSize: cellScaledPx(settings.hebDayFontPx), lineHeight: 1 }}
                     >
                       י״ד
                     </span>
@@ -1252,7 +1262,7 @@ export function Calendar() {
                   <div className="absolute inset-0 flex items-center justify-center px-5">
                     <div
                       className="w-full text-center font-bold text-slate-800"
-                      style={{ fontSize: scaledPx(settings.eventTitleFontPx), lineHeight: 1.15 }}
+                      style={{ fontSize: cellScaledPx(settings.eventTitleFontPx), lineHeight: 1.15 }}
                     >
                       ערב פסח
                     </div>
@@ -1261,7 +1271,7 @@ export function Calendar() {
                   {/* Bottom zmanim block (same idea/placement as the real cell) */}
                   <div
                     className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                    style={{ fontSize: scaledPx(settings.shabbatTimesFontPx) }}
+                    style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                   >
                     <div className="font-extrabold text-slate-900 whitespace-nowrap">
                       כניסת השבת:
@@ -2781,8 +2791,8 @@ export function Calendar() {
               !!(m.havdalahJer || m.havdalahTA))) ||
             (!isFriday && hasFast && m.inMonth);
 
-          const gregPx = Math.max(1, Number(settings.gregDayFontPx) || 12);
-          const hebPx = Math.max(1, Number(settings.hebDayFontPx) || 12);
+          const gregPx = Math.max(1, Number(settings.gregDayFontPx) || 12) * cellFontScale;
+          const hebPx = Math.max(1, Number(settings.hebDayFontPx) || 12) * cellFontScale;
           const editBtnFontPx = Math.max(5, Math.round(gregPx * 0.62));
           const topCornerPx = 8;
           const datesBandPx = Math.ceil(Math.max(gregPx, hebPx) * 1.32);
@@ -2876,7 +2886,7 @@ export function Calendar() {
                 <span
                   className="font-semibold text-slate-600"
                   style={{
-                    fontSize: scaledPx(settings.gregDayFontPx),
+                    fontSize: cellScaledPx(settings.gregDayFontPx),
                     lineHeight: 1,
                   }}
                 >
@@ -2887,7 +2897,7 @@ export function Calendar() {
                 </span>
                 <span
                   className="font-medium text-slate-700"
-                  style={{ fontSize: scaledPx(settings.hebDayFontPx), lineHeight: 1 }}
+                  style={{ fontSize: cellScaledPx(settings.hebDayFontPx), lineHeight: 1 }}
                 >
                   {m.hebDay}
                   {m.hebDay === 'א׳' && m.hebMonth ? (
@@ -2903,7 +2913,10 @@ export function Calendar() {
                   className="pointer-events-none absolute left-1 right-1 z-[12] mx-auto max-w-[calc(100%-0.5rem)] rounded border border-amber-300/90 bg-amber-50/95 px-1 py-0.5 text-center leading-tight text-amber-950 shadow-sm"
                   style={{
                     top: datesEndPx + 2,
-                    fontSize: Math.max(1, Math.round(Number(settings.eventTitleFontPx) * 0.55)),
+                    fontSize: Math.max(
+                      1,
+                      Math.round(Number(settings.eventTitleFontPx) * cellFontScale * 0.55),
+                    ),
                   }}
                   title="לפי אזור הזמן Asia/Jerusalem (מסד IANA). זמני Hebcal: ירושלים (780 מ׳) ותל אביב (0 מ׳), לפי ההגדרות בפאנל «זמנים»."
                 >
@@ -2986,17 +2999,21 @@ export function Calendar() {
                         ? {
                             top: centerPaddingTopPx,
                             bottom: '5.25rem',
-                            fontSize: scaledPx(settings.eventTitleFontPx),
+                            fontSize: cellScaledPx(settings.eventTitleFontPx),
                           }
                         : {
                             top: 0,
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            fontSize: scaledPx(settings.eventTitleFontPx),
+                            fontSize: cellScaledPx(settings.eventTitleFontPx),
                             paddingTop:
                               centerPaddingTopPx +
-                              (hasFast ? Math.round(Number(settings.eventTitleFontPx) * 0.2) : 0),
+                              (hasFast
+                                ? Math.round(
+                                    Number(settings.eventTitleFontPx) * cellFontScale * 0.2,
+                                  )
+                                : 0),
                           }
                     }
                   >
@@ -3040,7 +3057,7 @@ export function Calendar() {
               (m.candleLightingJer || m.candleLightingTA) ? (
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                  style={{ fontSize: scaledPx(settings.shabbatTimesFontPx) }}
+                  style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                 >
                   <div className="font-extrabold text-slate-900 whitespace-nowrap">
                     {m.isShabbat
@@ -3059,7 +3076,7 @@ export function Calendar() {
               ((m.havdalahJer || m.havdalahTA) || (settings.showParsha && m.parshaHe)) ? (
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right"
-                  style={{ fontSize: scaledPx(settings.shabbatTimesFontPx) }}
+                  style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                 >
                   {settings.showParsha && m.parshaHe ? (
                     <div className="line-clamp-2 break-words font-semibold text-slate-900 leading-tight">
@@ -3085,7 +3102,7 @@ export function Calendar() {
                 (m.havdalahJer || m.havdalahTA)) ? (
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                  style={{ fontSize: scaledPx(settings.shabbatTimesFontPx) }}
+                  style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                 >
                   <div className="font-extrabold text-slate-900 whitespace-nowrap">
                     {isYomKippurDay(m.titles) || isRoshHashanaDay(m.titles)
@@ -3121,7 +3138,7 @@ export function Calendar() {
                     return (
                       <div
                         className="absolute inset-x-2 bottom-2 z-[6] min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                        style={{ fontSize: scaledPx(settings.shabbatTimesFontPx) }}
+                        style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
                       >
                         {showAutoFastTitles ? (
                           <div

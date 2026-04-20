@@ -751,7 +751,9 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         inset:0;
         width:100%;
         height:100%;
-        object-position:center;
+        background-repeat:no-repeat;
+        background-position:center;
+        background-size:cover;
         z-index:0;
         pointer-events:none;
         user-select:none;

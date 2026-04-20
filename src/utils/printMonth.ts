@@ -209,11 +209,13 @@ export function buildPrintableMonthHtml(
       const imgOffY = Number(manual?.imageOffsetY) || 0;
       const imgHtml =
         typeof imgUrl === 'string' && imgUrl.trim()
-          ? `<img class="cellImg" alt="" src="${esc(imgUrl)}" style="object-fit:${esc(
-              imgFit,
-            )};object-position:calc(50% + ${imgOffX.toFixed(1)}px) calc(50% + ${imgOffY.toFixed(
+          ? `<div class="cellImg" style="background-image:url(${esc(
+              imgUrl,
+            )});background-size:${esc(imgFit)};background-position:calc(50% + ${imgOffX.toFixed(
               1,
-            )}px);opacity:${String(Math.max(0, Math.min(1, imgOpacity)))};" />`
+            )}px) calc(50% + ${imgOffY.toFixed(
+              1,
+            )}px);opacity:${String(Math.max(0, Math.min(1, imgOpacity)))};"></div>`
           : '';
       const midHtml =
         lines.length > 0

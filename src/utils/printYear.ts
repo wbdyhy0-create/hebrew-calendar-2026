@@ -160,13 +160,13 @@ export function buildPrintableYearHtml(
         const imgOffY = Number(manualEntry?.imageOffsetY) || 0;
         const imgHtml =
           typeof imgUrl === 'string' && imgUrl.trim()
-            ? `<img class="cellImg" alt="" src="${esc(imgUrl)}" style="object-fit:${esc(
-                imgFit,
-              )};object-position:calc(50% + ${imgOffX.toFixed(
+            ? `<div class="cellImg" style="background-image:url(${esc(
+                imgUrl,
+              )});background-size:${esc(imgFit)};background-position:calc(50% + ${imgOffX.toFixed(
                 1,
               )}px) calc(50% + ${imgOffY.toFixed(1)}px);opacity:${String(
                 Math.max(0, Math.min(1, imgOpacity)),
-              )};" />`
+              )};"></div>`
             : '';
         const midLines =
           manualEntry !== undefined
@@ -320,6 +320,9 @@ export function buildPrintableYearHtml(
         inset:0;
         width:100%;
         height:100%;
+        background-repeat:no-repeat;
+        background-position:center;
+        background-size:cover;
         z-index:0;
         pointer-events:none;
         user-select:none;
