@@ -422,6 +422,28 @@ export async function downloadPdfFromHtml(
         st.style.setProperty('align-items', 'center', 'important');
       });
 
+      // Ensure the *calendar content* (header + grid) is centered within the canvas.
+      // In some layouts, wrappers are full-width (100%), so flex-centering the stage alone
+      // doesn't center the visible grid; it can appear “stuck” to the left edge.
+      scope.querySelectorAll<HTMLElement>('.canvas').forEach((c) => {
+        c.style.setProperty('display', 'flex', 'important');
+        c.style.setProperty('flex-direction', 'column', 'important');
+        c.style.setProperty('align-items', 'center', 'important');
+      });
+      scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
+        w.style.setProperty('width', '100%', 'important');
+        w.style.setProperty('display', 'flex', 'important');
+        w.style.setProperty('justify-content', 'center', 'important');
+      });
+      scope
+        .querySelectorAll<HTMLElement>(
+          '.chromeJoined, .grid, .headerBar, .headerMinimal, .headerRightBlockShell, .headerCenteredPillShell',
+        )
+        .forEach((n) => {
+          n.style.setProperty('margin-left', 'auto', 'important');
+          n.style.setProperty('margin-right', 'auto', 'important');
+        });
+
       scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
         dow.style.display = 'flex';
         dow.style.alignItems = 'center';
