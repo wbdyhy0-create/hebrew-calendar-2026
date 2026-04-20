@@ -136,30 +136,46 @@ export async function downloadPdfFromHtml(
     y: number,
     w: number,
     h: number,
+    pageIndex: number,
   ) {
+    const alias = `page-${pageIndex}`;
     const attempts: Array<{ label: string; run: () => void }> = [
-      // Some jsPDF builds handle canvas best without specifying format.
+      // Newer jsPDF versions support an options object.
       {
-        label: 'addImage(canvas, no format)',
-        run: () => (doc as any).addImage(canvas, x, y, w, h, undefined, 'FAST'),
+        label: "addImage({ imageData: canvas, format: 'PNG' })",
+        run: () =>
+          (doc as any).addImage({
+            imageData: canvas,
+            format: 'PNG',
+            x,
+            y,
+            w,
+            h,
+            alias,
+          }),
       },
+      // Clean overloads (avoid passing undefined + compression, which can trigger internal parser bugs).
       {
         label: "addImage(canvas, 'PNG')",
-        run: () => doc.addImage(canvas as unknown as HTMLCanvasElement, 'PNG', x, y, w, h, undefined, 'FAST'),
+        run: () => doc.addImage(canvas as unknown as HTMLCanvasElement, 'PNG', x, y, w, h),
       },
-      // Fallbacks: dataURL, sometimes with/without format.
       {
-        label: 'addImage(dataURL, no format)',
-        run: () => {
-          const dataUrl = canvas.toDataURL('image/png', 1.0);
-          (doc as any).addImage(dataUrl, x, y, w, h, undefined, 'FAST');
-        },
+        label: 'addImage(canvas)',
+        run: () => (doc as any).addImage(canvas, x, y, w, h),
       },
+      // Fallbacks: dataURL.
       {
         label: "addImage(dataURL, 'PNG')",
         run: () => {
           const dataUrl = canvas.toDataURL('image/png', 1.0);
-          doc.addImage(dataUrl, 'PNG', x, y, w, h, undefined, 'FAST');
+          doc.addImage(dataUrl, 'PNG', x, y, w, h);
+        },
+      },
+      {
+        label: 'addImage(dataURL)',
+        run: () => {
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
+          (doc as any).addImage(dataUrl, x, y, w, h);
         },
       },
     ];
@@ -298,7 +314,7 @@ export async function downloadPdfFromHtml(
       const y = marginMm + (contentH - drawH) / 2;
 
       if (i > 0) doc.addPage();
-      addImageToPdfSafe(doc, canvas, x, y, drawW, drawH);
+      addImageToPdfSafe(doc, canvas, x, y, drawW, drawH, i);
     }
 
     doc.save(filename);
