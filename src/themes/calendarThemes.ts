@@ -14,8 +14,8 @@ const CELL_TYPO_LADDER: Pick<
 > = {
   gregDayFontPx: 17,
   hebDayFontPx: 15,
-  eventTitleFontPx: 14,
-  shabbatTimesFontPx: 12,
+  eventTitleFontPx: 1,
+  shabbatTimesFontPx: 1,
 };
 
 function patch(p: Partial<CalendarSettings>): Partial<CalendarSettings> {

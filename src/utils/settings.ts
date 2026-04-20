@@ -222,8 +222,8 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   fontWeight: 600,
   gregDayFontPx: 17,
   hebDayFontPx: 15,
-  eventTitleFontPx: 14,
-  shabbatTimesFontPx: 12,
+  eventTitleFontPx: 1,
+  shabbatTimesFontPx: 1,
   showParsha: true,
   shabbatTimesSource: 'hebcal',
   zmanimCity: 'Jerusalem',
@@ -280,7 +280,8 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
 };
 
 // Bump cache version to force a clean reset when data gets inconsistent.
-const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v2';
+// v3: default typography sliders were changed (event/zmanim can start at 1px).
+const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v3';
 
 export function loadSettings(): CalendarSettings {
   try {
