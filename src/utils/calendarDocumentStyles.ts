@@ -513,6 +513,8 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         box-sizing: border-box;
         transform: none;
         zoom: var(--layoutScale, 1);
+        margin-left: auto;
+        margin-right: auto;
         overflow: visible;
         backface-visibility: hidden;
       }
