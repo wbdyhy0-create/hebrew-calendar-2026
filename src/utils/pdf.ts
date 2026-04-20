@@ -129,6 +129,54 @@ export async function downloadPdfFromHtml(
   const marginMmRaw = Number(settings.pdfMarginMm);
   const marginMm = Number.isFinite(marginMmRaw) ? Math.max(0, marginMmRaw) : 0;
 
+  function addImageToPdfSafe(
+    doc: jsPDF,
+    canvas: HTMLCanvasElement,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ) {
+    const attempts: Array<{ label: string; run: () => void }> = [
+      // Some jsPDF builds handle canvas best without specifying format.
+      {
+        label: 'addImage(canvas, no format)',
+        run: () => (doc as any).addImage(canvas, x, y, w, h, undefined, 'FAST'),
+      },
+      {
+        label: "addImage(canvas, 'PNG')",
+        run: () => doc.addImage(canvas as unknown as HTMLCanvasElement, 'PNG', x, y, w, h, undefined, 'FAST'),
+      },
+      // Fallbacks: dataURL, sometimes with/without format.
+      {
+        label: 'addImage(dataURL, no format)',
+        run: () => {
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
+          (doc as any).addImage(dataUrl, x, y, w, h, undefined, 'FAST');
+        },
+      },
+      {
+        label: "addImage(dataURL, 'PNG')",
+        run: () => {
+          const dataUrl = canvas.toDataURL('image/png', 1.0);
+          doc.addImage(dataUrl, 'PNG', x, y, w, h, undefined, 'FAST');
+        },
+      },
+    ];
+
+    let lastErr: unknown = undefined;
+    for (const a of attempts) {
+      try {
+        a.run();
+        return;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+    throw new Error(`PDF: jsPDF addImage failed (${msg})`);
+  }
+
   async function renderWithHtml2CanvasThenPdf() {
     const pageW = widthMm;
     const pageH = heightMm;
@@ -247,17 +295,7 @@ export async function downloadPdfFromHtml(
       const y = marginMm + (contentH - drawH) / 2;
 
       if (i > 0) doc.addPage();
-      // jsPDF's dataURL parsing can throw obscure errors (e.g. reading `type` of undefined).
-      // Prefer passing the canvas directly; fall back to PNG dataURL when needed.
-      try {
-        doc.addImage(canvas as unknown as HTMLCanvasElement, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
-      } catch {
-        const imgData = canvas.toDataURL('image/png', 1.0);
-        if (!imgData || typeof imgData !== 'string') {
-          throw new Error('PDF export failed: html2canvas returned an invalid image.');
-        }
-        doc.addImage(imgData, 'PNG', x, y, drawW, drawH, undefined, 'FAST');
-      }
+      addImageToPdfSafe(doc, canvas, x, y, drawW, drawH);
     }
 
     doc.save(filename);
