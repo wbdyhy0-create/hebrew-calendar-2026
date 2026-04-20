@@ -1139,20 +1139,55 @@ export function Calendar() {
             </label>
 
             <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-              <div className="text-xs font-bold text-slate-700 mb-2">תצוגה מקדימה (לבדיקת סליידרים)</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="rounded-lg border border-slate-200 bg-white p-2">
-                  <div className="text-[11px] font-semibold text-slate-600 mb-1">שם אירוע</div>
-                  <div style={{ fontSize: settings.eventTitleFontPx }} className="font-bold text-slate-800">
-                    ערב פסח
+              <div className="text-xs font-bold text-slate-700 mb-2">
+                תצוגת תא אמיתית (כמו בלוח)
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 items-start">
+                <div
+                  className="relative overflow-hidden rounded-lg border border-slate-200 bg-white"
+                  style={{ width: 260, height: 190 }}
+                >
+                  {/* Top-right date band (same placement style as the real cell) */}
+                  <div className="absolute right-2 top-2 z-10 flex items-center gap-1 text-right text-slate-900">
+                    <span
+                      className="font-semibold text-slate-600"
+                      style={{ fontSize: settings.gregDayFontPx, lineHeight: 1 }}
+                    >
+                      14
+                    </span>
+                    <span
+                      className="font-semibold"
+                      style={{ fontSize: settings.hebDayFontPx, lineHeight: 1 }}
+                    >
+                      י״ד
+                    </span>
                   </div>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-white p-2">
-                  <div className="text-[11px] font-semibold text-slate-600 mb-1">זמני שבת</div>
-                  <div style={{ fontSize: settings.shabbatTimesFontPx }} className="text-slate-800">
-                    <div className="font-extrabold text-slate-900 whitespace-nowrap">כניסת השבת:</div>
+
+                  {/* Center event text */}
+                  <div className="absolute inset-0 flex items-center justify-center px-5">
+                    <div
+                      className="w-full text-center font-bold text-slate-800"
+                      style={{ fontSize: settings.eventTitleFontPx, lineHeight: 1.15 }}
+                    >
+                      ערב פסח
+                    </div>
+                  </div>
+
+                  {/* Bottom zmanim block (same idea/placement as the real cell) */}
+                  <div
+                    className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
+                    style={{ fontSize: settings.shabbatTimesFontPx }}
+                  >
+                    <div className="font-extrabold text-slate-900 whitespace-nowrap">
+                      כניסת השבת:
+                    </div>
                     <HebcalZmanimLine jer="18:22" ta="18:20" />
                   </div>
+                </div>
+
+                <div className="text-xs text-slate-600 max-w-sm leading-relaxed">
+                  כאן אתה רואה את אותם סוגי שכבות של התא בלוח (תאריך בפינה, טקסט אירוע במרכז,
+                  וזמנים בתחתית), כך שכל שינוי בסליידרים משקף את מה שיקרה בתאים אמיתיים.
                 </div>
               </div>
             </div>
