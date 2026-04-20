@@ -506,14 +506,17 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         justify-content:center;
       }
       .calendarLayoutZoom{
-        width: 100%;
+        /* IMPORTANT: html2canvas captures layout boxes; CSS transform scale can drift.
+           Use zoom so the scaled size participates in layout and remains centered. */
+        width: max-content;
+        max-width: 100%;
         box-sizing: border-box;
-        transform: scale(var(--layoutScale, 1));
-        transform-origin: center center;
+        transform: none;
+        zoom: var(--layoutScale, 1);
         overflow: visible;
         backface-visibility: hidden;
       }
-      .tableOffsetWrap { width: 100%; box-sizing: border-box; overflow: visible; }
+      .tableOffsetWrap { width: max-content; max-width: 100%; box-sizing: border-box; overflow: visible; margin-left:auto; margin-right:auto; }
       .canvas {
         position: relative;
         padding-left: ${settings.canvasPaddingPx}px;

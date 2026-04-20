@@ -343,7 +343,7 @@ export async function downloadPdfFromHtml(
       return out;
     }
 
-    const buildOnClone = (mode: 'background' | 'calendar') => (clonedDoc: Document) => {
+    const buildOnClone = () => (clonedDoc: Document) => {
       const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
       const scope = root ?? clonedDoc.body;
 
@@ -408,20 +408,17 @@ export async function downloadPdfFromHtml(
         (grid.style as any).alignContent = 'center';
       });
 
-      // Avoid `transform: scale()` during capture. Transforms can cause subpixel glyph issues
-      // (looks like “scrambled” text) and can introduce apparent horizontal drift.
-      // Instead, center the element and scale around its center, so the layout stays centered.
+      // Avoid `transform: scale()` during capture: html2canvas lays out by DOM boxes,
+      // and transform scale can visually move content without affecting layout.
+      // Use `zoom` so the scaled size participates in layout and stays centered.
       scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((z) => {
         const raw = getComputedStyle(z).getPropertyValue('--layoutScale').trim();
         const s = Number(raw);
         const scale = Number.isFinite(s) && s > 0 ? s : 1;
-        // Reset CSS variable so we control scaling explicitly.
-        z.style.setProperty('--layoutScale', '1');
-        z.style.setProperty('transform-origin', 'center center', 'important');
-        // Nudge only the calendar content (not the background).
-        // Use mm units so the shift is stable across capture pixel densities.
-        z.style.setProperty('transform', `scale(${scale})`, 'important');
-        z.style.setProperty('backface-visibility', 'hidden', 'important');
+        z.style.setProperty('transform', 'none', 'important');
+        (z.style as any).zoom = String(scale);
+        z.style.setProperty('width', 'max-content', 'important');
+        z.style.setProperty('max-width', '100%', 'important');
       });
 
       // Center the zoom wrapper within the page.
@@ -429,6 +426,13 @@ export async function downloadPdfFromHtml(
         st.style.setProperty('display', 'flex', 'important');
         st.style.setProperty('justify-content', 'center', 'important');
         st.style.setProperty('align-items', 'center', 'important');
+      });
+
+      scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
+        w.style.setProperty('width', 'max-content', 'important');
+        w.style.setProperty('max-width', '100%', 'important');
+        w.style.setProperty('margin-left', 'auto', 'important');
+        w.style.setProperty('margin-right', 'auto', 'important');
       });
 
       scope.querySelectorAll<HTMLElement>('.dow').forEach((dow) => {
@@ -458,34 +462,16 @@ export async function downloadPdfFromHtml(
         hb.style.setProperty('position', 'relative', 'important');
       });
 
-      if (mode === 'background') {
-        // Hide the calendar foreground; keep only the root background.
-        scope.querySelectorAll<HTMLElement>('.canvas, .grid, .headerBar, .headerMinimal, .headerRightBlockShell, .headerCenteredPillShell')
-          .forEach((n) => n.style.setProperty('visibility', 'hidden', 'important'));
-      } else {
-        // Calendar only: remove backgrounds to get transparent outside bounds.
-        scope.querySelectorAll<HTMLElement>('.printRoot').forEach((n) => {
-          n.style.setProperty('background-image', 'none', 'important');
-          n.style.setProperty('background-color', 'transparent', 'important');
-        });
-        scope.querySelectorAll<HTMLElement>('.canvas').forEach((n) => {
-          n.style.setProperty('background', 'transparent', 'important');
-        });
-      }
     };
 
-    async function renderElementToCanvas(
-      el: HTMLElement,
-      pageIndex: number,
-      mode: 'background' | 'calendar',
-    ) {
+    async function renderElementToCanvas(el: HTMLElement, pageIndex: number) {
       const stageBase = `html2canvas (page ${pageIndex + 1}/${nodes.length})`;
-      const onclone = buildOnClone(mode);
-      const backgroundColor = mode === 'calendar' ? null : '#ffffff';
+      const onclone = buildOnClone();
+      const backgroundColor = '#ffffff';
 
       // Strategy A: default renderer (best fidelity).
       try {
-        const canvas = await wrapPdfStageAsync(`${stageBase} [default/${mode}]`, async () => {
+        const canvas = await wrapPdfStageAsync(`${stageBase} [default]`, async () => {
           return await html2canvas(el, {
             scale,
             useCORS: true,
@@ -497,11 +483,11 @@ export async function downloadPdfFromHtml(
             onclone,
           });
         });
-        assertCanvasNotBlank(canvas, `${stageBase} [default/${mode}]`);
+        assertCanvasNotBlank(canvas, `${stageBase} [default]`);
         return canvas;
       } catch {
         // Strategy B: foreignObject renderer is less strict with CSS parsing in some environments.
-        const canvas = await wrapPdfStageAsync(`${stageBase} [foreignObjectRendering/${mode}]`, async () => {
+        const canvas = await wrapPdfStageAsync(`${stageBase} [foreignObjectRendering]`, async () => {
           return await html2canvas(el, {
             scale: 1, // foreignObject is already expensive; keep it stable
             useCORS: true,
@@ -514,41 +500,19 @@ export async function downloadPdfFromHtml(
             onclone,
           } as any);
         });
-        assertCanvasNotBlank(canvas, `${stageBase} [foreignObjectRendering/${mode}]`);
+        assertCanvasNotBlank(canvas, `${stageBase} [foreignObjectRendering]`);
         return canvas;
       }
     }
 
     for (let i = 0; i < nodes.length; i++) {
       const el = nodes[i]!;
-      // Render background and calendar as separate layers.
-      const bgCanvas = await renderElementToCanvas(el, i, 'background');
-      const calCanvas = await renderElementToCanvas(el, i, 'calendar');
-
-      const b = findOpaqueBounds(calCanvas);
-      const calCropped = b ? cropCanvas(calCanvas, b, 10) : calCanvas;
-
-      // Background: stretch to full page (no white strips).
-      const bgW = pageW;
-      const bgH = pageH;
-      const bgX = 0;
-      const bgY = 0;
-
-      // Calendar: compute exact centering in the content box by measurement.
-      const calPxW = calCropped.width || 1;
-      const calPxH = calCropped.height || 1;
-      const mmPerPx = Math.min(contentW / calPxW, contentH / calPxH);
-      const calW = calPxW * mmPerPx;
-      const calH = calPxH * mmPerPx;
-      const x = marginMm + (contentW - calW) / 2;
-      const y = marginMm + (contentH - calH) / 2;
+      const canvas = await renderElementToCanvas(el, i);
 
       if (i > 0) doc.addPage();
       wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
-        // Background first, stretched.
-        addImageToPdfSafe(doc, bgCanvas, bgX, bgY, bgW, bgH, i * 2);
-        // Then calendar, precisely centered.
-        addImageToPdfSafe(doc, calCropped, x, y, calW, calH, i * 2 + 1);
+        // Stretch capture to the PDF page content box.
+        addImageToPdfSafe(doc, canvas, marginMm, marginMm, contentW, contentH, i);
       });
     }
 
