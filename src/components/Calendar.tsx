@@ -509,6 +509,7 @@ export function Calendar() {
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [stylePackOpen, setStylePackOpen] = useState(false);
   const [shortcutOpen, setShortcutOpen] = useState<string | null>(null);
+  const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [inspect, setInspect] = useState<{
     key: 'none' | 'header' | 'weekdays' | 'cell' | 'background';
     x: number;
@@ -4124,12 +4125,142 @@ export function Calendar() {
               ) : null}
             </div>
           ))}
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={() => setColorPaletteOpen((v) => !v)}
+            >
+              <span className="truncate">פלטת צבעים</span>
+            </button>
+            {colorPaletteOpen ? (
+              <div
+                className={[
+                  'absolute top-0 z-30 w-[260px] rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden',
+                  'right-full mr-2',
+                ].join(' ')}
+              >
+                <div className="px-3 py-2 text-[11px] text-slate-600 bg-slate-50 border-b border-slate-200">
+                  טיפ: הפעל טפטפת 🎯 באחד הצבעים ואז רחף/הקלק על ריבועים כאן כדי לדגום.
+                </div>
+                <div className="max-h-[320px] overflow-auto p-3">
+                  {[
+                    {
+                      name: 'כחולים',
+                      colors: [
+                        '#0B1220',
+                        '#0F172A',
+                        '#1E3A8A',
+                        '#1D4ED8',
+                        '#2563EB',
+                        '#3B82F6',
+                        '#60A5FA',
+                        '#93C5FD',
+                        '#BFDBFE',
+                        '#DBEAFE',
+                      ],
+                    },
+                    {
+                      name: 'אדומים/ורודים',
+                      colors: [
+                        '#450A0A',
+                        '#7F1D1D',
+                        '#B91C1C',
+                        '#DC2626',
+                        '#EF4444',
+                        '#F87171',
+                        '#FDA4AF',
+                        '#FB7185',
+                        '#BE123C',
+                        '#FFE4E6',
+                      ],
+                    },
+                    {
+                      name: 'צהובים/כתומים',
+                      colors: [
+                        '#451A03',
+                        '#7C2D12',
+                        '#C2410C',
+                        '#EA580C',
+                        '#F97316',
+                        '#FB923C',
+                        '#FDBA74',
+                        '#FACC15',
+                        '#FDE047',
+                        '#FEF9C3',
+                      ],
+                    },
+                    {
+                      name: 'ירוקים/טורקיז',
+                      colors: [
+                        '#052E16',
+                        '#14532D',
+                        '#166534',
+                        '#16A34A',
+                        '#22C55E',
+                        '#4ADE80',
+                        '#86EFAC',
+                        '#0F766E',
+                        '#14B8A6',
+                        '#CCFBF1',
+                      ],
+                    },
+                    {
+                      name: 'אפור/שחור',
+                      colors: [
+                        '#000000',
+                        '#111827',
+                        '#1F2937',
+                        '#334155',
+                        '#475569',
+                        '#64748B',
+                        '#94A3B8',
+                        '#CBD5E1',
+                        '#E2E8F0',
+                        '#F8FAFC',
+                      ],
+                    },
+                    {
+                      name: 'סגולים',
+                      colors: [
+                        '#2E1065',
+                        '#4C1D95',
+                        '#6D28D9',
+                        '#7C3AED',
+                        '#8B5CF6',
+                        '#A78BFA',
+                        '#C4B5FD',
+                        '#DDD6FE',
+                        '#F3E8FF',
+                        '#FAF5FF',
+                      ],
+                    },
+                  ].map((group) => (
+                    <div key={group.name} className="mb-3 last:mb-0">
+                      <div className="mb-2 text-xs font-semibold text-slate-800">{group.name}</div>
+                      <div className="grid grid-cols-10 gap-2">
+                        {group.colors.map((c) => (
+                          <div
+                            key={c}
+                            title={c}
+                            className="h-5 w-5 rounded border border-slate-200"
+                            style={{ background: c }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             className="mt-2 w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 transition"
             onClick={() => {
               setSettingsOpen(false);
               setShortcutOpen(null);
+              setColorPaletteOpen(false);
             }}
           >
             סגור עריכה
