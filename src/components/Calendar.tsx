@@ -988,7 +988,7 @@ export function Calendar() {
     onChange: (hex: string) => void;
     label: string;
   }) => (
-    <div className="text-sm text-slate-700">
+    <div className="text-sm text-slate-700 pointer-events-auto">
       <div className="mb-1">{label}</div>
       <div className="flex items-center gap-2">
         <input
@@ -996,10 +996,7 @@ export function Calendar() {
           type="color"
           value={normalizeToHexForColorInput(value)}
           onChange={(e) => onChange(e.target.value)}
-          onPointerDown={(e) => {
-            // Avoid any capture listeners interfering with the native picker.
-            e.stopPropagation();
-          }}
+          onPointerDown={(e) => e.stopPropagation()}
         />
         <button
           type="button"
@@ -1011,9 +1008,7 @@ export function Calendar() {
           aria-label="טפטפת חיה"
           aria-pressed={livePicker?.label === label}
           onPointerDown={(e) => e.stopPropagation()}
-          onPointerDownCapture={(e) => {
-            // Activate on pointerdown so it can't be swallowed by other handlers.
-            e.preventDefault();
+          onClick={(e) => {
             e.stopPropagation();
             const original = normalizeToHexForColorInput(value);
             setLivePicker((prev) => {
@@ -1300,7 +1295,7 @@ export function Calendar() {
         <div
           data-live-eyedropper="1"
           ref={livePickerOverlayRef}
-          className="fixed inset-0 z-[120] cursor-crosshair"
+          className="fixed inset-0 z-[120] cursor-crosshair bg-black/10"
           onMouseMove={(e) => {
             const hex = sampleHexAtPoint(e.clientX, e.clientY);
             if (!hex) return;
