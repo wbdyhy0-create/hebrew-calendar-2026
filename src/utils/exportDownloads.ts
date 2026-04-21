@@ -20,8 +20,7 @@ export function downloadCssFromPrintableHtml(filename: string, html: string) {
   downloadTextFile(filename, css.trim() + '\n', 'text/css;charset=utf-8');
 }
 
-export async function downloadPngFromPrintableHtml(
-  filename: string,
+export async function exportPngBlobFromPrintableHtml(
   html: string,
   settings: CalendarSettings,
   opts?: { scale?: number },
@@ -185,7 +184,7 @@ export async function downloadPngFromPrintableHtml(
       );
     });
 
-    downloadBlobFile(filename, blob);
+    return blob;
   } finally {
     // cleanup
     try {
@@ -208,5 +207,15 @@ export async function downloadPngFromPrintableHtml(
       }
     });
   }
+}
+
+export async function downloadPngFromPrintableHtml(
+  filename: string,
+  html: string,
+  settings: CalendarSettings,
+  opts?: { scale?: number },
+) {
+  const blob = await exportPngBlobFromPrintableHtml(html, settings, opts);
+  downloadBlobFile(filename, blob);
 }
 

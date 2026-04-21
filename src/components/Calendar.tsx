@@ -32,8 +32,10 @@ import { downloadPdfFromHtml } from '../utils/pdf';
 import {
   downloadCssFromPrintableHtml,
   downloadHtmlFromPrintableHtml,
+  exportPngBlobFromPrintableHtml,
   downloadPngFromPrintableHtml,
 } from '../utils/exportDownloads';
+import { requestSaveHandle, saveBlobToHandle } from '../utils/download';
 import {
   resolveCalendarLayoutZoomPercent,
   resolveCanvasOuterRadiusPx,
@@ -792,12 +794,22 @@ export function Calendar() {
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
                           location: 'Jerusalem',
                         });
-                        await downloadPngFromPrintableHtml(
-                          `calendar-${format(viewDate, 'yyyy-MM')}.png`,
-                          html,
-                          settings,
-                        );
-                        setSaveFlash('ה‑PNG נשלח להורדה');
+                        const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.png`;
+                        // Chrome sometimes blocks async downloads after the first one.
+                        // If supported, ask "Save as" immediately (user gesture) and write later.
+                        const handle = await requestSaveHandle(suggested, {
+                          mime: 'image/png',
+                          description: 'PNG',
+                          extensions: ['.png'],
+                        });
+                        if (handle) {
+                          const blob = await exportPngBlobFromPrintableHtml(html, settings);
+                          await saveBlobToHandle(handle, blob);
+                          setSaveFlash('ה‑PNG נשמר');
+                        } else {
+                          await downloadPngFromPrintableHtml(suggested, html, settings);
+                          setSaveFlash('ה‑PNG נשלח להורדה');
+                        }
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
