@@ -76,6 +76,18 @@ export type CalendarSettings = {
   headerGregMonthPaddingXPx: number;
   headerGregMonthPaddingYPx: number;
   fontFamily: string;
+  /**
+   * Where to apply `fontFamily` in the app UI.
+   * - `all`: apply to everything (legacy behavior)
+   * - `settings`: only the settings panel
+   * - `calendarHeader`: month header / top strip
+   * - `cellDates`: the dates in the top-right corner of each cell
+   * - `cellTimes`: the zmanim/times blocks
+   * - `cellEvents`: the center event titles
+   */
+  fontApplyTargets: Array<
+    'all' | 'settings' | 'calendarHeader' | 'cellDates' | 'cellTimes' | 'cellEvents'
+  >;
   fontSizePx: number;
   fontWeight: 400 | 600 | 700;
   gregDayFontPx: number;
@@ -218,6 +230,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerGregMonthPaddingYPx: 6,
   fontFamily:
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
+  fontApplyTargets: ['all'],
   fontSizePx: 14,
   fontWeight: 400,
   gregDayFontPx: 14,
@@ -431,6 +444,23 @@ export function loadSettings(): CalendarSettings {
     }
     if (typeof merged.gridShellBg !== 'string' || !merged.gridShellBg.trim()) {
       merged.gridShellBg = DEFAULT_SETTINGS.gridShellBg;
+    }
+    // Coerce font apply targets (migration / manual edits)
+    const allowedTargets = new Set([
+      'all',
+      'settings',
+      'calendarHeader',
+      'cellDates',
+      'cellTimes',
+      'cellEvents',
+    ]);
+    if (Array.isArray(merged.fontApplyTargets)) {
+      const next = (merged.fontApplyTargets as any[]).filter((x) => typeof x === 'string' && allowedTargets.has(x));
+      merged.fontApplyTargets = next.length ? (next as any) : DEFAULT_SETTINGS.fontApplyTargets;
+    } else if (merged.fontApplyTargets === undefined || merged.fontApplyTargets === null) {
+      merged.fontApplyTargets = DEFAULT_SETTINGS.fontApplyTargets;
+    } else {
+      merged.fontApplyTargets = DEFAULT_SETTINGS.fontApplyTargets;
     }
     if (Array.isArray(merged.backgroundImagesByMonth)) {
       const arr = merged.backgroundImagesByMonth as any[];

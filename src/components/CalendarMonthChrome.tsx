@@ -22,6 +22,8 @@ type Props = {
   gregorianLabel: string;
   onEditHeader: () => void;
   gridChildren: ReactNode;
+  /** Optional font-family override applied to header area only */
+  headerFontFamily?: string;
   /** מצב עריכת פריסה (גרירה/שינוי גודל) — לא נשמר ב־localStorage כהגדרה נפרדת */
   headerLayoutEditMode?: boolean;
   onHeaderWysiwygClassicPctChange?: (pct: HeaderWysiwygClassicPct) => void;
@@ -266,11 +268,13 @@ export function CalendarMonthChrome({
   gregorianLabel,
   onEditHeader,
   gridChildren,
+  headerFontFamily,
   headerLayoutEditMode = false,
   onHeaderWysiwygClassicPctChange,
   onHeaderWysiwygClassicAlignChange,
   gridWeekCount,
 }: Props) {
+  const headerFontStyle = headerFontFamily ? ({ fontFamily: headerFontFamily } as const) : null;
   const layout: HeaderLayoutStyle = settings.headerLayoutStyle;
   const weekRows = Math.max(5, Math.min(6, Number(gridWeekCount) || 6));
   const weekdayRowOffsetY = Number(settings.gridWeekdayHeaderRowOffsetYPx) || 0;
@@ -322,7 +326,10 @@ export function CalendarMonthChrome({
         <div
           data-inspect="header"
           className="relative mx-auto mb-6 mt-0 w-full max-w-full overflow-visible px-5 text-center sm:px-6"
-          style={{ marginBottom: Math.max(settings.headerBarMarginBottomPx, 16) }}
+          style={{
+            marginBottom: Math.max(settings.headerBarMarginBottomPx, 16),
+            ...(headerFontStyle ?? {}),
+          }}
         >
           {settings.headerBarShowEditButton ? (
             <HeaderEditButton
@@ -397,6 +404,7 @@ export function CalendarMonthChrome({
             transform: `translateY(${settings.headerBarOffsetYPx}px)`,
             maxWidth:
               settings.headerBarMaxWidthPx > 0 ? `${settings.headerBarMaxWidthPx}px` : undefined,
+            ...(headerFontStyle ?? {}),
           }}
         >
           <div
@@ -473,6 +481,7 @@ export function CalendarMonthChrome({
             transform: `translateY(${settings.headerBarOffsetYPx}px)`,
             maxWidth:
               settings.headerBarMaxWidthPx > 0 ? `${settings.headerBarMaxWidthPx}px` : undefined,
+            ...(headerFontStyle ?? {}),
           }}
         >
           {settings.headerBarShowEditButton ? (
@@ -542,6 +551,7 @@ export function CalendarMonthChrome({
       transform: `translateY(${settings.headerBarOffsetYPx}px)`,
       maxWidth:
         settings.headerBarMaxWidthPx > 0 ? `${settings.headerBarMaxWidthPx}px` : undefined,
+      ...(headerFontStyle ?? {}),
     };
     return wrapIfFill(
       <div
@@ -583,6 +593,7 @@ export function CalendarMonthChrome({
     transform: `translateY(${settings.headerBarOffsetYPx}px)`,
     maxWidth:
       settings.headerBarMaxWidthPx > 0 ? `${settings.headerBarMaxWidthPx}px` : undefined,
+    ...(headerFontStyle ?? {}),
   };
 
   return wrapIfFill(

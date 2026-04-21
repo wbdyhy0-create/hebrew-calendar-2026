@@ -127,6 +127,15 @@ export function Calendar() {
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const [fontDragActive, setFontDragActive] = useState(false);
 
+  const fontTargets = settings.fontApplyTargets ?? ['all'];
+  const hasFontTarget = (t: (typeof fontTargets)[number]) =>
+    Array.isArray(fontTargets) && fontTargets.includes(t);
+  const shouldApplyFontEverywhere = hasFontTarget('all');
+  const shouldApplyFontTo = (
+    t: Exclude<(typeof fontTargets)[number], 'all'>,
+  ): boolean => shouldApplyFontEverywhere || hasFontTarget(t);
+  const scopedFontFamily = settings.fontFamily;
+
   const uploadFontFiles = async (files: File[]) => {
     const ok = files.filter((f) => /\.(ttf|otf|woff2?|)$/i.test(f.name) || String(f.type).includes('font'));
     if (!ok.length) {
@@ -816,7 +825,7 @@ export function Calendar() {
       dir="rtl"
       className="relative w-full max-w-6xl mx-auto p-4 sm:p-6 bg-white"
       style={{
-        fontFamily: settings.fontFamily,
+        fontFamily: shouldApplyFontEverywhere ? settings.fontFamily : undefined,
         fontSize: settings.fontSizePx,
         fontWeight: settings.fontWeight,
       }}
@@ -930,24 +939,27 @@ export function Calendar() {
           <button
             type="button"
             onClick={() => setThemePickerOpen(true)}
-            className="px-3 py-2 text-sm rounded-md border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 active:bg-violet-100/80 transition"
+            className="px-3 py-2 text-sm rounded-md border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 active:bg-violet-100/80 transition flex items-center gap-2"
           >
+            <span aria-hidden="true">🎨</span>
             ערכות עיצוב
           </button>
 
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
-            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+            className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
           >
+            <span aria-hidden="true">⚙️</span>
             הגדרות עיצוב
           </button>
 
           <button
             type="button"
             onClick={() => setHelpOpen(true)}
-            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+            className="px-3 py-2 text-sm rounded-md border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 active:bg-emerald-100/80 transition flex items-center gap-2"
           >
+            <span aria-hidden="true">📘</span>
             מדריך תפעולי
           </button>
 
@@ -955,10 +967,11 @@ export function Calendar() {
             <button
               type="button"
               onClick={() => setDownloadMenuOpen((v) => !v)}
-              className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+              className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100 active:bg-amber-100/80 transition flex items-center gap-2"
               aria-haspopup="menu"
               aria-expanded={downloadMenuOpen}
             >
+              <span aria-hidden="true">⬇️</span>
               הורדה
             </button>
             {downloadMenuOpen ? (
@@ -1482,7 +1495,10 @@ export function Calendar() {
       ) : null}
 
       {settingsOpen && (
-        <div className="relative mb-4 flex max-h-[min(92vh,940px)] flex-col rounded-xl border border-slate-200 bg-white/95 shadow-sm sm:max-h-[min(88vh,900px)]">
+        <div
+          className="relative mb-4 flex max-h-[min(92vh,940px)] flex-col rounded-xl border border-slate-200 bg-white/95 shadow-sm sm:max-h-[min(88vh,900px)]"
+          style={shouldApplyFontTo('settings') ? { fontFamily: scopedFontFamily } : undefined}
+        >
           <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
               <div className="font-normal text-slate-900">עיצוב</div>
@@ -1789,6 +1805,116 @@ export function Calendar() {
                 <option value='Georgia, "Times New Roman", serif'>Serif</option>
               </select>
             </label>
+
+            <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div className="text-sm font-semibold text-slate-900 mb-2">החל את הגופן על</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={settings.fontApplyTargets?.includes('all')}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSettings((s) => ({
+                        ...s,
+                        fontApplyTargets: checked
+                          ? ['all']
+                          : (s.fontApplyTargets || ['all']).filter((t) => t !== 'all'),
+                      }));
+                    }}
+                  />
+                  הכל (כולל ממשק)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    disabled={settings.fontApplyTargets?.includes('all')}
+                    checked={settings.fontApplyTargets?.includes('settings')}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSettings((s) => ({
+                        ...s,
+                        fontApplyTargets: checked
+                          ? Array.from(new Set([...(s.fontApplyTargets || []).filter((t) => t !== 'all'), 'settings']))
+                          : (s.fontApplyTargets || []).filter((t) => t !== 'settings'),
+                      }));
+                    }}
+                  />
+                  חלונית ההגדרות
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    disabled={settings.fontApplyTargets?.includes('all')}
+                    checked={settings.fontApplyTargets?.includes('calendarHeader')}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSettings((s) => ({
+                        ...s,
+                        fontApplyTargets: checked
+                          ? Array.from(new Set([...(s.fontApplyTargets || []).filter((t) => t !== 'all'), 'calendarHeader']))
+                          : (s.fontApplyTargets || []).filter((t) => t !== 'calendarHeader'),
+                      }));
+                    }}
+                  />
+                  פס הכותרת/תאריכים למעלה
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    disabled={settings.fontApplyTargets?.includes('all')}
+                    checked={settings.fontApplyTargets?.includes('cellDates')}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSettings((s) => ({
+                        ...s,
+                        fontApplyTargets: checked
+                          ? Array.from(new Set([...(s.fontApplyTargets || []).filter((t) => t !== 'all'), 'cellDates']))
+                          : (s.fontApplyTargets || []).filter((t) => t !== 'cellDates'),
+                      }));
+                    }}
+                  />
+                  תאריכים בתוך משבצות
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    disabled={settings.fontApplyTargets?.includes('all')}
+                    checked={settings.fontApplyTargets?.includes('cellTimes')}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSettings((s) => ({
+                        ...s,
+                        fontApplyTargets: checked
+                          ? Array.from(new Set([...(s.fontApplyTargets || []).filter((t) => t !== 'all'), 'cellTimes']))
+                          : (s.fontApplyTargets || []).filter((t) => t !== 'cellTimes'),
+                      }));
+                    }}
+                  />
+                  זמנים בתוך משבצות
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    disabled={settings.fontApplyTargets?.includes('all')}
+                    checked={settings.fontApplyTargets?.includes('cellEvents')}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setSettings((s) => ({
+                        ...s,
+                        fontApplyTargets: checked
+                          ? Array.from(new Set([...(s.fontApplyTargets || []).filter((t) => t !== 'all'), 'cellEvents']))
+                          : (s.fontApplyTargets || []).filter((t) => t !== 'cellEvents'),
+                      }));
+                    }}
+                  />
+                  אירועים/טקסט במרכז התא
+                </label>
+              </div>
+              <div className="mt-2 text-xs text-slate-600">
+                אם לא מסמנים “הכל”, הגופן לא יכפה על שאר הממשק — רק על החלקים שנבחרו.
+              </div>
+            </div>
 
             <div className="sm:col-span-2 lg:col-span-3 min-w-0 rounded-lg border border-slate-200 bg-white/80 p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -3354,6 +3480,7 @@ export function Calendar() {
             gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
             onEditHeader={openHeaderEditor}
             gridWeekCount={weeks.length}
+            headerFontFamily={shouldApplyFontTo('calendarHeader') ? scopedFontFamily : undefined}
             headerLayoutEditMode={headerLayoutEditMode}
             onHeaderWysiwygClassicPctChange={(pct) =>
               setSettings((s) => ({ ...s, headerWysiwygClassicPct: pct }))
@@ -3628,6 +3755,7 @@ export function Calendar() {
                   style={{
                     fontSize: cellScaledPx(settings.gregDayFontPx),
                     lineHeight: 1,
+                    fontFamily: shouldApplyFontTo('cellDates') ? scopedFontFamily : undefined,
                   }}
                 >
                   {m.gDay}
@@ -3637,7 +3765,11 @@ export function Calendar() {
                 </span>
                 <span
                   className="font-medium text-slate-700"
-                  style={{ fontSize: cellScaledPx(settings.hebDayFontPx), lineHeight: 1 }}
+                  style={{
+                    fontSize: cellScaledPx(settings.hebDayFontPx),
+                    lineHeight: 1,
+                    fontFamily: shouldApplyFontTo('cellDates') ? scopedFontFamily : undefined,
+                  }}
                 >
                   {m.hebDay}
                   {m.hebDay === 'א׳' && m.hebMonth ? (
@@ -3740,6 +3872,7 @@ export function Calendar() {
                             top: centerPaddingTopPx,
                             bottom: '5.25rem',
                             fontSize: cellScaledPx(settings.eventTitleFontPx),
+                            fontFamily: shouldApplyFontTo('cellEvents') ? scopedFontFamily : undefined,
                           }
                         : {
                             top: 0,
@@ -3754,6 +3887,7 @@ export function Calendar() {
                                     Number(settings.eventTitleFontPx) * cellFontScale * 0.2,
                                   )
                                 : 0),
+                            fontFamily: shouldApplyFontTo('cellEvents') ? scopedFontFamily : undefined,
                           }
                     }
                   >
@@ -3797,7 +3931,10 @@ export function Calendar() {
               (m.candleLightingJer || m.candleLightingTA) ? (
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                  style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
+                  style={{
+                    fontSize: cellScaledPx(settings.shabbatTimesFontPx),
+                    fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                  }}
                 >
                   <div className="font-normal text-slate-900 whitespace-nowrap">
                     {m.isShabbat
@@ -3816,7 +3953,10 @@ export function Calendar() {
               ((m.havdalahJer || m.havdalahTA) || (settings.showParsha && m.parshaHe)) ? (
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right"
-                  style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
+                  style={{
+                    fontSize: cellScaledPx(settings.shabbatTimesFontPx),
+                    fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                  }}
                 >
                   {settings.showParsha && m.parshaHe ? (
                     <div className="line-clamp-2 break-words font-semibold text-slate-900 leading-tight">
@@ -3842,7 +3982,10 @@ export function Calendar() {
                 (m.havdalahJer || m.havdalahTA)) ? (
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                  style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
+                  style={{
+                    fontSize: cellScaledPx(settings.shabbatTimesFontPx),
+                    fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                  }}
                 >
                   <div className="font-normal text-slate-900 whitespace-nowrap">
                     {isYomKippurDay(m.titles) || isRoshHashanaDay(m.titles)
@@ -3878,7 +4021,10 @@ export function Calendar() {
                     return (
                       <div
                         className="absolute inset-x-2 bottom-2 z-[6] min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                        style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
+                        style={{
+                          fontSize: cellScaledPx(settings.shabbatTimesFontPx),
+                          fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                        }}
                       >
                         {showAutoFastTitles ? (
                           <div
