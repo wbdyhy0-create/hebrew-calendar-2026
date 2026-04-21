@@ -537,6 +537,10 @@ export function Calendar() {
 
   /** Inspect / "עריכה מהירה" opens on click, not hover; closes on outside click. */
   useEffect(() => {
+    // When the settings panel is open, avoid capture-phase listeners that can interfere with
+    // native controls (e.g. <input type="color">) and custom tools (eyedropper buttons).
+    if (settingsOpen) return;
+
     const onPointerDown = (e: PointerEvent) => {
       const el = e.target as Element | null;
       if (!el) return;
@@ -567,7 +571,7 @@ export function Calendar() {
 
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, []);
+  }, [settingsOpen]);
 
   /** Download menu: close on outside click or Escape. */
   useEffect(() => {
