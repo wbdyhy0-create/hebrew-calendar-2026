@@ -33,17 +33,25 @@ export async function requestSaveHandle(
           [opts.mime]: extensions.map((e) => (e.startsWith('.') ? e : `.${e}`)),
         }
       : undefined;
-  return await fn({
-    suggestedName,
-    types: accept
-      ? [
-          {
-            description: opts?.description ?? 'File',
-            accept,
-          },
-        ]
-      : undefined,
-  });
+  try {
+    return await fn({
+      suggestedName,
+      types: accept
+        ? [
+            {
+              description: opts?.description ?? 'File',
+              accept,
+            },
+          ]
+        : undefined,
+    });
+  } catch (e) {
+    // `showSaveFilePicker` is blocked in cross-origin iframes and some hardened Chrome setups.
+    // Fall back to regular downloads instead of failing the action.
+    const name = e instanceof Error ? e.name : '';
+    if (name === 'SecurityError' || name === 'NotAllowedError') return null;
+    return null;
+  }
 }
 
 export async function saveBlobToHandle(handle: SaveHandle, blob: Blob) {
