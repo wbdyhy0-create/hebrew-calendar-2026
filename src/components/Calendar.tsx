@@ -87,6 +87,7 @@ import { HELP_ENTRIES } from '../utils/helpKnowledge';
 import {
   cssFontFamilyForUploaded,
   deleteStoredFont,
+  deleteStoredFontsByFamily,
   getStoredFont,
   listStoredFonts,
   putStoredFont,
@@ -158,11 +159,26 @@ export function Calendar() {
       setFontBusy(id);
       try {
         const data = await file.arrayBuffer();
-        const family = makeUploadedFamilyName(file.name, id);
+        const lower = file.name.toLowerCase();
+        const inferWeight = (): string => {
+          if (/(extra|ultra)[-_ ]?bold|extrabold|ultrabold/.test(lower)) return '800';
+          if (/black|heavy/.test(lower)) return '900';
+          if (/bold/.test(lower)) return '700';
+          if (/semi[-_ ]?bold|semibold|demi[-_ ]?bold|demibold/.test(lower)) return '600';
+          if (/medium/.test(lower)) return '500';
+          if (/light/.test(lower)) return '300';
+          if (/thin/.test(lower)) return '200';
+          return '400';
+        };
+        const inferStyle = (): string => (/(italic|oblique)/.test(lower) ? 'italic' : 'normal');
+
+        const family = makeUploadedFamilyName(file.name);
         const rec: StoredFont = {
           id,
           family,
           fileName: file.name,
+          weight: inferWeight(),
+          style: inferStyle(),
           mime: file.type || 'font/ttf',
           data,
           createdAt: Date.now(),
@@ -171,7 +187,15 @@ export function Calendar() {
         await registerStoredFont(rec);
         setUploadedFonts((prev) => [
           ...prev,
-          { id: rec.id, family: rec.family, fileName: rec.fileName, mime: rec.mime, createdAt: rec.createdAt },
+          {
+            id: rec.id,
+            family: rec.family,
+            fileName: rec.fileName,
+            weight: rec.weight,
+            style: rec.style,
+            mime: rec.mime,
+            createdAt: rec.createdAt,
+          },
         ]);
         setSettings((s) => ({ ...s, fontFamily: cssFontFamilyForUploaded(rec.family) }));
       } catch (err) {
@@ -228,16 +252,16 @@ export function Calendar() {
     return 'בחירה';
   };
 
-  const deleteUploadedFontEverywhere = async (fontId: string, fontFamilyLabel: string) => {
-    const ok = window.confirm(`האם למחוק את הגופן "${fontFamilyLabel}" מהאפליקציה?`);
+  const deleteUploadedFontEverywhere = async (family: string) => {
+    const ok = window.confirm(`האם למחוק את הגופן "${family}" מהאפליקציה?`);
     if (!ok) return;
     try {
-      setFontBusy(fontId);
-      await deleteStoredFont(fontId);
-      setUploadedFonts((prev) => prev.filter((x) => x.id !== fontId));
+      setFontBusy(family);
+      await deleteStoredFontsByFamily(family);
+      setUploadedFonts((prev) => prev.filter((x) => x.family !== family));
       setSettings((s) => {
         const next: any = { ...s };
-        if (typeof next.fontFamily === 'string' && next.fontFamily.includes(fontFamilyLabel)) {
+        if (typeof next.fontFamily === 'string' && next.fontFamily.includes(family)) {
           next.fontFamily = DEFAULT_SETTINGS.fontFamily;
         }
         const map = (next.fontFamilyByTarget && typeof next.fontFamilyByTarget === 'object')
@@ -245,7 +269,7 @@ export function Calendar() {
           : {};
         for (const k of ['settings', 'calendarHeader', 'cellDates', 'cellTimes', 'cellEvents'] as const) {
           const v = map[k];
-          if (typeof v === 'string' && v.includes(fontFamilyLabel)) delete map[k];
+          if (typeof v === 'string' && v.includes(family)) delete map[k];
         }
         next.fontFamilyByTarget = map;
         return next;
@@ -315,12 +339,31 @@ export function Calendar() {
                     גופנים שהועלו
                   </div>
                   <div className="max-h-[240px] overflow-auto">
-                    {uploadedFonts.map((f) => {
-                      const v = cssFontFamilyForUploaded(f.family);
-                      const isSelected = v === value;
+                    {(() => {
+                      const groups = new Map<string, Omit<StoredFont, 'data'>[]>();
+                      for (const f of uploadedFonts) {
+                        const arr = groups.get(f.family) ?? [];
+                        arr.push(f);
+                        groups.set(f.family, arr);
+                      }
+                      const families = Array.from(groups.entries()).sort((a, b) =>
+                        a[0].localeCompare(b[0], 'he'),
+                      );
+                      return families.map(([family, faces]) => {
+                        const v = cssFontFamilyForUploaded(family);
+                        const isSelected = v === value;
+                        const weights = Array.from(
+                          new Set(
+                            faces
+                              .map((x) => (typeof x.weight === 'string' ? x.weight : '400'))
+                              .filter(Boolean),
+                          ),
+                        )
+                          .sort((a, b) => Number(a) - Number(b))
+                          .join(', ');
                       return (
                         <div
-                          key={f.id}
+                          key={family}
                           className="w-full px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
                         >
                           <button
@@ -333,7 +376,10 @@ export function Calendar() {
                             }}
                             style={{ fontFamily: v }}
                           >
-                            <span className="truncate">{f.family}</span>
+                            <div className="truncate">{family}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                              משקלים שהועלו: {weights || '400'}
+                            </div>
                           </button>
                           <div className="flex items-center gap-2 shrink-0">
                             {isSelected ? (
@@ -343,13 +389,13 @@ export function Calendar() {
                               type="button"
                               className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40"
                               title="מחק גופן"
-                              aria-label={`מחק גופן ${f.family}`}
+                              aria-label={`מחק גופן ${family}`}
                               disabled={fontBusy !== null}
                               onClick={async (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 if (fontBusy) return;
-                                await deleteUploadedFontEverywhere(f.id, f.family);
+                                await deleteUploadedFontEverywhere(family);
                               }}
                             >
                               ✕
@@ -357,7 +403,8 @@ export function Calendar() {
                           </div>
                         </div>
                       );
-                    })}
+                      });
+                    })()}
                   </div>
                 </>
               ) : null}

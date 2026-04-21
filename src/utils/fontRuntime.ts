@@ -6,16 +6,25 @@ function sanitizeFamily(name: string): string {
   return base.replace(/[^\p{L}\p{N}\s_-]+/gu, '').trim() || 'Uploaded Font';
 }
 
-export function makeUploadedFamilyName(fileName: string, id: string): string {
+export function makeUploadedFamilyName(fileName: string): string {
   const stem = fileName.replace(/\.[^.]+$/, '');
-  return `${sanitizeFamily(stem)} (${id.slice(0, 6)})`;
+  // Try to normalize common "style/weight" suffixes so Regular/Bold files group under one family.
+  const normalized = stem
+    .replace(/[-_ ]?(regular|roman|book|normal)$/i, '')
+    .replace(/[-_ ]?(bold|black|heavy|light|thin|medium|semibold|demibold|extrabold|ultrabold)$/i, '')
+    .replace(/[-_ ]?(italic|oblique)$/i, '')
+    .trim();
+  return sanitizeFamily(normalized || stem);
 }
 
 export async function registerStoredFont(font: StoredFont): Promise<void> {
   // If already registered, skip.
   try {
     // Some browsers don't expose a direct lookup, so we attempt load+add and ignore duplicates.
-    const face = new FontFace(font.family, font.data, { style: 'normal', weight: '400' });
+    const face = new FontFace(font.family, font.data, {
+      style: font.style || 'normal',
+      weight: font.weight || '400',
+    });
     const loaded = await face.load();
     (document as any).fonts?.add?.(loaded);
   } catch {

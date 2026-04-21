@@ -2,6 +2,10 @@ export type StoredFont = {
   id: string;
   family: string;
   fileName: string;
+  /** CSS font-weight for this face (e.g. 400, 700). */
+  weight?: string;
+  /** CSS font-style for this face (normal/italic/oblique). */
+  style?: string;
   mime: string;
   data: ArrayBuffer;
   createdAt: number;
@@ -56,6 +60,8 @@ export async function listStoredFonts(): Promise<Omit<StoredFont, 'data'>[]> {
             id: f.id,
             family: f.family,
             fileName: f.fileName,
+            weight: f.weight,
+            style: f.style,
             mime: f.mime,
             createdAt: f.createdAt,
           }))
@@ -78,6 +84,26 @@ export async function putStoredFont(font: StoredFont): Promise<void> {
 
 export async function deleteStoredFont(id: string): Promise<void> {
   await tx('readwrite', (s) => s.delete(id));
+}
+
+export async function deleteStoredFontsByFamily(family: string): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const t = db.transaction(STORE, 'readwrite');
+    const store = t.objectStore(STORE);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      const items = (req.result as StoredFont[]) ?? [];
+      for (const it of items) {
+        if (it.family === family) store.delete(it.id);
+      }
+    };
+    req.onerror = () => reject(req.error ?? new Error('Failed to delete fonts by family'));
+    t.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+  });
 }
 
 export function cssFontFamilyForUploaded(family: string): string {
