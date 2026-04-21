@@ -35,7 +35,7 @@ import {
   exportPngBlobFromPrintableHtml,
   downloadPngFromPrintableHtml,
 } from '../utils/exportDownloads';
-import { requestSaveHandle, saveBlobToHandle, saveTextToHandle } from '../utils/download';
+import { isEmbeddedFrame, openInNewTab, requestSaveHandle, saveBlobToHandle, saveTextToHandle } from '../utils/download';
 import {
   resolveCalendarLayoutZoomPercent,
   resolveCanvasOuterRadiusPx,
@@ -104,6 +104,18 @@ export function Calendar() {
   const [saveFlash, setSaveFlash] = useState<string | null>(null);
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
+  const ensureDownloadsWork = (): boolean => {
+    // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
+    // Best UX: open the calendar in a top-level tab and ask the user to download there.
+    if (isEmbeddedFrame()) {
+      openInNewTab(window.location.href);
+      setSaveFlash('הורדות חסומות בהטמעה — פתחתי את הלוח בטאב חדש להורדה');
+      window.setTimeout(() => setSaveFlash(null), 3500);
+      return false;
+    }
+    return true;
+  };
+
   const [bgMonthIdx, setBgMonthIdx] = useState<number>(() => new Date().getMonth());
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [inspect, setInspect] = useState<{
@@ -760,6 +772,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={async () => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         setSaveFlash('מכין PDF…');
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
@@ -797,6 +810,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={async () => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         setSaveFlash('מכין PNG…');
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
@@ -836,6 +850,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={() => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
                           location: 'Jerusalem',
@@ -880,6 +895,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={() => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
                           location: 'Jerusalem',
@@ -933,6 +949,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={async () => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         setSaveFlash('מכין PDF של שנה…');
                         const year = viewDate.getFullYear();
@@ -969,6 +986,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={() => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);
@@ -1012,6 +1030,7 @@ export function Calendar() {
                     role="menuitem"
                     onClick={() => {
                       setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
                       try {
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);

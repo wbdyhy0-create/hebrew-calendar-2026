@@ -69,6 +69,19 @@ export async function saveTextToHandle(
   await saveBlobToHandle(handle, blob);
 }
 
+export function isEmbeddedFrame(): boolean {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+export function openInNewTab(url: string) {
+  // Called directly from a user gesture (click) to avoid popup blockers.
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 export function downloadBlobFile(filename: string, blob: Blob) {
   if (!(blob instanceof Blob)) {
     throw new Error('הורדה נכשלה: לא התקבל Blob תקין.');
