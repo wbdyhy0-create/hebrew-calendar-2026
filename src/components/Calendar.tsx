@@ -1231,14 +1231,15 @@ export function Calendar() {
           </div>
         </div>
       ) : null}
-      <header className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div className="text-right">
-          <p className="text-xs sm:text-sm text-slate-500">
-            {gMonthDays} ימים בחודש (לועזי)
-          </p>
-        </div>
+      <header className="relative flex flex-col gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-right">
+            <p className="text-xs sm:text-sm text-slate-500">
+              {gMonthDays} ימים בחודש (לועזי)
+            </p>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <div className="flex flex-wrap items-center gap-2 justify-end">
           <button
             type="button"
             onClick={() => setThemePickerOpen(true)}
@@ -1661,6 +1662,7 @@ export function Calendar() {
               </div>
             ) : null}
           </div>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 justify-end">
@@ -1694,6 +1696,35 @@ export function Calendar() {
           </button>
         </div>
       </header>
+
+      {/* Category shortcuts (right side of canvas) */}
+      <div className="hidden lg:flex fixed right-3 top-[140px] z-[60] w-[190px] flex-col gap-2">
+        {[
+          { label: 'ערכות עיצוב', icon: '🎨', anchorId: 'settings-anchor-themes', cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100' },
+          { label: 'זמנים', icon: '🕯️', anchorId: 'settings-anchor-zmanim', cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100' },
+          { label: 'טיפוגרפיה', icon: '✏️', anchorId: 'settings-anchor-header', cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100' },
+          { label: 'צבעים', icon: '🖌️', anchorId: 'settings-anchor-colors', cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100' },
+          { label: 'ריפוד', icon: '⬜', anchorId: 'settings-anchor-padding-cells', cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50' },
+          { label: 'ימי שבוע', icon: '📅', anchorId: 'settings-anchor-weekdays', cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100' },
+          { label: 'ייצוא', icon: '⬇️', anchorId: 'settings-anchor-export', cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100' },
+          { label: 'רקע/קנבס', icon: '🖼️', anchorId: 'settings-anchor-background', cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100' },
+          { label: 'גודל/זום', icon: '🔍', anchorId: 'settings-anchor-canvas-surface', cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50' },
+          { label: 'עריכה ידנית', icon: '📝', anchorId: 'settings-anchor-manual-edits', cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50' },
+        ].map((b) => (
+          <button
+            key={b.anchorId}
+            type="button"
+            className={[
+              'w-full text-right px-3 py-2 text-sm rounded-md border transition flex items-center justify-between gap-2 shadow-sm',
+              b.cls,
+            ].join(' ')}
+            onClick={() => jumpToSetting(b.anchorId)}
+          >
+            <span className="truncate">{b.label}</span>
+            <span aria-hidden="true">{b.icon}</span>
+          </button>
+        ))}
+      </div>
 
       {helpOpen ? (
         <HelpAssistant
@@ -1856,89 +1887,7 @@ export function Calendar() {
             <SettingsSearchBar onPick={jumpToSetting} />
           </div>
 
-          <div className="flex min-h-0 flex-1 gap-3 px-2 py-2 sm:px-3 sm:py-3">
-            <div className="hidden lg:flex w-[220px] shrink-0 flex-col gap-2">
-              {[
-                {
-                  label: 'ערכות עיצוב',
-                  icon: '🎨',
-                  anchorId: 'settings-anchor-themes',
-                  cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100',
-                },
-                {
-                  label: 'זמנים',
-                  icon: '🕯️',
-                  anchorId: 'settings-anchor-zmanim',
-                  cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
-                },
-                {
-                  label: 'טיפוגרפיה',
-                  icon: '✏️',
-                  anchorId: 'settings-anchor-header',
-                  cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100',
-                },
-                {
-                  label: 'צבעים/מסגרות',
-                  icon: '🖌️',
-                  anchorId: 'settings-anchor-colors',
-                  cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100',
-                },
-                {
-                  label: 'ריפוד תאים',
-                  icon: '⬜',
-                  anchorId: 'settings-anchor-padding-cells',
-                  cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-                },
-                {
-                  label: 'ימי שבוע',
-                  icon: '📅',
-                  anchorId: 'settings-anchor-weekdays',
-                  cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
-                },
-                {
-                  label: 'ייצוא',
-                  icon: '⬇️',
-                  anchorId: 'settings-anchor-export',
-                  cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
-                },
-                {
-                  label: 'רקע/קנבס',
-                  icon: '🖼️',
-                  anchorId: 'settings-anchor-background',
-                  cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
-                },
-                {
-                  label: 'גודל/זום',
-                  icon: '🔍',
-                  anchorId: 'settings-anchor-canvas-surface',
-                  cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-                },
-                {
-                  label: 'עריכה ידנית',
-                  icon: '📝',
-                  anchorId: 'settings-anchor-manual-edits',
-                  cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-                },
-              ].map((b) => (
-                <button
-                  key={b.anchorId}
-                  type="button"
-                  className={[
-                    'w-full text-right px-3 py-2 text-sm rounded-md border transition flex items-center justify-between gap-2',
-                    b.cls,
-                  ].join(' ')}
-                  onClick={() => jumpToSetting(b.anchorId)}
-                >
-                  <span className="truncate">{b.label}</span>
-                  <span aria-hidden="true">{b.icon}</span>
-                </button>
-              ))}
-              <div className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                לחיצה מעבירה מיד לקטגוריה בתוך ההגדרות.
-              </div>
-            </div>
-
-            <div className="min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain">
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain px-2 py-2 sm:px-3 sm:py-3">
             <SettingsCategory icon="📁" title="ערכות נושא ומבנה כותרת">
             <div
               id="settings-anchor-themes"
@@ -3864,7 +3813,6 @@ export function Calendar() {
               />
             </label>
             </SettingsCategory>
-            </div>
           </div>
         </div>
       )}
