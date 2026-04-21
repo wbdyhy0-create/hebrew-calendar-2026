@@ -902,6 +902,13 @@ export function Calendar() {
     commit: (hex: string) => void;
     revert: () => void;
   }>(null);
+  const livePickerOverlayRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!livePicker) return;
+    // Focus overlay so Escape works reliably.
+    window.setTimeout(() => livePickerOverlayRef.current?.focus(), 0);
+  }, [livePicker]);
 
   const rgbToHex = (rgb: string): string | null => {
     // Supports: rgb(r,g,b) / rgba(r,g,b,a)
@@ -996,20 +1003,33 @@ export function Calendar() {
         />
         <button
           type="button"
-          className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+          className={[
+            'h-10 w-10 shrink-0 rounded-md border bg-white hover:bg-slate-50',
+            livePicker?.label === label ? 'border-sky-400 ring-2 ring-sky-200 bg-sky-50' : 'border-slate-200',
+          ].join(' ')}
           title="טפטפת חיה (תצוגה מיידית)"
           aria-label="טפטפת חיה"
+          aria-pressed={livePicker?.label === label}
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => {
+          onPointerDownCapture={(e) => {
+            // Activate on pointerdown so it can't be swallowed by other handlers.
+            e.preventDefault();
+            e.stopPropagation();
             const original = normalizeToHexForColorInput(value);
-            setSaveFlash('טפטפת פעילה: הזז את העכבר על הלוח, קליק לקיבוע, Esc לביטול');
-            window.setTimeout(() => setSaveFlash(null), 1800);
-            setLivePicker({
-              label,
-              original,
-              current: original,
-              commit: (hex) => onChange(hex),
-              revert: () => onChange(original),
+            setLivePicker((prev) => {
+              if (prev?.label === label) {
+                prev.revert();
+                return null;
+              }
+              setSaveFlash('טפטפת פעילה: הזז את העכבר על הלוח, קליק לקיבוע, Esc לביטול');
+              window.setTimeout(() => setSaveFlash(null), 1800);
+              return {
+                label,
+                original,
+                current: original,
+                commit: (hex) => onChange(hex),
+                revert: () => onChange(original),
+              };
             });
           }}
         >
@@ -1279,6 +1299,7 @@ export function Calendar() {
       {livePicker ? (
         <div
           data-live-eyedropper="1"
+          ref={livePickerOverlayRef}
           className="fixed inset-0 z-[120] cursor-crosshair"
           onMouseMove={(e) => {
             const hex = sampleHexAtPoint(e.clientX, e.clientY);
@@ -1315,7 +1336,6 @@ export function Calendar() {
             }
           }}
           tabIndex={0}
-          ref={(node) => node?.focus()}
         >
           <div className="absolute left-3 top-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-800 shadow-sm">
             <div className="font-semibold text-slate-900">טפטפת: {livePicker.label}</div>
