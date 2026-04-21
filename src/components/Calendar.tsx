@@ -1770,7 +1770,7 @@ export function Calendar() {
                           const blob = await exportPdfBlobFromHtml(html, settings);
                           setPreviewBlob(blob);
                           if (previewUrl) URL.revokeObjectURL(previewUrl);
-                          setPreviewUrl(URL.createObjectURL(blob));
+                          setPreviewUrl(`${URL.createObjectURL(blob)}#zoom=page-width`);
                         } catch (e) {
                           const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                           setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
@@ -1992,7 +1992,7 @@ export function Calendar() {
                         const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
                         setPreviewBlob(blob);
                         if (previewUrl) URL.revokeObjectURL(previewUrl);
-                        setPreviewUrl(URL.createObjectURL(blob));
+                        setPreviewUrl(`${URL.createObjectURL(blob)}#zoom=page-width`);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
