@@ -128,6 +128,7 @@ export function Calendar() {
   const [fontDragActive, setFontDragActive] = useState(false);
   const [fontFamilyMenuOpen, setFontFamilyMenuOpen] = useState(false);
   const fontFamilyMenuRef = useRef<HTMLDivElement | null>(null);
+  const [fontFamilyMenuKey, setFontFamilyMenuKey] = useState<string>('default');
 
   const fontTargets = settings.fontApplyTargets ?? ['all'];
   const hasFontTarget = (t: (typeof fontTargets)[number]) =>
@@ -136,7 +137,13 @@ export function Calendar() {
   const shouldApplyFontTo = (
     t: Exclude<(typeof fontTargets)[number], 'all'>,
   ): boolean => shouldApplyFontEverywhere || hasFontTarget(t);
-  const scopedFontFamily = settings.fontFamily;
+  const resolveFontFamilyFor = (
+    t: Exclude<(typeof fontTargets)[number], 'all'>,
+  ): string => {
+    const map = settings.fontFamilyByTarget;
+    const v = map && typeof map === 'object' ? (map as any)[t] : undefined;
+    return typeof v === 'string' && v.trim() ? v : settings.fontFamily;
+  };
 
   const uploadFontFiles = async (files: File[]) => {
     const ok = files.filter((f) => /\.(ttf|otf|woff2?|)$/i.test(f.name) || String(f.type).includes('font'));
@@ -197,6 +204,192 @@ export function Calendar() {
       window.removeEventListener('keydown', onKey, true);
     };
   }, [fontFamilyMenuOpen]);
+
+  const FONT_BUILTINS: Array<{ label: string; value: string }> = [
+    { label: 'Heebo (אם מותקן)', value: '"Heebo", system-ui, "Segoe UI", Arial, sans-serif' },
+    {
+      label: 'Assistant (אם מותקן)',
+      value: '"Assistant", system-ui, "Segoe UI", Arial, sans-serif',
+    },
+    { label: 'System', value: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
+    { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
+  ];
+
+  const fontLabelForValue = (value: string): string => {
+    if (value === DEFAULT_SETTINGS.fontFamily) return 'ברירת מחדל';
+    const uploadedMatch = uploadedFonts.find((f) => cssFontFamilyForUploaded(f.family) === value);
+    if (uploadedMatch) return uploadedMatch.family;
+    const builtin = FONT_BUILTINS.find((b) => b.value === value);
+    if (builtin) return builtin.label;
+    if (value.includes('Heebo')) return 'Heebo (אם מותקן)';
+    if (value.includes('Assistant')) return 'Assistant (אם מותקן)';
+    if (value.startsWith('system-ui')) return 'System';
+    if (value.includes('Georgia')) return 'Serif';
+    return 'בחירה';
+  };
+
+  const deleteUploadedFontEverywhere = async (fontId: string, fontFamilyLabel: string) => {
+    const ok = window.confirm(`האם למחוק את הגופן "${fontFamilyLabel}" מהאפליקציה?`);
+    if (!ok) return;
+    try {
+      setFontBusy(fontId);
+      await deleteStoredFont(fontId);
+      setUploadedFonts((prev) => prev.filter((x) => x.id !== fontId));
+      setSettings((s) => {
+        const next: any = { ...s };
+        if (typeof next.fontFamily === 'string' && next.fontFamily.includes(fontFamilyLabel)) {
+          next.fontFamily = DEFAULT_SETTINGS.fontFamily;
+        }
+        const map = (next.fontFamilyByTarget && typeof next.fontFamilyByTarget === 'object')
+          ? { ...next.fontFamilyByTarget }
+          : {};
+        for (const k of ['settings', 'calendarHeader', 'cellDates', 'cellTimes', 'cellEvents'] as const) {
+          const v = map[k];
+          if (typeof v === 'string' && v.includes(fontFamilyLabel)) delete map[k];
+        }
+        next.fontFamilyByTarget = map;
+        return next;
+      });
+      setSaveFlash('הגופן נמחק');
+      window.setTimeout(() => setSaveFlash(null), 1500);
+    } finally {
+      setFontBusy(null);
+    }
+  };
+
+  const FontFamilyPicker = ({
+    menuKey,
+    label,
+    value,
+    onPick,
+  }: {
+    menuKey: string;
+    label: string;
+    value: string;
+    onPick: (v: string) => void;
+  }) => {
+    const open = fontFamilyMenuOpen && fontFamilyMenuKey === menuKey;
+    return (
+      <div className="sm:col-span-2 lg:col-span-3">
+        <div className="text-sm text-slate-700">{label}</div>
+        <div className="relative mt-1">
+          <button
+            type="button"
+            className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
+            onClick={() => {
+              setFontFamilyMenuKey(menuKey);
+              setFontFamilyMenuOpen((v) => (menuKey === fontFamilyMenuKey ? !v : true));
+            }}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+          >
+            <span className="truncate">{fontLabelForValue(value)}</span>
+            <span aria-hidden="true" className="text-slate-500">
+              ▾
+            </span>
+          </button>
+
+          {open ? (
+            <div
+              role="listbox"
+              className="absolute right-0 top-full mt-2 w-full min-w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
+            >
+              <button
+                type="button"
+                role="option"
+                className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                onClick={() => {
+                  setFontFamilyMenuOpen(false);
+                  onPick(DEFAULT_SETTINGS.fontFamily);
+                }}
+              >
+                <span className="truncate">ברירת מחדל</span>
+                {value === DEFAULT_SETTINGS.fontFamily ? (
+                  <span className="text-emerald-600 text-xs">נבחר</span>
+                ) : null}
+              </button>
+
+              {uploadedFonts.length ? (
+                <>
+                  <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
+                    גופנים שהועלו
+                  </div>
+                  <div className="max-h-[240px] overflow-auto">
+                    {uploadedFonts.map((f) => {
+                      const v = cssFontFamilyForUploaded(f.family);
+                      const isSelected = v === value;
+                      return (
+                        <div
+                          key={f.id}
+                          className="w-full px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                        >
+                          <button
+                            type="button"
+                            role="option"
+                            className="min-w-0 flex-1 text-right"
+                            onClick={() => {
+                              setFontFamilyMenuOpen(false);
+                              onPick(v);
+                            }}
+                            style={{ fontFamily: v }}
+                          >
+                            <span className="truncate">{f.family}</span>
+                          </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {isSelected ? (
+                              <span className="text-emerald-600 text-xs">נבחר</span>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                              title="מחק גופן"
+                              aria-label={`מחק גופן ${f.family}`}
+                              disabled={fontBusy !== null}
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (fontBusy) return;
+                                await deleteUploadedFontEverywhere(f.id, f.family);
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+
+              <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
+                גופנים מובנים
+              </div>
+              {FONT_BUILTINS.map((opt) => {
+                const isSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    role="option"
+                    className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                    onClick={() => {
+                      setFontFamilyMenuOpen(false);
+                      onPick(opt.value);
+                    }}
+                    style={{ fontFamily: opt.value }}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {isSelected ? <span className="text-emerald-600 text-xs">נבחר</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  };
   const ensureDownloadsWork = (): boolean => {
     // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
     // Best UX: open the calendar in a top-level tab and ask the user to download there.
@@ -1519,7 +1712,11 @@ export function Calendar() {
       {settingsOpen && (
         <div
           className="relative mb-4 flex max-h-[min(92vh,940px)] flex-col rounded-xl border border-slate-200 bg-white/95 shadow-sm sm:max-h-[min(88vh,900px)]"
-          style={shouldApplyFontTo('settings') ? { fontFamily: scopedFontFamily } : undefined}
+          style={
+            shouldApplyFontTo('settings')
+              ? { fontFamily: resolveFontFamilyFor('settings') }
+              : undefined
+          }
         >
           <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
@@ -1796,179 +1993,14 @@ export function Calendar() {
 
             <SettingsCategory icon="✏️" title="טיפוגרפיה">
             <div id="settings-anchor-header" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
-            <label className="text-sm text-slate-700">
-              משפחת גופן
-              <div ref={fontFamilyMenuRef} className="relative mt-1">
-                {(() => {
-                  const current = settings.fontFamily;
-                  const uploadedMatch = uploadedFonts.find(
-                    (f) => cssFontFamilyForUploaded(f.family) === current,
-                  );
-                  const currentLabel =
-                    current === DEFAULT_SETTINGS.fontFamily
-                      ? 'ברירת מחדל'
-                      : uploadedMatch
-                        ? uploadedMatch.family
-                        : current.includes('Heebo')
-                          ? 'Heebo (אם מותקן)'
-                          : current.includes('Assistant')
-                            ? 'Assistant (אם מותקן)'
-                            : current.startsWith('system-ui')
-                              ? 'System'
-                              : current.includes('Georgia')
-                                ? 'Serif'
-                                : 'בחירה';
-
-                  return (
-                    <>
-                      <button
-                        type="button"
-                        className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
-                        onClick={() => setFontFamilyMenuOpen((v) => !v)}
-                        aria-haspopup="listbox"
-                        aria-expanded={fontFamilyMenuOpen}
-                      >
-                        <span className="truncate">{currentLabel}</span>
-                        <span aria-hidden="true" className="text-slate-500">
-                          ▾
-                        </span>
-                      </button>
-
-                      {fontFamilyMenuOpen ? (
-                        <div
-                          role="listbox"
-                          className="absolute right-0 top-full mt-2 w-full min-w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
-                        >
-                          <button
-                            type="button"
-                            role="option"
-                            className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
-                            onClick={() => {
-                              setFontFamilyMenuOpen(false);
-                              setSettings((s) => ({ ...s, fontFamily: DEFAULT_SETTINGS.fontFamily }));
-                            }}
-                          >
-                            <span className="truncate">ברירת מחדל</span>
-                            {current === DEFAULT_SETTINGS.fontFamily ? (
-                              <span className="text-emerald-600 text-xs">נבחר</span>
-                            ) : null}
-                          </button>
-
-                          {uploadedFonts.length ? (
-                            <>
-                              <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
-                                גופנים שהועלו
-                              </div>
-                              <div className="max-h-[240px] overflow-auto">
-                                {uploadedFonts.map((f) => {
-                                  const v = cssFontFamilyForUploaded(f.family);
-                                  const isSelected = v === current;
-                                  return (
-                                    <div
-                                      key={f.id}
-                                      className="w-full px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
-                                    >
-                                      <button
-                                        type="button"
-                                        role="option"
-                                        className="min-w-0 flex-1 text-right"
-                                        onClick={() => {
-                                          setFontFamilyMenuOpen(false);
-                                          setSettings((s) => ({ ...s, fontFamily: v }));
-                                        }}
-                                        style={{ fontFamily: v }}
-                                      >
-                                        <span className="truncate">{f.family}</span>
-                                      </button>
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        {isSelected ? (
-                                          <span className="text-emerald-600 text-xs">נבחר</span>
-                                        ) : null}
-                                        <button
-                                          type="button"
-                                          className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
-                                          title="מחק גופן"
-                                          aria-label={`מחק גופן ${f.family}`}
-                                          onClick={async (e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            if (fontBusy) return;
-                                            const ok = window.confirm(
-                                              `האם למחוק את הגופן "${f.family}" מהאפליקציה?`,
-                                            );
-                                            if (!ok) return;
-                                            try {
-                                              setFontBusy(f.id);
-                                              await deleteStoredFont(f.id);
-                                              setUploadedFonts((prev) => prev.filter((x) => x.id !== f.id));
-                                              setSaveFlash('הגופן נמחק');
-                                              window.setTimeout(() => setSaveFlash(null), 1500);
-                                              if (settings.fontFamily === v) {
-                                                setSettings((s) => ({
-                                                  ...s,
-                                                  fontFamily: DEFAULT_SETTINGS.fontFamily,
-                                                }));
-                                              }
-                                            } finally {
-                                              setFontBusy(null);
-                                            }
-                                          }}
-                                        >
-                                          ✕
-                                        </button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          ) : null}
-
-                          <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
-                            גופנים מובנים
-                          </div>
-                          {[
-                            {
-                              label: 'Heebo (אם מותקן)',
-                              value: '"Heebo", system-ui, "Segoe UI", Arial, sans-serif',
-                            },
-                            {
-                              label: 'Assistant (אם מותקן)',
-                              value: '"Assistant", system-ui, "Segoe UI", Arial, sans-serif',
-                            },
-                            {
-                              label: 'System',
-                              value: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
-                            },
-                            { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
-                          ].map((opt) => {
-                            const isSelected = opt.value === current;
-                            return (
-                              <button
-                                key={opt.label}
-                                type="button"
-                                role="option"
-                                className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
-                                onClick={() => {
-                                  setFontFamilyMenuOpen(false);
-                                  setSettings((s) => ({ ...s, fontFamily: opt.value }));
-                                }}
-                                style={{ fontFamily: opt.value }}
-                              >
-                                <span className="truncate">{opt.label}</span>
-                                {isSelected ? (
-                                  <span className="text-emerald-600 text-xs">נבחר</span>
-                                ) : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                    </>
-                  );
-                })()}
-              </div>
-            </label>
+            <div ref={fontFamilyMenuRef} className="sm:col-span-2 lg:col-span-3">
+              <FontFamilyPicker
+                menuKey="default"
+                label="משפחת גופן — ברירת מחדל (Fallback)"
+                value={settings.fontFamily}
+                onPick={(v) => setSettings((s) => ({ ...s, fontFamily: v }))}
+              />
+            </div>
 
             <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
               <div className="text-sm font-semibold text-slate-900 mb-2">החל את הגופן על</div>
@@ -2075,6 +2107,75 @@ export function Calendar() {
                   אירועים/טקסט במרכז התא
                 </label>
               </div>
+              {!settings.fontApplyTargets?.includes('all') ? (
+                <div className="mt-3 grid grid-cols-1 gap-3">
+                  {settings.fontApplyTargets?.includes('settings') ? (
+                    <FontFamilyPicker
+                      menuKey="target-settings"
+                      label="גופן לחלונית ההגדרות"
+                      value={settings.fontFamilyByTarget?.settings ?? settings.fontFamily}
+                      onPick={(v) =>
+                        setSettings((s) => ({
+                          ...s,
+                          fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), settings: v },
+                        }))
+                      }
+                    />
+                  ) : null}
+                  {settings.fontApplyTargets?.includes('calendarHeader') ? (
+                    <FontFamilyPicker
+                      menuKey="target-header"
+                      label="גופן לפס העליון (כותרת חודש)"
+                      value={settings.fontFamilyByTarget?.calendarHeader ?? settings.fontFamily}
+                      onPick={(v) =>
+                        setSettings((s) => ({
+                          ...s,
+                          fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), calendarHeader: v },
+                        }))
+                      }
+                    />
+                  ) : null}
+                  {settings.fontApplyTargets?.includes('cellDates') ? (
+                    <FontFamilyPicker
+                      menuKey="target-cellDates"
+                      label="גופן לתאריכים במשבצות"
+                      value={settings.fontFamilyByTarget?.cellDates ?? settings.fontFamily}
+                      onPick={(v) =>
+                        setSettings((s) => ({
+                          ...s,
+                          fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), cellDates: v },
+                        }))
+                      }
+                    />
+                  ) : null}
+                  {settings.fontApplyTargets?.includes('cellTimes') ? (
+                    <FontFamilyPicker
+                      menuKey="target-cellTimes"
+                      label="גופן לזמני שבת במשבצות"
+                      value={settings.fontFamilyByTarget?.cellTimes ?? settings.fontFamily}
+                      onPick={(v) =>
+                        setSettings((s) => ({
+                          ...s,
+                          fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), cellTimes: v },
+                        }))
+                      }
+                    />
+                  ) : null}
+                  {settings.fontApplyTargets?.includes('cellEvents') ? (
+                    <FontFamilyPicker
+                      menuKey="target-cellEvents"
+                      label="גופן לאירועים/טקסט במרכז התא"
+                      value={settings.fontFamilyByTarget?.cellEvents ?? settings.fontFamily}
+                      onPick={(v) =>
+                        setSettings((s) => ({
+                          ...s,
+                          fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), cellEvents: v },
+                        }))
+                      }
+                    />
+                  ) : null}
+                </div>
+              ) : null}
               <div className="mt-2 text-xs text-slate-600">
                 אם לא מסמנים “הכל”, הגופן לא יכפה על שאר הממשק — רק על החלקים שנבחרו.
               </div>
@@ -3644,7 +3745,11 @@ export function Calendar() {
             gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
             onEditHeader={openHeaderEditor}
             gridWeekCount={weeks.length}
-            headerFontFamily={shouldApplyFontTo('calendarHeader') ? scopedFontFamily : undefined}
+            headerFontFamily={
+              shouldApplyFontTo('calendarHeader')
+                ? resolveFontFamilyFor('calendarHeader')
+                : undefined
+            }
             headerLayoutEditMode={headerLayoutEditMode}
             onHeaderWysiwygClassicPctChange={(pct) =>
               setSettings((s) => ({ ...s, headerWysiwygClassicPct: pct }))
@@ -3919,7 +4024,9 @@ export function Calendar() {
                   style={{
                     fontSize: cellScaledPx(settings.gregDayFontPx),
                     lineHeight: 1,
-                    fontFamily: shouldApplyFontTo('cellDates') ? scopedFontFamily : undefined,
+                    fontFamily: shouldApplyFontTo('cellDates')
+                      ? resolveFontFamilyFor('cellDates')
+                      : undefined,
                   }}
                 >
                   {m.gDay}
@@ -3932,7 +4039,9 @@ export function Calendar() {
                   style={{
                     fontSize: cellScaledPx(settings.hebDayFontPx),
                     lineHeight: 1,
-                    fontFamily: shouldApplyFontTo('cellDates') ? scopedFontFamily : undefined,
+                    fontFamily: shouldApplyFontTo('cellDates')
+                      ? resolveFontFamilyFor('cellDates')
+                      : undefined,
                   }}
                 >
                   {m.hebDay}
@@ -4036,7 +4145,9 @@ export function Calendar() {
                             top: centerPaddingTopPx,
                             bottom: '5.25rem',
                             fontSize: cellScaledPx(settings.eventTitleFontPx),
-                            fontFamily: shouldApplyFontTo('cellEvents') ? scopedFontFamily : undefined,
+                            fontFamily: shouldApplyFontTo('cellEvents')
+                              ? resolveFontFamilyFor('cellEvents')
+                              : undefined,
                           }
                         : {
                             top: 0,
@@ -4051,7 +4162,9 @@ export function Calendar() {
                                     Number(settings.eventTitleFontPx) * cellFontScale * 0.2,
                                   )
                                 : 0),
-                            fontFamily: shouldApplyFontTo('cellEvents') ? scopedFontFamily : undefined,
+                            fontFamily: shouldApplyFontTo('cellEvents')
+                              ? resolveFontFamilyFor('cellEvents')
+                              : undefined,
                           }
                     }
                   >
@@ -4097,7 +4210,9 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
                     fontSize: cellScaledPx(settings.shabbatTimesFontPx),
-                    fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                    fontFamily: shouldApplyFontTo('cellTimes')
+                      ? resolveFontFamilyFor('cellTimes')
+                      : undefined,
                   }}
                 >
                   <div className="font-normal text-slate-900 whitespace-nowrap">
@@ -4119,7 +4234,9 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right"
                   style={{
                     fontSize: cellScaledPx(settings.shabbatTimesFontPx),
-                    fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                    fontFamily: shouldApplyFontTo('cellTimes')
+                      ? resolveFontFamilyFor('cellTimes')
+                      : undefined,
                   }}
                 >
                   {settings.showParsha && m.parshaHe ? (
@@ -4148,7 +4265,9 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
                     fontSize: cellScaledPx(settings.shabbatTimesFontPx),
-                    fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                    fontFamily: shouldApplyFontTo('cellTimes')
+                      ? resolveFontFamilyFor('cellTimes')
+                      : undefined,
                   }}
                 >
                   <div className="font-normal text-slate-900 whitespace-nowrap">
@@ -4187,7 +4306,9 @@ export function Calendar() {
                         className="absolute inset-x-2 bottom-2 z-[6] min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                         style={{
                           fontSize: cellScaledPx(settings.shabbatTimesFontPx),
-                          fontFamily: shouldApplyFontTo('cellTimes') ? scopedFontFamily : undefined,
+                          fontFamily: shouldApplyFontTo('cellTimes')
+                            ? resolveFontFamilyFor('cellTimes')
+                            : undefined,
                         }}
                       >
                         {showAutoFastTitles ? (

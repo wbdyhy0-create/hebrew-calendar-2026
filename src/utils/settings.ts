@@ -77,6 +77,13 @@ export type CalendarSettings = {
   headerGregMonthPaddingYPx: number;
   fontFamily: string;
   /**
+   * Optional per-area font override. When omitted, `fontFamily` is used as fallback.
+   * This enables choosing different fonts for different parts (header vs. times, etc).
+   */
+  fontFamilyByTarget?: Partial<
+    Record<'settings' | 'calendarHeader' | 'cellDates' | 'cellTimes' | 'cellEvents', string>
+  >;
+  /**
    * Where to apply `fontFamily` in the app UI.
    * - `all`: apply to everything (legacy behavior)
    * - `settings`: only the settings panel
@@ -230,6 +237,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerGregMonthPaddingYPx: 6,
   fontFamily:
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
+  fontFamilyByTarget: {},
   fontApplyTargets: ['all'],
   fontSizePx: 14,
   fontWeight: 400,
@@ -461,6 +469,21 @@ export function loadSettings(): CalendarSettings {
       merged.fontApplyTargets = DEFAULT_SETTINGS.fontApplyTargets;
     } else {
       merged.fontApplyTargets = DEFAULT_SETTINGS.fontApplyTargets;
+    }
+
+    // Coerce per-target font families
+    if (merged.fontFamilyByTarget && typeof merged.fontFamilyByTarget === 'object' && !Array.isArray(merged.fontFamilyByTarget)) {
+      const src = merged.fontFamilyByTarget as any;
+      const next: any = {};
+      for (const k of ['settings', 'calendarHeader', 'cellDates', 'cellTimes', 'cellEvents'] as const) {
+        const v = src[k];
+        if (typeof v === 'string' && v.trim()) next[k] = v;
+      }
+      merged.fontFamilyByTarget = next;
+    } else if (merged.fontFamilyByTarget === undefined || merged.fontFamilyByTarget === null) {
+      merged.fontFamilyByTarget = {};
+    } else {
+      merged.fontFamilyByTarget = {};
     }
     if (Array.isArray(merged.backgroundImagesByMonth)) {
       const arr = merged.backgroundImagesByMonth as any[];
