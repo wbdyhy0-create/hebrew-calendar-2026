@@ -14,9 +14,9 @@ export type SettingsSearchItem = {
 export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     anchorId: 'settings-anchor-themes',
-    label: 'ערכות עיצוב מוכנות',
-    category: 'ערכות נושא ומבנה כותרת',
-    tokens: 'theme בורר ערכות נושא',
+    label: 'ערכות צבע מוכנות',
+    category: 'ערכות צבע ומבנה כותרת',
+    tokens: 'theme color בורר ערכות צבע',
   },
   {
     anchorId: 'settings-anchor-zmanim',

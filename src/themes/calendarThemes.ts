@@ -898,58 +898,62 @@ export const STYLE_PACK_IDS = new Set([
   'book_layout_bw',
 ]);
 
-const PRESERVE_KEYS: (keyof CalendarSettings)[] = [
-  'titleMain',
-  'titleSub',
-  'backgroundImageDataUrl',
-  'backgroundImagesByMonth',
-  'backgroundImageMode',
+// (legacy note) theme application used to preserve a large key list; color themes no longer need it.
+
+const COLOR_THEME_KEYS: (keyof CalendarSettings)[] = [
+  'headerBarBg',
+  'headerBarBorderColor',
+  'headerBarBorderWidthPx',
+  'headerBarTitleColor',
+  'headerBarSubtitleColor',
+  'headerHebMonthBg',
+  'headerHebMonthTextColor',
+  'headerHebMonthBorderColor',
+  'headerHebMonthBorderWidthPx',
+  'headerGregMonthBg',
+  'headerGregMonthTextColor',
+  'headerGregMonthBorderColor',
+  'headerGregMonthBorderWidthPx',
+  'calendarCanvasFill',
+  'gridShellBg',
+  'gridBorderColor',
+  'gridWeekdayHeaderBg',
+  'gridWeekdayHeaderTextColor',
+  'gridWeekdayHeaderBorderBottomColor',
+  'cellBorderColor',
+  'eventBg',
+  'shabbatBg',
+  'todayBg',
+  'canvasBorderColor',
   'backgroundOpacity',
-  'enableManualEdits',
-  'showEditButtonInCells',
-  'showParsha',
-  'shabbatTimesSource',
-  'zmanimCity',
-  'candleLightingMins',
-  'fastTzaitStyle',
-  'fastSunsetOffsetMins',
-  'pdfPagePreset',
-  'pdfOrientation',
-  'pdfCustomWidthMm',
-  'pdfCustomHeightMm',
-  'pdfMarginMm',
-  'pdfHtml2CanvasScale',
-  'pdfExportCellHeightPx',
-  'calendarLayoutScalePercent',
-  'canvasPaddingPx',
-  'canvasPaddingTopPx',
-  'stylePackId',
 ];
 
-function pickPreserved(current: CalendarSettings): Partial<CalendarSettings> {
+function pickColorPatch(patch: Partial<CalendarSettings>): Partial<CalendarSettings> {
   const out: Partial<CalendarSettings> = {};
-  for (const k of PRESERVE_KEYS) {
-    (out as Record<string, unknown>)[k as string] = current[k];
+  for (const k of COLOR_THEME_KEYS) {
+    const v = patch[k];
+    if (v !== undefined) (out as any)[k] = v;
   }
   return out;
 }
 
 export function applyDesignThemeId(current: CalendarSettings, themeId: string): CalendarSettings {
   if (themeId === 'default') {
+    // Reset colors to defaults but keep current layout/typography/content.
     return {
-      ...DEFAULT_SETTINGS,
-      ...pickPreserved(current),
+      ...current,
+      ...pickColorPatch(DEFAULT_SETTINGS),
       designThemeId: 'default',
     } as CalendarSettings;
   }
   const entry = CALENDAR_THEME_CATALOG.find((t) => t.id === themeId);
   if (!entry) {
-    return { ...DEFAULT_SETTINGS, ...pickPreserved(current), designThemeId: 'default' };
+    return { ...current, ...pickColorPatch(DEFAULT_SETTINGS), designThemeId: 'default' };
   }
+  // Color themes should only influence palette, not layout/typography (handled by style packs).
   return {
-    ...DEFAULT_SETTINGS,
-    ...entry.patch,
-    ...pickPreserved(current),
+    ...current,
+    ...pickColorPatch(entry.patch),
     designThemeId: themeId,
   } as CalendarSettings;
 }

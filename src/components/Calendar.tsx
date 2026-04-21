@@ -1252,7 +1252,7 @@ export function Calendar() {
               className="px-3 py-2 text-sm rounded-md border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 active:bg-violet-100/80 transition flex items-center gap-2"
             >
               <span aria-hidden="true">🎨</span>
-              ערכות עיצוב
+              ערכות צבע
             </button>
             <button
               type="button"
@@ -1883,14 +1883,14 @@ export function Calendar() {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain px-2 py-2 sm:px-3 sm:py-3">
-            <SettingsCategory icon="📁" title="ערכות נושא ומבנה כותרת">
+            <SettingsCategory icon="📁" title="ערכות צבע ומבנה כותרת">
             <div
               id="settings-anchor-themes"
               className="sm:col-span-2 lg:col-span-3 scroll-mt-24 rounded-lg border border-violet-100 bg-violet-50/50 p-3"
             >
-              <div className="text-sm font-normal text-slate-900">ערכות עיצוב מוכנות</div>
+              <div className="text-sm font-normal text-slate-900">ערכות צבע מוכנות</div>
               <p className="mt-1 text-xs text-slate-600">
-                12 סגנונות לפס הכותרת והטבלה. תמונות רקע, זמנים ו־PDF נשמרים מהגדרות נפרדות.
+                בחרו פלטת צבעים בלבד (לא משנה מבנה/גופנים). מבנה נקבע ב״ערכת סגנונות״.
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <button
@@ -1950,7 +1950,7 @@ export function Calendar() {
                 <option value="minimal_text">מינימליסטי — בלי פס, טקסט גדול מעל הלוח</option>
               </select>
               <div className="mt-1 text-xs text-slate-500">
-                ערכות עיצוב יכולות לקבוע מבנה ברירת מחדל; כאן אפשר לעקוף ידנית.
+                מבנה נקבע ב״ערכת סגנונות״; כאן אפשר לעקוף ידנית.
               </div>
             </label>
 
@@ -3822,9 +3822,9 @@ export function Calendar() {
           {[
             {
               key: 'themes',
-              label: 'ערכות עיצוב',
+              label: 'ערכות צבע',
               cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100',
-              items: [{ label: 'בורר ערכות', anchorId: 'settings-anchor-themes' }],
+              items: [{ label: 'בורר ערכות צבע', anchorId: 'settings-anchor-themes' }],
             },
             {
               key: 'header',
