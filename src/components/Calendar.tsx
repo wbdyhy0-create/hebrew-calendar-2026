@@ -4603,9 +4603,7 @@ export function Calendar() {
                   borderRadius: cellRadiusPx ? `${cellRadiusPx}px` : undefined,
                   cursor: settings.enableManualEdits ? 'pointer' : undefined,
                 }}
-                onClick={(e) => {
-                  // Only open picker when clicking the empty cell background (not image drag/delete).
-                  if (e.target !== e.currentTarget) return;
+                onClick={() => {
                   if (!settings.enableManualEdits) return;
                   pickImageForCell(m.gKey);
                 }}
