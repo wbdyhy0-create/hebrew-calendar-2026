@@ -125,6 +125,47 @@ export function Calendar() {
   const [uploadedFonts, setUploadedFonts] = useState<Omit<StoredFont, 'data'>[]>([]);
   const [fontBusy, setFontBusy] = useState<string | null>(null);
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
+  const [fontDragActive, setFontDragActive] = useState(false);
+
+  const uploadFontFiles = async (files: File[]) => {
+    const ok = files.filter((f) => /\.(ttf|otf|woff2?|)$/i.test(f.name) || String(f.type).includes('font'));
+    if (!ok.length) {
+      setSaveFlash('לא נמצאו קבצי גופן (ttf/otf/woff/woff2).');
+      window.setTimeout(() => setSaveFlash(null), 2500);
+      return;
+    }
+
+    for (const file of ok) {
+      const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      setFontBusy(id);
+      try {
+        const data = await file.arrayBuffer();
+        const family = makeUploadedFamilyName(file.name, id);
+        const rec: StoredFont = {
+          id,
+          family,
+          fileName: file.name,
+          mime: file.type || 'font/ttf',
+          data,
+          createdAt: Date.now(),
+        };
+        await putStoredFont(rec);
+        await registerStoredFont(rec);
+        setUploadedFonts((prev) => [
+          ...prev,
+          { id: rec.id, family: rec.family, fileName: rec.fileName, mime: rec.mime, createdAt: rec.createdAt },
+        ]);
+        setSettings((s) => ({ ...s, fontFamily: cssFontFamilyForUploaded(rec.family) }));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+        setSaveFlash(`שגיאה בהעלאת גופן: ${file.name}`);
+        window.setTimeout(() => setSaveFlash(null), 3500);
+      } finally {
+        setFontBusy(null);
+      }
+    }
+  };
   const ensureDownloadsWork = (): boolean => {
     // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
     // Best UX: open the calendar in a top-level tab and ask the user to download there.
@@ -1791,51 +1832,51 @@ export function Calendar() {
                   </button>
                 </div>
               </div>
+              <div
+                className={[
+                  'mt-3 rounded-xl border border-dashed px-4 py-4 text-sm',
+                  fontDragActive
+                    ? 'border-sky-300 bg-sky-50 text-slate-900'
+                    : 'border-slate-200 bg-white text-slate-600',
+                ].join(' ')}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (fontBusy) return;
+                  setFontDragActive(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (fontBusy) return;
+                  setFontDragActive(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFontDragActive(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFontDragActive(false);
+                  if (fontBusy) return;
+                  const files = Array.from(e.dataTransfer.files || []);
+                  void uploadFontFiles(files);
+                }}
+              >
+                גרור קובץ גופן מהתיקייה ושחרר כאן (אפשר גם כמה קבצים).
+              </div>
               <input
                 ref={fontPickerRef}
                 type="file"
                 accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2"
                 className="hidden"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
+                  const files = Array.from(e.target.files || []);
                   e.target.value = '';
-                  if (!file) return;
-                  (async () => {
-                    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-                    setFontBusy(id);
-                    try {
-                      const data = await file.arrayBuffer();
-                      const family = makeUploadedFamilyName(file.name, id);
-                      const rec: StoredFont = {
-                        id,
-                        family,
-                        fileName: file.name,
-                        mime: file.type || 'font/ttf',
-                        data,
-                        createdAt: Date.now(),
-                      };
-                      await putStoredFont(rec);
-                      await registerStoredFont(rec);
-                      setUploadedFonts((prev) => [
-                        ...prev,
-                        {
-                          id: rec.id,
-                          family: rec.family,
-                          fileName: rec.fileName,
-                          mime: rec.mime,
-                          createdAt: rec.createdAt,
-                        },
-                      ]);
-                      setSettings((s) => ({ ...s, fontFamily: cssFontFamilyForUploaded(rec.family) }));
-                    } catch (err) {
-                      // eslint-disable-next-line no-console
-                      console.error(err);
-                      setSaveFlash('שגיאה בהעלאת גופן (ייתכן שהקובץ גדול מדי או לא נתמך)');
-                      window.setTimeout(() => setSaveFlash(null), 3500);
-                    } finally {
-                      setFontBusy(null);
-                    }
-                  })();
+                  if (!files.length) return;
+                  void uploadFontFiles(files);
                 }}
               />
               {uploadedFonts.length ? (
