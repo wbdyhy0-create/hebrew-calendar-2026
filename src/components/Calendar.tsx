@@ -3813,11 +3813,12 @@ export function Calendar() {
       )}
 
       <div
-        className="relative mx-auto flex w-full justify-center gap-3 flex-row-reverse"
+        dir="ltr"
+        className="relative mx-auto flex w-full justify-center gap-3"
         style={{ maxWidth: canvasSurfacePx.widthPx + 220 }}
       >
         {/* Category shortcuts (right of canvas, never overlapping) */}
-        <div className="hidden md:flex w-[160px] shrink-0 flex-col gap-2 pt-2">
+        <div className="order-2 flex w-[160px] shrink-0 flex-col gap-2 pt-2">
           {[
             {
               key: 'themes',
@@ -3941,6 +3942,7 @@ export function Calendar() {
         {/* Ornamental canvas around the table — גודל כמו עמוד PDF (ברירת מחדל A4 לרוחב) */}
         <div
           className={[
+            'order-1',
             'relative shadow-sm',
             // Always allow scrolling if content overflows the frame (when zoom/manual settings exceed the canvas).
             'overflow-auto',
