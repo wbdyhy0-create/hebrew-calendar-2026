@@ -121,34 +121,61 @@ export async function downloadPngFromPrintableHtml(
   const target = calendarElement ?? container;
 
   try {
-    const canvas = await html2canvas(target, {
-      backgroundColor: '#ffffff',
-      scale,
-      useCORS: true,
-      allowTaint: true,
-      windowWidth: windowWidthPx,
-      windowHeight: windowHeightPx,
-      onclone: (doc) => {
-        const scope = doc.querySelector('#calendar-container') ?? doc.body;
-        scope.querySelectorAll<HTMLElement>('.grid').forEach((grid) => {
-          grid.style.display = 'grid';
-          grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
-          grid.style.width = '100%';
-          grid.style.direction = 'rtl';
-        });
-        // Keep wrappers stretched (avoid shrink-to-fit in capture).
-        scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((el) => {
-          el.style.width = '100%';
-          el.style.maxWidth = '100%';
-          el.style.marginLeft = '0';
-          el.style.marginRight = '0';
-        });
-        scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
-          w.style.width = '100%';
-          w.style.maxWidth = '100%';
-        });
-      },
-    });
+    const applyBaseCloneFixes = (scope: Element) => {
+      scope.querySelectorAll<HTMLElement>('.grid').forEach((grid) => {
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+        grid.style.width = '100%';
+        grid.style.direction = 'rtl';
+      });
+      // Keep wrappers stretched (avoid shrink-to-fit in capture).
+      scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((el) => {
+        el.style.width = '100%';
+        el.style.maxWidth = '100%';
+        el.style.marginLeft = '0';
+        el.style.marginRight = '0';
+      });
+      scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
+        w.style.width = '100%';
+        w.style.maxWidth = '100%';
+      });
+    };
+
+    const render = async (mode: 'full' | 'safe') => {
+      return await html2canvas(target, {
+        backgroundColor: '#ffffff',
+        scale,
+        useCORS: true,
+        // If cross-origin images are present without CORS headers, the canvas can become
+        // "tainted" and PNG export will fail. In safe mode we disable images to guarantee a file.
+        allowTaint: false,
+        windowWidth: windowWidthPx,
+        windowHeight: windowHeightPx,
+        onclone: (doc) => {
+          const scope = (doc.querySelector('#calendar-container') ?? doc.body) as Element;
+          applyBaseCloneFixes(scope);
+
+          if (mode === 'safe') {
+            scope.querySelectorAll<HTMLElement>('.printRoot, .canvas').forEach((el) => {
+              el.style.backgroundImage = 'none';
+            });
+            scope.querySelectorAll<HTMLElement>('.cellImg').forEach((el) => {
+              el.style.backgroundImage = 'none';
+            });
+          }
+        },
+      });
+    };
+
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await render('full');
+    } catch (e) {
+      // Retry without any external images (stable export).
+      canvas = await render('safe');
+      // eslint-disable-next-line no-console
+      console.warn('PNG export fell back to safe mode (images disabled).', e);
+    }
 
     const blob: Blob = await new Promise((resolve, reject) => {
       canvas.toBlob(
