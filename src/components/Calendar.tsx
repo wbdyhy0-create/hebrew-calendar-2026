@@ -949,28 +949,35 @@ export function Calendar() {
     return s === 'transparent' || s === 'rgba(0,0,0,0)' || s === 'rgba(0, 0, 0, 0)';
   };
 
-  const sampleHexAtPoint = (clientX: number, clientY: number): string | null => {
+  const sampleHexAtPoint = (
+    clientX: number,
+    clientY: number,
+  ): { hex: string | null; needsSystemPick: boolean } => {
     const stack = document.elementsFromPoint(clientX, clientY);
     const overlay = stack.find((el) => (el as HTMLElement)?.dataset?.liveEyedropper === '1');
     const el =
       stack.find((n) => n !== overlay && (n as HTMLElement).nodeType === 1) ??
       document.elementFromPoint(clientX, clientY);
-    if (!el || !(el instanceof HTMLElement)) return null;
+    if (!el || !(el instanceof HTMLElement)) return { hex: null, needsSystemPick: false };
 
     // Prefer a visible background; fall back to text color.
     let cur: HTMLElement | null = el;
     for (let i = 0; i < 6 && cur; i++) {
       const cs = getComputedStyle(cur);
       const bg = cs.backgroundColor;
+      const bgImg = cs.backgroundImage;
+      if (bgImg && bgImg !== 'none') {
+        return { hex: null, needsSystemPick: true };
+      }
       if (bg && !isTransparent(bg)) {
         const hex = rgbToHex(bg);
-        if (hex) return hex;
+        if (hex) return { hex, needsSystemPick: false };
       }
       cur = cur.parentElement;
     }
     const cs = getComputedStyle(el);
     const hex = rgbToHex(cs.color);
-    return hex;
+    return { hex, needsSystemPick: false };
   };
 
   const pickColorFromScreen = async (apply: (hex: string) => void) => {
@@ -1311,7 +1318,9 @@ export function Calendar() {
           className="fixed inset-0 z-[120] cursor-crosshair bg-black/10"
           style={{ cursor: 'crosshair' }}
           onMouseMove={(e) => {
-            const hex = sampleHexAtPoint(e.clientX, e.clientY);
+            const s = sampleHexAtPoint(e.clientX, e.clientY);
+            if (s.needsSystemPick) return;
+            const hex = s.hex;
             if (!hex) return;
             setLivePicker((p) => {
               if (!p || p.current === hex) return p;
@@ -1320,7 +1329,9 @@ export function Calendar() {
             });
           }}
           onPointerMove={(e) => {
-            const hex = sampleHexAtPoint(e.clientX, e.clientY);
+            const s = sampleHexAtPoint(e.clientX, e.clientY);
+            if (s.needsSystemPick) return;
+            const hex = s.hex;
             if (!hex) return;
             setLivePicker((p) => {
               if (!p || p.current === hex) return p;
@@ -1335,6 +1346,19 @@ export function Calendar() {
             if (e.button === 2) {
               livePicker.revert();
               setLivePicker(null);
+              return;
+            }
+            const s = sampleHexAtPoint(e.clientX, e.clientY);
+            if (s.needsSystemPick) {
+              if (!supportsEyeDropper) {
+                setSaveFlash('אי אפשר לדגום מתמונה בדפדפן הזה (אין EyeDropper).');
+                window.setTimeout(() => setSaveFlash(null), 2200);
+                return;
+              }
+              pickColorFromScreen((hex) => {
+                livePicker.commit(hex);
+                setLivePicker(null);
+              });
               return;
             }
             setLivePicker(null);
@@ -1364,6 +1388,9 @@ export function Calendar() {
               />
               <span className="font-mono">{livePicker.current}</span>
               <span className="text-slate-500">• קליק לקיבוע • Esc לביטול</span>
+            </div>
+            <div className="mt-1 text-[11px] text-slate-500">
+              מעל תמונה/רקע — קליק יפתח טפטפת מערכת לדגימה מדויקת.
             </div>
           </div>
         </div>
