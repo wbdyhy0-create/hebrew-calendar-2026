@@ -60,6 +60,9 @@ export type CalendarSettings = {
   headerWysiwygManualActive: boolean;
   headerWysiwygClassicPct: HeaderWysiwygClassicPct | null;
   headerWysiwygClassicAlign: HeaderWysiwygClassicAlign | null;
+  /** Explicit font sizes for the header main/sub titles (px). */
+  headerTitleMainFontPx: number;
+  headerTitleSubFontPx: number;
   // Month labels inside header bar
   headerHebMonthFontPx: number;
   headerGregMonthFontPx: number;
@@ -227,6 +230,8 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerWysiwygManualActive: false,
   headerWysiwygClassicPct: null,
   headerWysiwygClassicAlign: null,
+  headerTitleMainFontPx: 20,
+  headerTitleSubFontPx: 13,
   headerHebMonthFontPx: 22,
   headerGregMonthFontPx: 16,
   headerHebMonthBorderColor: '#E2E8F0',
@@ -349,6 +354,8 @@ export function loadSettings(): CalendarSettings {
       'headerBarMonthPillOffsetYPx',
       'headerGregLabelOffsetXPx',
       'headerGregLabelOffsetYPx',
+      'headerTitleMainFontPx',
+      'headerTitleSubFontPx',
       'headerHebMonthFontPx',
       'headerGregMonthFontPx',
       'headerHebMonthBorderWidthPx',

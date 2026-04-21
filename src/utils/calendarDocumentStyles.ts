@@ -36,11 +36,15 @@ export function resolveDetachedGridBorderRadiusPx(settings: CalendarSettings): n
 
 /** Classic / right-block primary title row (Tailwind `text-lg` / `sm:text-xl` midpoint). */
 export function resolveHeaderBarPrimaryTitleFontPx(settings: CalendarSettings): number {
+  const n = Number((settings as any).headerTitleMainFontPx);
+  if (Number.isFinite(n) && n > 0) return Math.round(n);
   return Math.max(17, Math.min(22, Math.round(settings.fontSizePx * 1.28)));
 }
 
 /** Classic / right-block subtitle row (`text-xs` / `sm:text-sm`). */
 export function resolveHeaderBarSecondaryTitleFontPx(settings: CalendarSettings): number {
+  const n = Number((settings as any).headerTitleSubFontPx);
+  if (Number.isFinite(n) && n > 0) return Math.round(n);
   return Math.max(11, Math.min(15, Math.round(settings.fontSizePx * 0.88)));
 }
 

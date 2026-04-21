@@ -3773,7 +3773,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת כותרות (ימין/שמאל) ({settings.headerBarTitlesOffsetXPx}px)
+              הזזת טקסטים “לוח שנה/מועדים” (ימין/שמאל) ({settings.headerBarTitlesOffsetXPx}px)
               <input
                 className="mt-2 w-full"
                 type="range"
@@ -3790,7 +3790,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת כותרות (למעלה/למטה) ({settings.headerBarTitlesOffsetYPx}px)
+              הזזת טקסטים “לוח שנה/מועדים” (למעלה/למטה) ({settings.headerBarTitlesOffsetYPx}px)
               <input
                 className="mt-2 w-full"
                 type="range"
@@ -3801,6 +3801,40 @@ export function Calendar() {
                   setSettings((s) => ({
                     ...s,
                     headerBarTitlesOffsetYPx: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              גודל טקסט “לוח שנה עברי‑לועזי” ({settings.headerTitleMainFontPx}px)
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={12}
+                max={44}
+                value={settings.headerTitleMainFontPx}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerTitleMainFontPx: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              גודל טקסט שורת “מועדים · ראשי חודשים · זמני שבת” ({settings.headerTitleSubFontPx}px)
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={10}
+                max={32}
+                value={settings.headerTitleSubFontPx}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerTitleSubFontPx: Number(e.target.value),
                   }))
                 }
               />
