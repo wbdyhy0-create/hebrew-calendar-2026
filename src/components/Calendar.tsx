@@ -30,6 +30,11 @@ import { buildCalendarDayMetas } from '../utils/monthViewModel';
 import { formatGregorianMonthYearHebrew } from '../utils/gregorianHebrew';
 import { downloadPdfFromHtml } from '../utils/pdf';
 import {
+  downloadCssFromPrintableHtml,
+  downloadHtmlFromPrintableHtml,
+  downloadPngFromPrintableHtml,
+} from '../utils/exportDownloads';
+import {
   resolveCalendarLayoutZoomPercent,
   resolveCanvasOuterRadiusPx,
 } from '../utils/calendarDocumentStyles';
@@ -729,6 +734,80 @@ export function Calendar() {
             className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
           >
             הורד חודש PDF
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                setSaveFlash('מכין PNG…');
+                const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
+                  location: 'Jerusalem',
+                });
+                await downloadPngFromPrintableHtml(
+                  `calendar-${format(viewDate, 'yyyy-MM')}.png`,
+                  html,
+                  settings,
+                );
+                setSaveFlash('ה‑PNG ירד');
+                window.setTimeout(() => setSaveFlash(null), 1400);
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                setSaveFlash(`שגיאה בהורדת PNG: ${msg}`);
+                window.setTimeout(() => setSaveFlash(null), 3500);
+                // eslint-disable-next-line no-console
+                console.error(e);
+              }
+            }}
+            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+          >
+            הורד חודש PNG
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
+                  location: 'Jerusalem',
+                });
+                downloadHtmlFromPrintableHtml(`calendar-${format(viewDate, 'yyyy-MM')}.html`, html);
+                setSaveFlash('ה‑HTML ירד');
+                window.setTimeout(() => setSaveFlash(null), 1400);
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                setSaveFlash(`שגיאה בהורדת HTML: ${msg}`);
+                window.setTimeout(() => setSaveFlash(null), 3500);
+                // eslint-disable-next-line no-console
+                console.error(e);
+              }
+            }}
+            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+          >
+            הורד חודש HTML
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
+                  location: 'Jerusalem',
+                });
+                downloadCssFromPrintableHtml(`calendar-${format(viewDate, 'yyyy-MM')}.css`, html);
+                setSaveFlash('ה‑CSS ירד');
+                window.setTimeout(() => setSaveFlash(null), 1400);
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                setSaveFlash(`שגיאה בהורדת CSS: ${msg}`);
+                window.setTimeout(() => setSaveFlash(null), 3500);
+                // eslint-disable-next-line no-console
+                console.error(e);
+              }
+            }}
+            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+          >
+            הורד חודש CSS
           </button>
 
           <button

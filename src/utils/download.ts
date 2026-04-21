@@ -4,6 +4,10 @@ export function downloadTextFile(
   mime = 'text/plain;charset=utf-8',
 ) {
   const blob = new Blob([content], { type: mime });
+  downloadBlobFile(filename, blob);
+}
+
+export function downloadBlobFile(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -11,6 +15,7 @@ export function downloadTextFile(
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  // Revoke after the click is dispatched.
+  setTimeout(() => URL.revokeObjectURL(url), 250);
 }
 
