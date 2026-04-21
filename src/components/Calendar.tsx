@@ -3813,7 +3813,7 @@ export function Calendar() {
       )}
 
       <div
-        className="relative mx-auto flex w-full justify-center gap-3"
+        className="relative mx-auto flex w-full justify-center gap-3 flex-row-reverse"
         style={{ maxWidth: canvasSurfacePx.widthPx + 220 }}
       >
         {/* Category shortcuts (right of canvas, never overlapping) */}
