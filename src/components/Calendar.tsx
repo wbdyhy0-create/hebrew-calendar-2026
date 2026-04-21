@@ -82,6 +82,8 @@ import { CalendarMonthChrome } from './CalendarMonthChrome';
 import { SettingsCategory } from './SettingsCategory';
 import { SettingsSearchBar } from './SettingsSearchBar';
 import { HebcalZmanimLine } from './HebcalZmanimLine';
+import { HelpAssistant } from './HelpAssistant';
+import { HELP_ENTRIES } from '../utils/helpKnowledge';
 
 export function Calendar() {
   const [viewDate, setViewDate] = useState<Date>(() => new Date());
@@ -110,6 +112,7 @@ export function Calendar() {
   const [saveFlash, setSaveFlash] = useState<string | null>(null);
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   const ensureDownloadsWork = (): boolean => {
     // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
     // Best UX: open the calendar in a top-level tab and ask the user to download there.
@@ -870,6 +873,14 @@ export function Calendar() {
             הגדרות עיצוב
           </button>
 
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+          >
+            מדריך תפעולי
+          </button>
+
           <div ref={downloadMenuRef} className="relative">
             <button
               type="button"
@@ -1295,6 +1306,14 @@ export function Calendar() {
           </button>
         </div>
       </header>
+
+      {helpOpen ? (
+        <HelpAssistant
+          entries={HELP_ENTRIES}
+          onJumpToAnchor={(anchorId) => jumpToSetting(anchorId)}
+          onClose={() => setHelpOpen(false)}
+        />
+      ) : null}
 
       {previewOpen ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/40 p-4">
