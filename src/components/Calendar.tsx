@@ -73,7 +73,7 @@ import { mixHexWithWhite } from '../utils/color';
 import { getWeekdayHeaderLabels } from '../utils/weekdayHeaders';
 import { getBackgroundImageForMonth } from '../utils/backgroundImage';
 import { cssCellEdgeBorder } from '../utils/cellBorderCss';
-import { applyDesignThemeId, getThemeEntry } from '../themes/calendarThemes';
+import { applyDesignThemeId, applyStylePackId, getThemeEntry } from '../themes/calendarThemes';
 import { ThemePickerModal } from './ThemePickerModal';
 import { StylePackModal } from './StylePackModal';
 import {
@@ -4894,9 +4894,9 @@ export function Calendar() {
       />
       <StylePackModal
         open={stylePackOpen}
-        currentThemeId={settings.designThemeId}
+        currentStylePackId={settings.stylePackId}
         onClose={() => setStylePackOpen(false)}
-        onSelectTheme={(id) => setSettings((s) => applyDesignThemeId(s, id))}
+        onSelectTheme={(id) => setSettings((s) => applyStylePackId(s, id))}
       />
     </section>
   );

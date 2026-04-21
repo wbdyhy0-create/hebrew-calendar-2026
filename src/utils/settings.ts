@@ -164,6 +164,8 @@ export type CalendarSettings = {
   showCellBorders: boolean;
   /** Active catalog theme id (`default` = built-in defaults, no catalog overlay). */
   designThemeId: string;
+  /** Structural style pack id (`default` = none). */
+  stylePackId: string;
   /** Fill behind the canvas image / lace (calendar “body” tray). */
   calendarCanvasFill: string;
   /** Background for the 7-column grid shell (weekday row + cells). */
@@ -280,6 +282,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   cellCornerRadiusPx: 0,
   showCellBorders: true,
   designThemeId: 'default',
+  stylePackId: 'default',
   calendarCanvasFill: '#ffffff',
   gridShellBg: 'rgba(255,255,255,0.8)',
   backgroundImageMode: 'year',
@@ -429,6 +432,9 @@ export function loadSettings(): CalendarSettings {
     }
     if (typeof merged.designThemeId !== 'string' || !merged.designThemeId.trim()) {
       merged.designThemeId = DEFAULT_SETTINGS.designThemeId;
+    }
+    if (typeof merged.stylePackId !== 'string' || !merged.stylePackId.trim()) {
+      merged.stylePackId = DEFAULT_SETTINGS.stylePackId;
     }
     merged.headerLayoutStyle = sanitizeHeaderLayoutStyle(merged.headerLayoutStyle);
     merged.headerWysiwygManualActive = Boolean(merged.headerWysiwygManualActive);

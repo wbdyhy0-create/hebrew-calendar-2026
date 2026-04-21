@@ -653,6 +653,18 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
   },
 ];
 
+export const STYLE_PACK_IDS = new Set([
+  'retro_yeshivish',
+  'minimal_clean_nolines',
+  'pocket_compact',
+  'combined_header',
+  'double_headerbar',
+  'modern_soft',
+  'overlay_header',
+  'handdrawn_art',
+  'compact_torani',
+]);
+
 const PRESERVE_KEYS: (keyof CalendarSettings)[] = [
   'titleMain',
   'titleSub',
@@ -678,6 +690,7 @@ const PRESERVE_KEYS: (keyof CalendarSettings)[] = [
   'calendarLayoutScalePercent',
   'canvasPaddingPx',
   'canvasPaddingTopPx',
+  'stylePackId',
 ];
 
 function pickPreserved(current: CalendarSettings): Partial<CalendarSettings> {
@@ -705,6 +718,20 @@ export function applyDesignThemeId(current: CalendarSettings, themeId: string): 
     ...entry.patch,
     ...pickPreserved(current),
     designThemeId: themeId,
+  } as CalendarSettings;
+}
+
+export function applyStylePackId(current: CalendarSettings, stylePackId: string): CalendarSettings {
+  if (!stylePackId || stylePackId === 'default') {
+    return { ...current, stylePackId: 'default' };
+  }
+  const entry = CALENDAR_THEME_CATALOG.find((t) => t.id === stylePackId);
+  if (!entry) return { ...current, stylePackId: 'default' };
+  // Apply structural patch on top of current (keep colors/theme as-is).
+  return {
+    ...current,
+    ...entry.patch,
+    stylePackId,
   } as CalendarSettings;
 }
 

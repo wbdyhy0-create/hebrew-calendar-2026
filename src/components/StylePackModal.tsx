@@ -1,25 +1,13 @@
-import { CALENDAR_THEME_CATALOG } from '../themes/calendarThemes';
+import { CALENDAR_THEME_CATALOG, STYLE_PACK_IDS } from '../themes/calendarThemes';
 
 type Props = {
   open: boolean;
-  currentThemeId: string;
+  currentStylePackId: string;
   onClose: () => void;
   onSelectTheme: (themeId: string) => void;
 };
 
-const STYLE_PACK_IDS = new Set([
-  'retro_yeshivish',
-  'minimal_clean_nolines',
-  'pocket_compact',
-  'combined_header',
-  'double_headerbar',
-  'modern_soft',
-  'overlay_header',
-  'handdrawn_art',
-  'compact_torani',
-]);
-
-export function StylePackModal({ open, currentThemeId, onClose, onSelectTheme }: Props) {
+export function StylePackModal({ open, currentStylePackId, onClose, onSelectTheme }: Props) {
   if (!open) return null;
 
   const entries = CALENDAR_THEME_CATALOG.filter((t) => STYLE_PACK_IDS.has(t.id));
@@ -58,7 +46,7 @@ export function StylePackModal({ open, currentThemeId, onClose, onSelectTheme }:
           <button
             type="button"
             className={`rounded-lg border px-3 py-2 text-sm font-medium ${
-              currentThemeId === 'default'
+              currentStylePackId === 'default'
                 ? 'border-sky-500 bg-sky-50 text-sky-900'
                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
             }`}
@@ -73,7 +61,7 @@ export function StylePackModal({ open, currentThemeId, onClose, onSelectTheme }:
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {entries.map((t) => {
-            const active = currentThemeId === t.id;
+            const active = currentStylePackId === t.id;
             return (
               <button
                 key={t.id}

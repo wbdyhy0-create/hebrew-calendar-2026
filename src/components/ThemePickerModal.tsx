@@ -1,4 +1,4 @@
-import { CALENDAR_THEME_CATALOG } from '../themes/calendarThemes';
+import { CALENDAR_THEME_CATALOG, STYLE_PACK_IDS } from '../themes/calendarThemes';
 
 type Props = {
   open: boolean;
@@ -60,7 +60,7 @@ export function ThemePickerModal({ open, currentThemeId, onClose, onSelectTheme 
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {CALENDAR_THEME_CATALOG.map((t) => {
+          {CALENDAR_THEME_CATALOG.filter((t) => !STYLE_PACK_IDS.has(t.id)).map((t) => {
             const active = currentThemeId === t.id;
             return (
               <button
