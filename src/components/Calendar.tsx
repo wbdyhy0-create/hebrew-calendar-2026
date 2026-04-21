@@ -506,6 +506,7 @@ export function Calendar() {
 
   const [bgMonthIdx, setBgMonthIdx] = useState<number>(() => new Date().getMonth());
   const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [shortcutOpen, setShortcutOpen] = useState<string | null>(null);
   const [inspect, setInspect] = useState<{
     key: 'none' | 'header' | 'weekdays' | 'cell' | 'background';
     x: number;
@@ -1231,7 +1232,10 @@ export function Calendar() {
           </div>
         </div>
       ) : null}
-      <header className="relative flex flex-col gap-3 mb-4">
+      <header
+        className="relative flex flex-col gap-3 mb-4 mx-auto"
+        style={{ width: `min(100%, ${canvasSurfacePx.widthPx}px)` }}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="text-right">
             <p className="text-xs sm:text-sm text-slate-500">
@@ -1239,7 +1243,7 @@ export function Calendar() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 justify-end">
+          <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
           <button
             type="button"
             onClick={() => setThemePickerOpen(true)}
@@ -1665,7 +1669,7 @@ export function Calendar() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 justify-end">
+        <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
           <button
             type="button"
             onClick={() => setViewDate((d) => addMonths(d, 12))}
@@ -1698,32 +1702,127 @@ export function Calendar() {
       </header>
 
       {/* Category shortcuts (right side of canvas) */}
-      <div className="hidden lg:flex fixed right-3 top-[140px] z-[60] w-[190px] flex-col gap-2">
+      <div className="hidden lg:flex fixed right-3 top-[180px] z-[60] w-[168px] flex-col gap-2">
         {[
-          { label: 'ערכות עיצוב', icon: '🎨', anchorId: 'settings-anchor-themes', cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100' },
-          { label: 'זמנים', icon: '🕯️', anchorId: 'settings-anchor-zmanim', cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100' },
-          { label: 'טיפוגרפיה', icon: '✏️', anchorId: 'settings-anchor-header', cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100' },
-          { label: 'צבעים', icon: '🖌️', anchorId: 'settings-anchor-colors', cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100' },
-          { label: 'ריפוד', icon: '⬜', anchorId: 'settings-anchor-padding-cells', cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50' },
-          { label: 'ימי שבוע', icon: '📅', anchorId: 'settings-anchor-weekdays', cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100' },
-          { label: 'ייצוא', icon: '⬇️', anchorId: 'settings-anchor-export', cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100' },
-          { label: 'רקע/קנבס', icon: '🖼️', anchorId: 'settings-anchor-background', cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100' },
-          { label: 'גודל/זום', icon: '🔍', anchorId: 'settings-anchor-canvas-surface', cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50' },
-          { label: 'עריכה ידנית', icon: '📝', anchorId: 'settings-anchor-manual-edits', cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50' },
+          {
+            key: 'themes',
+            label: 'ערכות עיצוב',
+            icon: '🎨',
+            cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100',
+            items: [{ label: 'בורר ערכות', anchorId: 'settings-anchor-themes' }],
+          },
+          {
+            key: 'header',
+            label: 'פס עליון',
+            icon: '🧾',
+            cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
+            items: [
+              { label: 'גובה/עיגול/מסגרת', anchorId: 'settings-anchor-headerbar-size' },
+              { label: 'צבעים', anchorId: 'settings-anchor-headerbar-colors' },
+              { label: 'חודש עברי/לועזי', anchorId: 'settings-anchor-header-month' },
+              { label: 'מיקום/רוחב', anchorId: 'settings-anchor-header-position' },
+            ],
+          },
+          {
+            key: 'zmanim',
+            label: 'זמנים',
+            icon: '🕯️',
+            cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
+            items: [{ label: 'כניסה/יציאה', anchorId: 'settings-anchor-zmanim' }],
+          },
+          {
+            key: 'typography',
+            label: 'טיפוגרפיה',
+            icon: '✏️',
+            cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100',
+            items: [{ label: 'גופנים/משקלים', anchorId: 'settings-anchor-header' }],
+          },
+          {
+            key: 'colors',
+            label: 'צבעים',
+            icon: '🖌️',
+            cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100',
+            items: [
+              { label: 'צבעי ימים', anchorId: 'settings-anchor-colors' },
+              { label: 'ריפוד תאים', anchorId: 'settings-anchor-padding-cells' },
+              { label: 'קווים/מסגרות', anchorId: 'settings-anchor-borders' },
+            ],
+          },
+          {
+            key: 'weekdays',
+            label: 'ימי שבוע',
+            icon: '📅',
+            cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
+            items: [{ label: 'פורמט/צבע/גובה', anchorId: 'settings-anchor-weekdays' }],
+          },
+          {
+            key: 'export',
+            label: 'ייצוא',
+            icon: '⬇️',
+            cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
+            items: [{ label: 'PDF/HTML/PNG', anchorId: 'settings-anchor-export' }],
+          },
+          {
+            key: 'background',
+            label: 'רקע/קנבס',
+            icon: '🖼️',
+            cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
+            items: [
+              { label: 'תמונת רקע', anchorId: 'settings-anchor-background' },
+              { label: 'גודל/זום', anchorId: 'settings-anchor-canvas-surface' },
+            ],
+          },
+          {
+            key: 'manual',
+            label: 'עריכה ידנית',
+            icon: '📝',
+            cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+            items: [{ label: 'אפשרויות', anchorId: 'settings-anchor-manual-edits' }],
+          },
         ].map((b) => (
-          <button
-            key={b.anchorId}
-            type="button"
-            className={[
-              'w-full text-right px-3 py-2 text-sm rounded-md border transition flex items-center justify-between gap-2 shadow-sm',
-              b.cls,
-            ].join(' ')}
-            onClick={() => jumpToSetting(b.anchorId)}
-          >
-            <span className="truncate">{b.label}</span>
-            <span aria-hidden="true">{b.icon}</span>
-          </button>
+          <div key={b.key} className="w-full">
+            <button
+              type="button"
+              className={[
+                'w-full text-right px-3 py-2 text-sm rounded-md border transition flex items-center justify-between gap-2 shadow-sm',
+                b.cls,
+              ].join(' ')}
+              onClick={() => {
+                setSettingsOpen(true);
+                setShortcutOpen((prev) => (prev === b.key ? null : b.key));
+              }}
+            >
+              <span className="truncate">{b.label}</span>
+              <span aria-hidden="true">{b.icon}</span>
+            </button>
+            {shortcutOpen === b.key ? (
+              <div className="mt-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden">
+                {b.items.map((it) => (
+                  <button
+                    key={it.anchorId}
+                    type="button"
+                    className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                    onClick={() => jumpToSetting(it.anchorId)}
+                  >
+                    {it.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
         ))}
+
+        <button
+          type="button"
+          className="mt-2 w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 transition flex items-center justify-between gap-2"
+          onClick={() => {
+            setSettingsOpen(false);
+            setShortcutOpen(null);
+          }}
+        >
+          <span>סגור עריכה</span>
+          <span aria-hidden="true">✕</span>
+        </button>
       </div>
 
       {helpOpen ? (
