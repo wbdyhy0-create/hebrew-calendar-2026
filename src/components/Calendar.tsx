@@ -1661,13 +1661,22 @@ export function Calendar() {
               </div>
             ) : null}
           </div>
+        </div>
 
+        <div className="flex flex-wrap items-center gap-2 justify-end">
           <button
             type="button"
             onClick={() => setViewDate((d) => addMonths(d, 12))}
             className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
           >
             שנה הבאה
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewDate((d) => addMonths(d, -12))}
+            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+          >
+            שנה קודמת
           </button>
           <button
             type="button"
@@ -1682,13 +1691,6 @@ export function Calendar() {
             className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
           >
             החודש הקודם
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewDate((d) => addMonths(d, -12))}
-            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
-          >
-            שנה קודמת
           </button>
         </div>
       </header>
@@ -1854,7 +1856,89 @@ export function Calendar() {
             <SettingsSearchBar onPick={jumpToSetting} />
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain px-2 py-2 sm:px-3 sm:py-3">
+          <div className="flex min-h-0 flex-1 gap-3 px-2 py-2 sm:px-3 sm:py-3">
+            <div className="hidden lg:flex w-[220px] shrink-0 flex-col gap-2">
+              {[
+                {
+                  label: 'ערכות עיצוב',
+                  icon: '🎨',
+                  anchorId: 'settings-anchor-themes',
+                  cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100',
+                },
+                {
+                  label: 'זמנים',
+                  icon: '🕯️',
+                  anchorId: 'settings-anchor-zmanim',
+                  cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
+                },
+                {
+                  label: 'טיפוגרפיה',
+                  icon: '✏️',
+                  anchorId: 'settings-anchor-header',
+                  cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100',
+                },
+                {
+                  label: 'צבעים/מסגרות',
+                  icon: '🖌️',
+                  anchorId: 'settings-anchor-colors',
+                  cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100',
+                },
+                {
+                  label: 'ריפוד תאים',
+                  icon: '⬜',
+                  anchorId: 'settings-anchor-padding-cells',
+                  cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+                },
+                {
+                  label: 'ימי שבוע',
+                  icon: '📅',
+                  anchorId: 'settings-anchor-weekdays',
+                  cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
+                },
+                {
+                  label: 'ייצוא',
+                  icon: '⬇️',
+                  anchorId: 'settings-anchor-export',
+                  cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
+                },
+                {
+                  label: 'רקע/קנבס',
+                  icon: '🖼️',
+                  anchorId: 'settings-anchor-background',
+                  cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
+                },
+                {
+                  label: 'גודל/זום',
+                  icon: '🔍',
+                  anchorId: 'settings-anchor-canvas-surface',
+                  cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+                },
+                {
+                  label: 'עריכה ידנית',
+                  icon: '📝',
+                  anchorId: 'settings-anchor-manual-edits',
+                  cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+                },
+              ].map((b) => (
+                <button
+                  key={b.anchorId}
+                  type="button"
+                  className={[
+                    'w-full text-right px-3 py-2 text-sm rounded-md border transition flex items-center justify-between gap-2',
+                    b.cls,
+                  ].join(' ')}
+                  onClick={() => jumpToSetting(b.anchorId)}
+                >
+                  <span className="truncate">{b.label}</span>
+                  <span aria-hidden="true">{b.icon}</span>
+                </button>
+              ))}
+              <div className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                לחיצה מעבירה מיד לקטגוריה בתוך ההגדרות.
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain">
             <SettingsCategory icon="📁" title="ערכות נושא ומבנה כותרת">
             <div
               id="settings-anchor-themes"
@@ -3780,6 +3864,7 @@ export function Calendar() {
               />
             </label>
             </SettingsCategory>
+            </div>
           </div>
         </div>
       )}
