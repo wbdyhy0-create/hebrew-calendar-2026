@@ -1457,6 +1457,10 @@ export function Calendar() {
               type="button"
               className="h-8 w-8 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
               aria-label="סגור פלטת צבעים"
+              onPointerDown={(e) => {
+                // Prevent the draggable header from capturing the pointer, which can swallow the click.
+                e.stopPropagation();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 setColorPaletteOpen(false);
