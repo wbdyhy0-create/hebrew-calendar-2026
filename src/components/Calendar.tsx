@@ -3649,52 +3649,6 @@ export function Calendar() {
             />
 
             <ColorInput
-              label="צבע מסגרת תג עברי (מרכז)"
-              value={settings.headerHebMonthBorderColor}
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerHebMonthBorderColor: hex,
-                }))
-              }
-            />
-
-            <label className="text-sm text-slate-700">
-              עובי מסגרת תג עברי (מרכז) ({settings.headerHebMonthBorderWidthPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={8}
-                value={settings.headerHebMonthBorderWidthPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthBorderWidthPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <ColorInput
-              label="רקע תג עברי (מרכז)"
-              value={
-                (settings.headerHebMonthBg ?? '').startsWith('#')
-                  ? (settings.headerHebMonthBg as string)
-                  : '#FFFFFF'
-              }
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerHebMonthBg: hex,
-                }))
-              }
-            />
-            <div className="mt-1 text-xs text-slate-500 sm:col-span-2 lg:col-span-3">
-              שים לב: בחירת צבע תחליף לרקע אטום (לא שקוף).
-            </div>
-
-            <ColorInput
               label="צבע טקסט תג עברי (מרכז)"
               value={settings.headerHebMonthTextColor}
               onChange={(hex) =>
@@ -3718,57 +3672,6 @@ export function Calendar() {
                   setSettings((s) => ({
                     ...s,
                     headerHebMonthFontWeight: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              עיגול פינות תג עברי (מרכז) ({settings.headerHebMonthRadiusPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={999}
-                value={settings.headerHebMonthRadiusPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthRadiusPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              ריפוד תג עברי לרוחב ({settings.headerHebMonthPaddingXPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={6}
-                max={40}
-                value={settings.headerHebMonthPaddingXPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthPaddingXPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              ריפוד תג עברי לגובה ({settings.headerHebMonthPaddingYPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={2}
-                max={22}
-                value={settings.headerHebMonthPaddingYPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthPaddingYPx: Number(e.target.value),
                   }))
                 }
               />
