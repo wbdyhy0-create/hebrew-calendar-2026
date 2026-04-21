@@ -4411,6 +4411,12 @@ export function Calendar() {
               items: [{ label: 'בורר ערכות צבע', anchorId: 'settings-anchor-themes' }],
             },
             {
+              key: 'styles',
+              label: 'סגנונות',
+              cls: 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100',
+              items: [],
+            },
+            {
               key: 'header',
               label: 'פס עליון',
               cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
@@ -4541,29 +4547,160 @@ export function Calendar() {
               >
                 <span className="truncate">{b.label}</span>
               </button>
-              {shortcutOpen === b.key && b.items.length > 0 ? (
+              {shortcutOpen === b.key && (b.items.length > 0 || b.key === 'styles') ? (
                 <div
                   className={[
-                    'absolute top-0 z-30 w-[220px] rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden',
+                    'absolute top-0 z-30 w-[260px] rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden',
                     // Open the submenu to the left of the sidebar (so it never covers the list below).
                     'right-full mr-2',
                   ].join(' ')}
                 >
-                  <div className="max-h-[260px] overflow-auto">
-                    {b.items.map((it) => (
-                      <button
-                        key={it.anchorId}
-                        type="button"
-                        className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
-                        onClick={() => {
-                          openAndJumpToSetting(it.anchorId);
-                          setShortcutOpen(null);
-                        }}
-                      >
-                        {it.label}
-                      </button>
-                    ))}
-                  </div>
+                  {b.key === 'styles' ? (
+                    <div className="max-h-[360px] overflow-auto p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold text-slate-900">סגנונות שמורים</div>
+                        <button
+                          type="button"
+                          className="h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          aria-label="סגור סגנונות"
+                          onClick={() => setShortcutOpen(null)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-600">
+                        שמור והחל את כל ההגדרות בלחיצה אחת.
+                      </div>
+
+                      <div className="mt-3 flex flex-col gap-2">
+                        <input
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="שם סגנון"
+                          value={stylePresetName}
+                          onChange={(e) => setStylePresetName(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                          onClick={() => {
+                            const name = stylePresetName.trim();
+                            if (!name) {
+                              setSaveFlash('אנא כתוב שם לסגנון.');
+                              window.setTimeout(() => setSaveFlash(null), 1800);
+                              return;
+                            }
+                            const now = Date.now();
+                            const p: StylePreset = {
+                              id: createPresetId(),
+                              name,
+                              createdAt: now,
+                              updatedAt: now,
+                              settings,
+                            };
+                            setStylePresets((items) => [p, ...items]);
+                            setStylePresetSelectedId(p.id);
+                            setStylePresetName('');
+                            setSaveFlash('הסגנון נשמר');
+                            window.setTimeout(() => setSaveFlash(null), 1500);
+                          }}
+                        >
+                          שמור כסגנון חדש
+                        </button>
+                      </div>
+
+                      <div className="mt-3">
+                        {stylePresets.length ? (
+                          <>
+                            <select
+                              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                              value={stylePresetSelectedId ?? ''}
+                              onChange={(e) => setStylePresetSelectedId(e.target.value || null)}
+                            >
+                              {stylePresets.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name}
+                                </option>
+                              ))}
+                            </select>
+
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                                onClick={() => {
+                                  const p = stylePresets.find((x) => x.id === stylePresetSelectedId);
+                                  if (!p) return;
+                                  applyStylePreset(p);
+                                  // Close the panel after applying, per user request.
+                                  setShortcutOpen(null);
+                                }}
+                              >
+                                החל
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                                onClick={() => {
+                                  const p = stylePresets.find((x) => x.id === stylePresetSelectedId);
+                                  if (!p) return;
+                                  if (!window.confirm(`לעדכן את הסגנון \"${p.name}\" לפי ההגדרות הנוכחיות?`))
+                                    return;
+                                  const now = Date.now();
+                                  setStylePresets((items) =>
+                                    items.map((x) =>
+                                      x.id === p.id ? { ...x, updatedAt: now, settings } : x,
+                                    ),
+                                  );
+                                  setSaveFlash('הסגנון עודכן');
+                                  window.setTimeout(() => setSaveFlash(null), 1500);
+                                }}
+                              >
+                                עדכן
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 hover:bg-rose-100"
+                                onClick={() => {
+                                  const p = stylePresets.find((x) => x.id === stylePresetSelectedId);
+                                  if (!p) return;
+                                  if (!window.confirm(`למחוק את הסגנון \"${p.name}\"?`)) return;
+                                  setStylePresets((items) => {
+                                    const next = items.filter((x) => x.id !== p.id);
+                                    setStylePresetSelectedId((cur) =>
+                                      cur === p.id ? (next[0]?.id ?? null) : cur,
+                                    );
+                                    return next;
+                                  });
+                                  setSaveFlash('הסגנון נמחק');
+                                  window.setTimeout(() => setSaveFlash(null), 1500);
+                                }}
+                              >
+                                מחק
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-sm text-slate-600">אין עדיין סגנונות שמורים.</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-h-[260px] overflow-auto">
+                      {b.items.map((it) => (
+                        <button
+                          key={it.anchorId}
+                          type="button"
+                          className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                          onClick={() => {
+                            openAndJumpToSetting(it.anchorId);
+                            setShortcutOpen(null);
+                          }}
+                        >
+                          {it.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>
