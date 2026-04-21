@@ -4198,7 +4198,23 @@ export function Calendar() {
               />
             </label>
             <label className="text-sm text-slate-700">
-              עיגול פינות מסגרת קנבס ({settings.canvasOuterRadiusPx}px)
+              <div id="settings-anchor-canvas-radius" className="scroll-mt-24" />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>עיגול פינות מסגרת קנבס ({settings.canvasOuterRadiusPx}px)</div>
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      canvasOuterRadiusPx: s.canvasOuterRadiusPx > 0 ? 0 : DEFAULT_SETTINGS.canvasOuterRadiusPx,
+                    }))
+                  }
+                  title={settings.canvasOuterRadiusPx > 0 ? 'זוויות חדות (0px)' : 'פינות מעוגלות'}
+                >
+                  {settings.canvasOuterRadiusPx > 0 ? 'זוויות' : 'עגול'}
+                </button>
+              </div>
               <input
                 className="mt-2 w-full"
                 type="range"
@@ -4337,6 +4353,7 @@ export function Calendar() {
                 { label: 'מרכוז אנכי', anchorId: 'settings-anchor-canvas-center' },
                 { label: 'ריפוד קנבס', anchorId: 'settings-anchor-canvas-padding' },
                 { label: 'מסגרת קנבס', anchorId: 'settings-anchor-canvas-border' },
+                { label: 'עיגול פינות מסגרת קנבס', anchorId: 'settings-anchor-canvas-radius' },
               ],
             },
             {
