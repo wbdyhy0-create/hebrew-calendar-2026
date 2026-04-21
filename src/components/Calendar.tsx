@@ -2267,7 +2267,12 @@ export function Calendar() {
               {previewKind === 'html' ? (
                 <iframe title="preview" className="w-full h-full" srcDoc={previewSrcDoc ?? ''} />
               ) : previewUrl ? (
-                <iframe title="preview" className="w-full h-full" src={previewUrl} />
+                <iframe
+                  title="preview"
+                  className="w-full h-full"
+                  style={{ direction: 'ltr' }}
+                  src={previewUrl}
+                />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-sm text-slate-600">
                   טוען תצוגה מקדימה…
