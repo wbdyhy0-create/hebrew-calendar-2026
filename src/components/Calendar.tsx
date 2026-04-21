@@ -1865,6 +1865,9 @@ export function Calendar() {
             <p className="text-xs sm:text-sm text-slate-500">
               {gMonthDays} ימים בחודש (לועזי)
             </p>
+            <p className="mt-0.5 text-[10px] text-slate-400 select-text">
+              build {typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : 'unknown'}
+            </p>
           </div>
         </div>
 
