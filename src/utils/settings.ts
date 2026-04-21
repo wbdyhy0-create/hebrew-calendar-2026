@@ -50,6 +50,9 @@ export type CalendarSettings = {
   headerBarTitlesOffsetYPx: number;
   headerBarMonthPillOffsetXPx: number;
   headerBarMonthPillOffsetYPx: number;
+  /** Fine nudge for the left Gregorian month/year label (CSS translate, px). */
+  headerGregLabelOffsetXPx: number;
+  headerGregLabelOffsetYPx: number;
   /**
    * כשמופעל: פס כותרת קלאסי (צף / חיבור חלק) משתמש ב־`headerWysiwygClassicPct` (אחוזים מתוך הפס)
    * לוויץ׳וויו ול־PDF — ללא חישוב px נפרד.
@@ -219,6 +222,8 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerBarTitlesOffsetYPx: 0,
   headerBarMonthPillOffsetXPx: 0,
   headerBarMonthPillOffsetYPx: 0,
+  headerGregLabelOffsetXPx: 0,
+  headerGregLabelOffsetYPx: 0,
   headerWysiwygManualActive: false,
   headerWysiwygClassicPct: null,
   headerWysiwygClassicAlign: null,
@@ -342,6 +347,8 @@ export function loadSettings(): CalendarSettings {
       'headerBarTitlesOffsetYPx',
       'headerBarMonthPillOffsetXPx',
       'headerBarMonthPillOffsetYPx',
+      'headerGregLabelOffsetXPx',
+      'headerGregLabelOffsetYPx',
       'headerHebMonthFontPx',
       'headerGregMonthFontPx',
       'headerHebMonthBorderWidthPx',

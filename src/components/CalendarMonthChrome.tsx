@@ -236,7 +236,7 @@ function HeaderBarClassic({
         <div
           className="min-w-0 justify-self-start overflow-visible"
           style={{
-            transform: `translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px)`,
+            transform: `translate(${settings.headerGregLabelOffsetXPx}px, ${settings.headerGregLabelOffsetYPx}px)`,
           }}
         >
           <GregChip settings={settings}>{gregorianLabel}</GregChip>

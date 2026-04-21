@@ -3626,12 +3626,46 @@ export function Calendar() {
                 className="mt-2 w-full"
                 type="range"
                 min={10}
-                max={28}
+                max={42}
                 value={settings.headerGregMonthFontPx}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
                     headerGregMonthFontPx: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              הזזת טקסט חודש/שנה לועזי (ימין/שמאל) ({settings.headerGregLabelOffsetXPx}px)
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={-320}
+                max={320}
+                value={settings.headerGregLabelOffsetXPx}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerGregLabelOffsetXPx: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              הזזת טקסט חודש/שנה לועזי (למעלה/למטה) ({settings.headerGregLabelOffsetYPx}px)
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={-160}
+                max={160}
+                value={settings.headerGregLabelOffsetYPx}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerGregLabelOffsetYPx: Number(e.target.value),
                   }))
                 }
               />
