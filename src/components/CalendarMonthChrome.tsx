@@ -85,7 +85,7 @@ function GregChip({ settings, children }: { settings: CalendarSettings; children
   );
 }
 
-/** כותרת חודש עברי במרכז — טקסט בלבד (בלי תג/מסגרת). */
+/** כותרת חודש עברי במרכז — תג עם רקע/מסגרת לפי ההגדרות. */
 function HebMonthTitle({ settings, children }: { settings: CalendarSettings; children: ReactNode }) {
   return (
     <span
@@ -94,8 +94,21 @@ function HebMonthTitle({ settings, children }: { settings: CalendarSettings; chi
         fontSize: settings.headerHebMonthFontPx,
         fontWeight: settings.headerHebMonthFontWeight,
         color: settings.headerHebMonthTextColor,
+        borderStyle: 'solid',
+        borderColor: settings.headerHebMonthBorderColor,
+        borderWidth: settings.headerHebMonthBorderWidthPx,
+        background: settings.headerHebMonthBg,
+        borderRadius: settings.headerHebMonthRadiusPx,
+        paddingLeft: settings.headerHebMonthPaddingXPx,
+        paddingRight: settings.headerHebMonthPaddingXPx,
+        paddingTop: settings.headerHebMonthPaddingYPx,
+        paddingBottom: settings.headerHebMonthPaddingYPx,
         whiteSpace: 'nowrap',
+        display: 'inline-flex',
+        alignItems: 'center',
         lineHeight: 1,
+        boxSizing: 'border-box',
+        maxWidth: '100%',
       }}
     >
       {children}

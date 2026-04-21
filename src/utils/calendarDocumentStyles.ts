@@ -101,7 +101,7 @@ export function buildGregChipPrintHtml(
   )}</span>`;
 }
 
-/** Hebrew month title text — same as `HebMonthTitle` (no pill frame). */
+/** Hebrew month title chip — same as `HebMonthTitle` in live preview. */
 export function buildHebMonthTitlePrintHtml(
   settings: CalendarSettings,
   esc: (s: string) => string,
@@ -109,7 +109,13 @@ export function buildHebMonthTitlePrintHtml(
 ): string {
   return `<span class="hebPill" style="font-size:${settings.headerHebMonthFontPx}px;font-weight:${
     settings.headerHebMonthFontWeight
-  };color:${escAttr(settings.headerHebMonthTextColor)};white-space:nowrap;line-height:1;">${esc(
+  };color:${escAttr(settings.headerHebMonthTextColor)};border-style:solid;border-color:${escAttr(
+    settings.headerHebMonthBorderColor,
+  )};border-width:${settings.headerHebMonthBorderWidthPx}px;background:${escAttr(
+    settings.headerHebMonthBg,
+  )};border-radius:${settings.headerHebMonthRadiusPx}px;padding:${settings.headerHebMonthPaddingYPx}px ${
+    settings.headerHebMonthPaddingXPx
+  }px;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;box-sizing:border-box;max-width:100%;">${esc(
     text,
   )}</span>`;
 }
@@ -599,6 +605,10 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       .headerBar:not(.headerWysiwyg) .hebPill{
         font-weight: ${settings.headerHebMonthFontWeight};
         color: ${settings.headerHebMonthTextColor};
+        border:${settings.headerHebMonthBorderWidthPx}px solid ${settings.headerHebMonthBorderColor};
+        background: ${settings.headerHebMonthBg};
+        border-radius:${settings.headerHebMonthRadiusPx}px;
+        padding: ${settings.headerHebMonthPaddingYPx}px ${settings.headerHebMonthPaddingXPx}px;
         white-space:nowrap;
         font-size: ${settings.headerHebMonthFontPx}px;
         line-height: 1;
@@ -608,6 +618,9 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         align-self: center;
         transform: translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px);
         box-sizing: border-box;
+        display:inline-flex;
+        align-items:center;
+        max-width:100%;
         overflow: visible;
       }
       .headerBar:not(.headerWysiwyg) .gregLabel{
