@@ -75,6 +75,7 @@ import { getBackgroundImageForMonth } from '../utils/backgroundImage';
 import { cssCellEdgeBorder } from '../utils/cellBorderCss';
 import { applyDesignThemeId, getThemeEntry } from '../themes/calendarThemes';
 import { ThemePickerModal } from './ThemePickerModal';
+import { StylePackModal } from './StylePackModal';
 import {
   DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN,
   DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT,
@@ -506,6 +507,7 @@ export function Calendar() {
 
   const [bgMonthIdx, setBgMonthIdx] = useState<number>(() => new Date().getMonth());
   const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [stylePackOpen, setStylePackOpen] = useState(false);
   const [shortcutOpen, setShortcutOpen] = useState<string | null>(null);
   const [inspect, setInspect] = useState<{
     key: 'none' | 'header' | 'weekdays' | 'cell' | 'background';
@@ -1245,6 +1247,14 @@ export function Calendar() {
             >
               <span aria-hidden="true">🎨</span>
               ערכות עיצוב
+            </button>
+            <button
+              type="button"
+              onClick={() => setStylePackOpen(true)}
+              className="px-3 py-2 text-sm rounded-md border border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100 active:bg-fuchsia-100/80 transition flex items-center gap-2"
+            >
+              <span aria-hidden="true">🧩</span>
+              ערכת סגנונות
             </button>
 
             <button
@@ -4880,6 +4890,12 @@ export function Calendar() {
         open={themePickerOpen}
         currentThemeId={settings.designThemeId}
         onClose={() => setThemePickerOpen(false)}
+        onSelectTheme={(id) => setSettings((s) => applyDesignThemeId(s, id))}
+      />
+      <StylePackModal
+        open={stylePackOpen}
+        currentThemeId={settings.designThemeId}
+        onClose={() => setStylePackOpen(false)}
         onSelectTheme={(id) => setSettings((s) => applyDesignThemeId(s, id))}
       />
     </section>
