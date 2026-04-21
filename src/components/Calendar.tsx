@@ -293,11 +293,38 @@ export function Calendar() {
     onPick: (v: string) => void;
   }) => {
     const open = fontFamilyMenuOpen && fontFamilyMenuKey === menuKey;
+    const btnRef = useRef<HTMLButtonElement | null>(null);
+    const [menuRect, setMenuRect] = useState<{ left: number; top: number; width: number } | null>(
+      null,
+    );
+
+    useEffect(() => {
+      if (!open) return;
+      const compute = () => {
+        const el = btnRef.current;
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const left = Math.max(8, Math.min(window.innerWidth - 8 - r.width, r.left));
+        setMenuRect({ left, top: r.bottom + 8, width: r.width });
+      };
+      compute();
+      const onResize = () => compute();
+      // Close on any scroll (including inside the settings panel), so it never looks “stuck”.
+      const onScroll = () => setFontFamilyMenuOpen(false);
+      window.addEventListener('resize', onResize);
+      window.addEventListener('scroll', onScroll, true);
+      return () => {
+        window.removeEventListener('resize', onResize);
+        window.removeEventListener('scroll', onScroll, true);
+      };
+    }, [open]);
+
     return (
       <div className="sm:col-span-2 lg:col-span-3">
         <div className="text-sm text-slate-700">{label}</div>
         <div className="relative mt-1">
           <button
+            ref={btnRef}
             type="button"
             className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
             onClick={() => {
@@ -316,7 +343,13 @@ export function Calendar() {
           {open ? (
             <div
               role="listbox"
-              className="absolute right-0 top-full mt-2 w-full min-w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
+              className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
+              style={{
+                left: menuRect?.left ?? 8,
+                top: menuRect?.top ?? 80,
+                width: menuRect?.width ?? 300,
+                maxWidth: 'calc(100vw - 16px)',
+              }}
             >
               <button
                 type="button"
