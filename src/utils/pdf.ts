@@ -283,19 +283,6 @@ export async function exportPdfBlobFromHtml(
         root.style.setProperty('min-height', `${heightMm}mm`, 'important');
       }
 
-      // Ensure RTL layout in the clone. Without this, some environments treat the cloned subtree as LTR,
-      // which flips header flex/grid alignment (month box moves to left, titles flow LTR).
-      if (root) {
-        root.setAttribute('dir', 'rtl');
-        root.style.setProperty('direction', 'rtl', 'important');
-      }
-      scope.setAttribute?.('dir', 'rtl');
-      (scope as HTMLElement).style?.setProperty?.('direction', 'rtl', 'important');
-      scope.querySelectorAll<HTMLElement>('.printRoot, .canvas, .headerBar, .headerMinimal, .headerRightBlockShell, .headerRightBlockBar, .headerCenteredPillShell').forEach((el) => {
-        el.setAttribute('dir', 'rtl');
-        el.style.setProperty('direction', 'rtl', 'important');
-      });
-
       // When exporting multi-page (year), we capture `.canvas` nodes. The printable HTML background
       // is applied to `.printRoot`, not `.canvas`, so the photo can disappear in PDF.
       // Copy the computed background from the root into each canvas in the clone.
