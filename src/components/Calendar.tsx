@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  addDays,
   addMonths,
   format,
   getDaysInMonth,
@@ -1079,52 +1078,6 @@ export function Calendar() {
 
           <button
             type="button"
-            onClick={() => {
-              const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
-                location: 'Jerusalem',
-              });
-              // Print via hidden iframe (no popups; closest to Chrome's native layout engine).
-              const iframe = document.createElement('iframe');
-              iframe.style.position = 'fixed';
-              iframe.style.left = '0';
-              iframe.style.top = '0';
-              iframe.style.width = '100%';
-              iframe.style.height = '100%';
-              iframe.style.opacity = '0';
-              iframe.style.pointerEvents = 'none';
-              iframe.style.zIndex = '-1';
-              iframe.setAttribute('aria-hidden', 'true');
-              iframe.srcdoc = html;
-              document.body.appendChild(iframe);
-
-              const cleanup = () => {
-                try {
-                  iframe.remove();
-                } catch {
-                  // ignore
-                }
-              };
-
-              iframe.onload = () => {
-                try {
-                  const w = iframe.contentWindow;
-                  if (!w) return cleanup();
-                  w.focus();
-                  w.print();
-                  // remove after print dialog opens
-                  setTimeout(cleanup, 2000);
-                } catch {
-                  cleanup();
-                }
-              };
-            }}
-            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
-          >
-            הדפס / שמור כ‑PDF (Chrome)
-          </button>
-
-          <button
-            type="button"
             onClick={() => setViewDate((d) => addMonths(d, 12))}
             className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
           >
@@ -1150,23 +1103,6 @@ export function Calendar() {
             className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
           >
             שנה קודמת
-          </button>
-
-          <div className="w-px h-7 bg-slate-200 mx-1" aria-hidden="true" />
-
-          <button
-            type="button"
-            onClick={() => setViewDate((d) => addDays(d, 7))}
-            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
-          >
-            שבוע הבא
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewDate((d) => addDays(d, -7))}
-            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
-          >
-            שבוע קודם
           </button>
         </div>
       </header>
