@@ -916,6 +916,16 @@ export function Calendar() {
     return `#${to2(r)}${to2(g)}${to2(b)}`.toUpperCase();
   };
 
+  const normalizeToHexForColorInput = (raw: string, fallbackHex = '#FFFFFF'): string => {
+    const v = String(raw ?? '').trim();
+    if (/^#[0-9a-f]{6}$/i.test(v)) return v.toUpperCase();
+    const fromRgb = rgbToHex(v);
+    if (fromRgb) return fromRgb;
+    // Common named values from presets:
+    if (isTransparent(v)) return fallbackHex;
+    return fallbackHex;
+  };
+
   const isTransparent = (v: string) => {
     const s = v.trim().toLowerCase();
     return s === 'transparent' || s === 'rgba(0,0,0,0)' || s === 'rgba(0, 0, 0, 0)';
@@ -977,7 +987,7 @@ export function Calendar() {
         <input
           className="w-full h-10 rounded-md border border-slate-200 bg-white px-2"
           type="color"
-          value={value}
+          value={normalizeToHexForColorInput(value)}
           onChange={(e) => onChange(e.target.value)}
         />
         <button
@@ -986,7 +996,9 @@ export function Calendar() {
           title="טפטפת חיה (תצוגה מיידית)"
           aria-label="טפטפת"
           onClick={() => {
-            const original = value;
+            const original = normalizeToHexForColorInput(value);
+            setSaveFlash('טפטפת פעילה: הזז את העכבר על הלוח, קליק לקיבוע, Esc לביטול');
+            window.setTimeout(() => setSaveFlash(null), 1800);
             setLivePicker({
               label,
               original,
