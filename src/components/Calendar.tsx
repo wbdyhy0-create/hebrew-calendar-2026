@@ -76,6 +76,7 @@ import { cssCellEdgeBorder } from '../utils/cellBorderCss';
 import { applyDesignThemeId, applyStylePackId, getThemeEntry } from '../themes/calendarThemes';
 import { ThemePickerModal } from './ThemePickerModal';
 import { StylePackModal } from './StylePackModal';
+import { createPresetId, loadStylePresets, saveStylePresets, type StylePreset } from '../utils/stylePresets';
 import {
   DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN,
   DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT,
@@ -318,6 +319,15 @@ export function Calendar() {
   const [settings, setSettings] = useState<CalendarSettings>(() =>
     typeof window === 'undefined' ? DEFAULT_SETTINGS : loadSettings(),
   );
+  const [stylePresets, setStylePresets] = useState<StylePreset[]>(() =>
+    typeof window === 'undefined' ? [] : loadStylePresets(),
+  );
+  const [stylePresetSelectedId, setStylePresetSelectedId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const items = loadStylePresets();
+    return items[0]?.id ?? null;
+  });
+  const [stylePresetName, setStylePresetName] = useState<string>('');
   const [overrides, setOverrides] = useState<OverridesMap>(() =>
     typeof window === 'undefined' ? {} : loadOverrides(),
   );
@@ -533,6 +543,23 @@ export function Calendar() {
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
+
+  useEffect(() => {
+    saveStylePresets(stylePresets);
+  }, [stylePresets]);
+
+  const applyStylePreset = (p: StylePreset) => {
+    try {
+      const next = p.settings;
+      setSettings(next);
+      setSaveFlash(`הוחל סגנון: ${p.name}`);
+      window.setTimeout(() => setSaveFlash(null), 1600);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+      setSaveFlash(`שגיאה בהחלת סגנון: ${msg}`);
+      window.setTimeout(() => setSaveFlash(null), 3500);
+    }
+  };
 
   useEffect(() => {
     saveOverrides(overrides);
@@ -3484,6 +3511,121 @@ export function Calendar() {
               />
               הצג כפתור “ערוך” בתוך התאים
             </label>
+
+            <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2 lg:col-span-3">
+              <div className="text-sm font-semibold text-slate-900">סגנונות שמורים</div>
+              <div className="mt-1 text-xs text-slate-600">
+                שמור את כל ההגדרות הנוכחיות בשם, והחל אותן בלחיצה אחת.
+              </div>
+
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  className="w-full sm:w-72 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                  placeholder="שם סגנון (למשל: פרינט נקי / רטרו)"
+                  value={stylePresetName}
+                  onChange={(e) => setStylePresetName(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    const name = stylePresetName.trim();
+                    if (!name) {
+                      setSaveFlash('אנא כתוב שם לסגנון.');
+                      window.setTimeout(() => setSaveFlash(null), 1800);
+                      return;
+                    }
+                    const now = Date.now();
+                    const p: StylePreset = {
+                      id: createPresetId(),
+                      name,
+                      createdAt: now,
+                      updatedAt: now,
+                      settings,
+                    };
+                    setStylePresets((items) => [p, ...items]);
+                    setStylePresetSelectedId(p.id);
+                    setStylePresetName('');
+                    setSaveFlash('הסגנון נשמר');
+                    window.setTimeout(() => setSaveFlash(null), 1500);
+                  }}
+                >
+                  שמור כסגנון חדש
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-col gap-2">
+                {stylePresets.length ? (
+                  <div className="flex flex-col gap-2">
+                    <select
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                      value={stylePresetSelectedId ?? ''}
+                      onChange={(e) => setStylePresetSelectedId(e.target.value || null)}
+                    >
+                      {stylePresets.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                        onClick={() => {
+                          const p = stylePresets.find((x) => x.id === stylePresetSelectedId);
+                          if (!p) return;
+                          applyStylePreset(p);
+                        }}
+                      >
+                        החל סגנון
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                        onClick={() => {
+                          const p = stylePresets.find((x) => x.id === stylePresetSelectedId);
+                          if (!p) return;
+                          if (!window.confirm(`לעדכן את הסגנון \"${p.name}\" לפי ההגדרות הנוכחיות?`)) return;
+                          const now = Date.now();
+                          setStylePresets((items) =>
+                            items.map((x) =>
+                              x.id === p.id ? { ...x, updatedAt: now, settings } : x,
+                            ),
+                          );
+                          setSaveFlash('הסגנון עודכן');
+                          window.setTimeout(() => setSaveFlash(null), 1500);
+                        }}
+                      >
+                        עדכן לפי מצב נוכחי
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 hover:bg-rose-100"
+                        onClick={() => {
+                          const p = stylePresets.find((x) => x.id === stylePresetSelectedId);
+                          if (!p) return;
+                          if (!window.confirm(`למחוק את הסגנון \"${p.name}\"?`)) return;
+                          setStylePresets((items) => items.filter((x) => x.id !== p.id));
+                          setStylePresetSelectedId((cur) => {
+                            if (cur !== p.id) return cur;
+                            const next = stylePresets.filter((x) => x.id !== p.id)[0];
+                            return next?.id ?? null;
+                          });
+                          setSaveFlash('הסגנון נמחק');
+                          window.setTimeout(() => setSaveFlash(null), 1500);
+                        }}
+                      >
+                        מחק
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-600">אין עדיין סגנונות שמורים.</div>
+                )}
+              </div>
+            </div>
 
             <div
               id="settings-anchor-headerbar-size"
