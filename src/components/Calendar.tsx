@@ -3638,6 +3638,24 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
+              משקל גופן חודש/שנה לועזי ({settings.headerGregMonthFontWeight})
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={300}
+                max={900}
+                step={50}
+                value={settings.headerGregMonthFontWeight}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerGregMonthFontWeight: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
               הזזת טקסט חודש/שנה לועזי (ימין/שמאל) ({settings.headerGregLabelOffsetXPx}px)
               <input
                 className="mt-2 w-full"
@@ -3835,6 +3853,42 @@ export function Calendar() {
                   setSettings((s) => ({
                     ...s,
                     headerTitleSubFontPx: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              משקל גופן “לוח שנה עברי‑לועזי” ({settings.headerTitleMainFontWeight})
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={300}
+                max={900}
+                step={50}
+                value={settings.headerTitleMainFontWeight}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerTitleMainFontWeight: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label className="text-sm text-slate-700">
+              משקל גופן שורת “מועדים · ראשי חודשים · זמני שבת” ({settings.headerTitleSubFontWeight})
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={300}
+                max={900}
+                step={50}
+                value={settings.headerTitleSubFontWeight}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    headerTitleSubFontWeight: Number(e.target.value),
                   }))
                 }
               />

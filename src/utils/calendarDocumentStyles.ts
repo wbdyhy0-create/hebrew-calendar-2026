@@ -96,7 +96,9 @@ export function buildGregChipPrintHtml(
 ): string {
   return `<span class="gregChipPrint" style="font-size:${settings.headerGregMonthFontPx}px;color:${escAttr(
     settings.headerGregMonthTextColor,
-  )};border-style:solid;border-color:${escAttr(settings.headerGregMonthBorderColor)};border-width:${
+  )};font-weight:${settings.headerGregMonthFontWeight};border-style:solid;border-color:${escAttr(
+    settings.headerGregMonthBorderColor,
+  )};border-width:${
     settings.headerGregMonthBorderWidthPx
   }px;background:${escAttr(settings.headerGregMonthBg)};border-radius:${
     settings.headerGregMonthRadiusPx
@@ -582,7 +584,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow: visible;
       }
       .headerBar:not(.headerWysiwyg) .main{
-        font-weight:${settings.fontWeight};
+        font-weight:${settings.headerTitleMainFontWeight};
         font-size:${titlePx}px;
         color:${settings.headerBarTitleColor};
         white-space:normal;
@@ -593,6 +595,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       }
       .headerBar:not(.headerWysiwyg) .sub{
         font-size:${subPx}px;
+        font-weight:${settings.headerTitleSubFontWeight};
         color:${settings.headerBarSubtitleColor};
         white-space:normal;
         word-break:break-word;
@@ -641,7 +644,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow:visible;
       }
       .headerBar.headerWysiwyg .main{
-        font-weight:${settings.fontWeight};
+        font-weight:${settings.headerTitleMainFontWeight};
         font-size:${titlePx}px;
         color:${settings.headerBarTitleColor};
         white-space:normal;
@@ -652,6 +655,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       }
       .headerBar.headerWysiwyg .sub{
         font-size:${subPx}px;
+        font-weight:${settings.headerTitleSubFontWeight};
         color:${settings.headerBarSubtitleColor};
         white-space:normal;
         word-break:break-word;

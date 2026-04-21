@@ -62,6 +62,7 @@ function GregChip({ settings, children }: { settings: CalendarSettings; children
       className="leading-none"
       style={{
         fontSize: settings.headerGregMonthFontPx,
+        fontWeight: settings.headerGregMonthFontWeight,
         color: settings.headerGregMonthTextColor,
         borderStyle: 'solid',
         borderColor: settings.headerGregMonthBorderColor,
@@ -163,6 +164,7 @@ function HeaderBarClassic({
                 style={{
                   color: settings.headerBarTitleColor,
                   fontSize: resolveHeaderBarPrimaryTitleFontPx(settings),
+                  fontWeight: settings.headerTitleMainFontWeight,
                 }}
               >
                 {settings.titleMain}
@@ -172,6 +174,7 @@ function HeaderBarClassic({
                 style={{
                   color: settings.headerBarSubtitleColor,
                   fontSize: resolveHeaderBarSecondaryTitleFontPx(settings),
+                  fontWeight: settings.headerTitleSubFontWeight,
                 }}
               >
                 {settings.titleSub}
@@ -208,6 +211,7 @@ function HeaderBarClassic({
               style={{
                 color: settings.headerBarTitleColor,
                 fontSize: resolveHeaderBarPrimaryTitleFontPx(settings),
+                fontWeight: settings.headerTitleMainFontWeight,
               }}
             >
               {settings.titleMain}
@@ -217,6 +221,7 @@ function HeaderBarClassic({
               style={{
                 color: settings.headerBarSubtitleColor,
                 fontSize: resolveHeaderBarSecondaryTitleFontPx(settings),
+                fontWeight: settings.headerTitleSubFontWeight,
               }}
             >
               {settings.titleSub}

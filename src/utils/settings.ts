@@ -63,6 +63,9 @@ export type CalendarSettings = {
   /** Explicit font sizes for the header main/sub titles (px). */
   headerTitleMainFontPx: number;
   headerTitleSubFontPx: number;
+  /** Explicit font weights for the header main/sub titles (400..900). */
+  headerTitleMainFontWeight: number;
+  headerTitleSubFontWeight: number;
   // Month labels inside header bar
   headerHebMonthFontPx: number;
   headerGregMonthFontPx: number;
@@ -81,6 +84,7 @@ export type CalendarSettings = {
   headerGregMonthRadiusPx: number;
   headerGregMonthPaddingXPx: number;
   headerGregMonthPaddingYPx: number;
+  headerGregMonthFontWeight: number; // 400..900
   fontFamily: string;
   /**
    * Optional per-area font override. When omitted, `fontFamily` is used as fallback.
@@ -232,6 +236,8 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerWysiwygClassicAlign: null,
   headerTitleMainFontPx: 20,
   headerTitleSubFontPx: 13,
+  headerTitleMainFontWeight: 400,
+  headerTitleSubFontWeight: 400,
   headerHebMonthFontPx: 22,
   headerGregMonthFontPx: 16,
   headerHebMonthBorderColor: '#E2E8F0',
@@ -249,6 +255,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerGregMonthRadiusPx: 999,
   headerGregMonthPaddingXPx: 12,
   headerGregMonthPaddingYPx: 6,
+  headerGregMonthFontWeight: 400,
   fontFamily:
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
   fontFamilyByTarget: {},
@@ -356,6 +363,8 @@ export function loadSettings(): CalendarSettings {
       'headerGregLabelOffsetYPx',
       'headerTitleMainFontPx',
       'headerTitleSubFontPx',
+      'headerTitleMainFontWeight',
+      'headerTitleSubFontWeight',
       'headerHebMonthFontPx',
       'headerGregMonthFontPx',
       'headerHebMonthBorderWidthPx',
@@ -367,6 +376,7 @@ export function loadSettings(): CalendarSettings {
       'headerGregMonthRadiusPx',
       'headerGregMonthPaddingXPx',
       'headerGregMonthPaddingYPx',
+      'headerGregMonthFontWeight',
       'canvasPaddingPx',
       'canvasPaddingTopPx',
       'calendarLayoutScalePercent',
