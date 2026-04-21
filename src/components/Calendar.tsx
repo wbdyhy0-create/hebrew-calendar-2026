@@ -3324,6 +3324,7 @@ export function Calendar() {
             </div>
 
             <label className="text-sm text-slate-700">
+              <div id="settings-anchor-export-page" className="scroll-mt-24" />
               גודל עמוד (תבנית)
               <select
                 className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
@@ -3342,6 +3343,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
+              <div id="settings-anchor-export-orientation" className="scroll-mt-24" />
               כיוון עמוד
               <select
                 className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
@@ -3396,6 +3398,7 @@ export function Calendar() {
             ) : null}
 
             <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
+              <div id="settings-anchor-export-margin" className="scroll-mt-24" />
               שוליים סביב העמוד ({settings.pdfMarginMm} מ״מ)
               <input
                 className="mt-2 w-full"
@@ -3899,6 +3902,7 @@ export function Calendar() {
               <div className="mt-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+                    <div id="settings-anchor-background-mode" className="scroll-mt-24" />
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"
@@ -3957,6 +3961,7 @@ export function Calendar() {
                 </div>
 
                 <input
+                  id="settings-anchor-background-upload"
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
@@ -3998,6 +4003,7 @@ export function Calendar() {
                   הסר רקע
                 </button>
                 <button
+                  id="settings-anchor-background-remove"
                   type="button"
                   onClick={() =>
                     setSettings((s) => ({
@@ -4011,6 +4017,7 @@ export function Calendar() {
                   הסר הכל
                 </button>
                 <div className="text-sm text-slate-600">
+                  <div id="settings-anchor-background-opacity" className="scroll-mt-24" />
                   אטימות ({Math.round(settings.backgroundOpacity * 100)}%)
                   <input
                     className="ml-2 align-middle"
@@ -4045,6 +4052,7 @@ export function Calendar() {
             </div>
 
             <label className="text-sm text-slate-700 flex items-center gap-2 sm:col-span-2 lg:col-span-3">
+              <div id="settings-anchor-canvas-autofit" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.layoutAutoFitToCanvas}
@@ -4061,6 +4069,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700 flex items-center gap-2 sm:col-span-2 lg:col-span-3">
+              <div id="settings-anchor-canvas-fillheight" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.layoutFillHeight}
@@ -4075,6 +4084,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
+              <div id="settings-anchor-canvas-zoom" className="scroll-mt-24" />
               זום הלוח ({resolveCalendarLayoutZoomPercent(settings)}%)
               <input
                 className="mt-2 w-full"
@@ -4096,6 +4106,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700 flex items-center gap-2 sm:col-span-2 lg:col-span-3">
+              <div id="settings-anchor-canvas-center" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.layoutCenterVertically}
@@ -4110,6 +4121,7 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
+              <div id="settings-anchor-canvas-padding" className="scroll-mt-24" />
               רווח מסביב בקנבס ({settings.canvasPaddingPx}px)
               <input
                 className="mt-2 w-full"
@@ -4145,6 +4157,7 @@ export function Calendar() {
               </div>
             </label>
             <label className="text-sm text-slate-700">
+              <div id="settings-anchor-canvas-border" className="scroll-mt-24" />
               מסגרת הקנבס ({settings.canvasBorderWidthPx}px)
               <input
                 className="mt-2 w-full"
@@ -4249,7 +4262,12 @@ export function Calendar() {
               key: 'export',
               label: 'ייצוא',
               cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
-              items: [{ label: 'PDF/HTML/PNG', anchorId: 'settings-anchor-export' }],
+              items: [
+                { label: 'כללי ייצוא', anchorId: 'settings-anchor-export' },
+                { label: 'גודל עמוד (A4/A5/מותאם)', anchorId: 'settings-anchor-export-page' },
+                { label: 'כיוון עמוד', anchorId: 'settings-anchor-export-orientation' },
+                { label: 'שוליים', anchorId: 'settings-anchor-export-margin' },
+              ],
             },
             {
               key: 'background',
@@ -4257,7 +4275,17 @@ export function Calendar() {
               cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
               items: [
                 { label: 'תמונת רקע', anchorId: 'settings-anchor-background' },
-                { label: 'גודל/זום', anchorId: 'settings-anchor-canvas-surface' },
+                { label: 'מצב תמונה (שנה/חודש)', anchorId: 'settings-anchor-background-mode' },
+                { label: 'העלאת תמונה', anchorId: 'settings-anchor-background-upload' },
+                { label: 'הסרה/איפוס רקע', anchorId: 'settings-anchor-background-remove' },
+                { label: 'אטימות רקע', anchorId: 'settings-anchor-background-opacity' },
+                { label: 'מידות קנבס', anchorId: 'settings-anchor-canvas-surface' },
+                { label: 'מתח למילוי (Auto‑fit)', anchorId: 'settings-anchor-canvas-autofit' },
+                { label: 'מלא גובה', anchorId: 'settings-anchor-canvas-fillheight' },
+                { label: 'זום לוח', anchorId: 'settings-anchor-canvas-zoom' },
+                { label: 'מרכוז אנכי', anchorId: 'settings-anchor-canvas-center' },
+                { label: 'ריפוד קנבס', anchorId: 'settings-anchor-canvas-padding' },
+                { label: 'מסגרת קנבס', anchorId: 'settings-anchor-canvas-border' },
               ],
             },
             {
