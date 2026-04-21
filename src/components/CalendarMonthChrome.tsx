@@ -94,15 +94,10 @@ function HebMonthTitle({ settings, children }: { settings: CalendarSettings; chi
         fontSize: settings.headerHebMonthFontPx,
         fontWeight: settings.headerHebMonthFontWeight,
         color: settings.headerHebMonthTextColor,
-        borderStyle: 'solid',
-        borderColor: settings.headerHebMonthBorderColor,
-        borderWidth: settings.headerHebMonthBorderWidthPx,
-        background: settings.headerHebMonthBg,
-        borderRadius: settings.headerHebMonthRadiusPx,
-        paddingLeft: settings.headerHebMonthPaddingXPx,
-        paddingRight: settings.headerHebMonthPaddingXPx,
-        paddingTop: settings.headerHebMonthPaddingYPx,
-        paddingBottom: settings.headerHebMonthPaddingYPx,
+        border: 'none',
+        background: 'transparent',
+        borderRadius: 0,
+        padding: 0,
         whiteSpace: 'nowrap',
         display: 'inline-flex',
         alignItems: 'center',
@@ -197,7 +192,10 @@ function HeaderBarClassic({
 
   return (
     <div className={[outerClassName, 'overflow-visible'].join(' ')} data-inspect="header" style={barStyle}>
-      <div className="relative grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 overflow-visible px-5 py-1.5 sm:px-6">
+      <div
+        className="relative grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 overflow-visible px-5 py-1.5 sm:px-6"
+        style={{ minHeight: barMinH }}
+      >
         <div
           className="min-w-0 max-w-full justify-self-end overflow-visible text-right"
           style={{
