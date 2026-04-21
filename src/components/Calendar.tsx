@@ -209,25 +209,8 @@ export function Calendar() {
     }
   };
 
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (!fontFamilyMenuOpen) return;
-      const el = fontFamilyMenuRef.current;
-      if (!el) return;
-      if (e.target && el.contains(e.target as Node)) return;
-      setFontFamilyMenuOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (!fontFamilyMenuOpen) return;
-      if (e.key === 'Escape') setFontFamilyMenuOpen(false);
-    };
-    window.addEventListener('mousedown', onDown, true);
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('mousedown', onDown, true);
-      window.removeEventListener('keydown', onKey, true);
-    };
-  }, [fontFamilyMenuOpen]);
+  // Note: font picker dropdown closing is handled by an overlay + Escape (inside the picker),
+  // to avoid tricky event ordering with capture listeners inside scroll/overflow containers.
 
   const FONT_BUILTINS: Array<{ label: string; value: string }> = [
     { label: 'Heebo (אם מותקן)', value: '"Heebo", system-ui, "Segoe UI", Arial, sans-serif' },
@@ -311,11 +294,16 @@ export function Calendar() {
       const onResize = () => compute();
       // Close on any scroll (including inside the settings panel), so it never looks “stuck”.
       const onScroll = () => setFontFamilyMenuOpen(false);
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setFontFamilyMenuOpen(false);
+      };
       window.addEventListener('resize', onResize);
       window.addEventListener('scroll', onScroll, true);
+      window.addEventListener('keydown', onKeyDown, true);
       return () => {
         window.removeEventListener('resize', onResize);
         window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('keydown', onKeyDown, true);
       };
     }, [open]);
 
@@ -345,16 +333,27 @@ export function Calendar() {
           </button>
 
           {open ? (
-            <div
-              role="listbox"
-              className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
-              style={{
-                left: menuRect?.left ?? 8,
-                top: menuRect?.top ?? 80,
-                width: menuRect?.width ?? 300,
-                maxWidth: 'calc(100vw - 16px)',
-              }}
-            >
+            <>
+              <button
+                type="button"
+                className="fixed inset-0 z-[89] cursor-default bg-transparent"
+                aria-label="סגור רשימת גופנים"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFontFamilyMenuOpen(false);
+                }}
+              />
+              <div
+                role="listbox"
+                className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
+                style={{
+                  left: menuRect?.left ?? 8,
+                  top: menuRect?.top ?? 80,
+                  width: menuRect?.width ?? 300,
+                  maxWidth: 'calc(100vw - 16px)',
+                }}
+              >
               <button
                 type="button"
                 role="option"
@@ -468,7 +467,8 @@ export function Calendar() {
                   </button>
                 );
               })}
-            </div>
+              </div>
+            </>
           ) : null}
         </div>
       </div>
