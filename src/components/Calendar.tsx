@@ -3895,17 +3895,29 @@ export function Calendar() {
                 <span className="truncate">{b.label}</span>
               </button>
               {shortcutOpen === b.key ? (
-                <div className="mt-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  {b.items.map((it) => (
-                    <button
-                      key={it.anchorId}
-                      type="button"
-                      className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
-                      onClick={() => jumpToSetting(it.anchorId)}
-                    >
-                      {it.label}
-                    </button>
-                  ))}
+                <div className="mt-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden p-2">
+                  <select
+                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-800"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const anchorId = e.target.value;
+                      if (!anchorId) return;
+                      jumpToSetting(anchorId);
+                      // close the menu so the sidebar stays compact
+                      setShortcutOpen(null);
+                      // reset selection so user can pick again easily
+                      e.currentTarget.value = '';
+                    }}
+                  >
+                    <option value="" disabled>
+                      בחר אפשרות…
+                    </option>
+                    {b.items.map((it) => (
+                      <option key={it.anchorId} value={it.anchorId}>
+                        {it.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ) : null}
             </div>
@@ -3926,7 +3938,8 @@ export function Calendar() {
         <div
           className={[
             'relative shadow-sm',
-            settings.layoutAutoFitToCanvas ? 'overflow-hidden' : 'overflow-auto',
+            // Always allow scrolling if content overflows the frame (when zoom/manual settings exceed the canvas).
+            'overflow-auto',
           ].join(' ')}
           data-inspect="background"
           style={{
