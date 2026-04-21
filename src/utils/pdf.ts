@@ -7,8 +7,7 @@ import { resolvePdfPageDimensionsMm } from './pdfPage';
 // NOTE: We intentionally do not use html2pdf.js for exports anymore.
 // We render via html2canvas (with `onclone`) and embed into jsPDF to match screen layout.
 
-export async function downloadPdfFromHtml(
-  filename: string,
+export async function exportPdfBlobFromHtml(
   html: string,
   settings: CalendarSettings,
   opts?: { multiPage?: boolean },
@@ -445,8 +444,9 @@ export async function downloadPdfFromHtml(
       });
     }
 
-    wrapPdfStage('jsPDF save()', () => {
-      doc.save(filename);
+    return wrapPdfStage('jsPDF output(blob)', () => {
+      // jsPDF supports blob output; avoids Chrome async download gesture issues.
+      return doc.output('blob') as Blob;
     });
   }
 
@@ -454,7 +454,7 @@ export async function downloadPdfFromHtml(
     try {
       // Prefer explicit html2canvas -> jsPDF pipeline to match on-screen layout/alignment.
       // Keeps layout stable by using `onclone` before capture.
-      await renderWithHtml2CanvasThenPdf();
+      return await renderWithHtml2CanvasThenPdf();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       // Always wrap so the UI message is consistent and includes context,
@@ -465,5 +465,27 @@ export async function downloadPdfFromHtml(
     container.remove();
     tempStyles.forEach((style) => style.remove());
     tempLinks.forEach((link) => link.remove());
+  }
+}
+
+export async function downloadPdfFromHtml(
+  filename: string,
+  html: string,
+  settings: CalendarSettings,
+  opts?: { multiPage?: boolean },
+) {
+  const blob = await exportPdfBlobFromHtml(html, settings, opts);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  try {
+    a.click();
+  } finally {
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 250);
   }
 }

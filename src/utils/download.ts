@@ -52,6 +52,15 @@ export async function saveBlobToHandle(handle: SaveHandle, blob: Blob) {
   await writable.close();
 }
 
+export async function saveTextToHandle(
+  handle: SaveHandle,
+  content: string,
+  mime = 'text/plain;charset=utf-8',
+) {
+  const blob = new Blob([content], { type: mime });
+  await saveBlobToHandle(handle, blob);
+}
+
 export function downloadBlobFile(filename: string, blob: Blob) {
   if (!(blob instanceof Blob)) {
     throw new Error('הורדה נכשלה: לא התקבל Blob תקין.');

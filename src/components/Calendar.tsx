@@ -28,14 +28,14 @@ import {
 } from '../utils/hebrewDate';
 import { buildCalendarDayMetas } from '../utils/monthViewModel';
 import { formatGregorianMonthYearHebrew } from '../utils/gregorianHebrew';
-import { downloadPdfFromHtml } from '../utils/pdf';
+import { downloadPdfFromHtml, exportPdfBlobFromHtml } from '../utils/pdf';
 import {
   downloadCssFromPrintableHtml,
   downloadHtmlFromPrintableHtml,
   exportPngBlobFromPrintableHtml,
   downloadPngFromPrintableHtml,
 } from '../utils/exportDownloads';
-import { requestSaveHandle, saveBlobToHandle } from '../utils/download';
+import { requestSaveHandle, saveBlobToHandle, saveTextToHandle } from '../utils/download';
 import {
   resolveCalendarLayoutZoomPercent,
   resolveCanvasOuterRadiusPx,
@@ -765,12 +765,20 @@ export function Calendar() {
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
                           location: 'Jerusalem',
                         });
-                        await downloadPdfFromHtml(
-                          `calendar-${format(viewDate, 'yyyy-MM')}.pdf`,
-                          html,
-                          settings,
-                        );
-                        setSaveFlash('ה‑PDF נשלח להורדה');
+                        const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
+                        const handle = await requestSaveHandle(suggested, {
+                          mime: 'application/pdf',
+                          description: 'PDF',
+                          extensions: ['.pdf'],
+                        });
+                        if (handle) {
+                          const blob = await exportPdfBlobFromHtml(html, settings);
+                          await saveBlobToHandle(handle, blob);
+                          setSaveFlash('ה‑PDF נשמר');
+                        } else {
+                          await downloadPdfFromHtml(suggested, html, settings);
+                          setSaveFlash('ה‑PDF נשלח להורדה');
+                        }
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -832,12 +840,29 @@ export function Calendar() {
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
                           location: 'Jerusalem',
                         });
-                        downloadHtmlFromPrintableHtml(
-                          `calendar-${format(viewDate, 'yyyy-MM')}.html`,
-                          html,
-                        );
-                        setSaveFlash('ה‑HTML נשלח להורדה');
-                        window.setTimeout(() => setSaveFlash(null), 1400);
+                        const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.html`;
+                        requestSaveHandle(suggested, {
+                          mime: 'text/html',
+                          description: 'HTML',
+                          extensions: ['.html'],
+                        })
+                          .then(async (handle) => {
+                            if (handle) {
+                              await saveTextToHandle(handle, html, 'text/html;charset=utf-8');
+                              setSaveFlash('ה‑HTML נשמר');
+                            } else {
+                              downloadHtmlFromPrintableHtml(suggested, html);
+                              setSaveFlash('ה‑HTML נשלח להורדה');
+                            }
+                            window.setTimeout(() => setSaveFlash(null), 1400);
+                          })
+                          .catch((e) => {
+                            const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                            setSaveFlash(`שגיאה בהורדת HTML: ${msg}`);
+                            window.setTimeout(() => setSaveFlash(null), 3500);
+                            // eslint-disable-next-line no-console
+                            console.error(e);
+                          });
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בהורדת HTML: ${msg}`);
@@ -859,12 +884,32 @@ export function Calendar() {
                         const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
                           location: 'Jerusalem',
                         });
-                        downloadCssFromPrintableHtml(
-                          `calendar-${format(viewDate, 'yyyy-MM')}.css`,
-                          html,
-                        );
-                        setSaveFlash('ה‑CSS נשלח להורדה');
-                        window.setTimeout(() => setSaveFlash(null), 1400);
+                        const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.css`;
+                        const parsed = new DOMParser().parseFromString(html, 'text/html');
+                        const css = parsed.head.querySelector('style')?.textContent ?? '';
+                        requestSaveHandle(suggested, {
+                          mime: 'text/css',
+                          description: 'CSS',
+                          extensions: ['.css'],
+                        })
+                          .then(async (handle) => {
+                            if (handle) {
+                              if (!css) throw new Error('לא נמצא CSS בתוך ה‑HTML (style tag חסר).');
+                              await saveTextToHandle(handle, css.trim() + '\n', 'text/css;charset=utf-8');
+                              setSaveFlash('ה‑CSS נשמר');
+                            } else {
+                              downloadCssFromPrintableHtml(suggested, html);
+                              setSaveFlash('ה‑CSS נשלח להורדה');
+                            }
+                            window.setTimeout(() => setSaveFlash(null), 1400);
+                          })
+                          .catch((e) => {
+                            const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                            setSaveFlash(`שגיאה בהורדת CSS: ${msg}`);
+                            window.setTimeout(() => setSaveFlash(null), 3500);
+                            // eslint-disable-next-line no-console
+                            console.error(e);
+                          });
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בהורדת CSS: ${msg}`);
@@ -892,10 +937,20 @@ export function Calendar() {
                         setSaveFlash('מכין PDF של שנה…');
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);
-                        await downloadPdfFromHtml(`calendar-${year}.pdf`, html, settings, {
-                          multiPage: true,
+                        const suggested = `calendar-${year}.pdf`;
+                        const handle = await requestSaveHandle(suggested, {
+                          mime: 'application/pdf',
+                          description: 'PDF',
+                          extensions: ['.pdf'],
                         });
-                        setSaveFlash('ה‑PDF נשלח להורדה');
+                        if (handle) {
+                          const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
+                          await saveBlobToHandle(handle, blob);
+                          setSaveFlash('ה‑PDF נשמר');
+                        } else {
+                          await downloadPdfFromHtml(suggested, html, settings, { multiPage: true });
+                          setSaveFlash('ה‑PDF נשלח להורדה');
+                        }
                         window.setTimeout(() => setSaveFlash(null), 1600);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -917,9 +972,29 @@ export function Calendar() {
                       try {
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);
-                        downloadHtmlFromPrintableHtml(`calendar-${year}.html`, html);
-                        setSaveFlash('ה‑HTML נשלח להורדה');
-                        window.setTimeout(() => setSaveFlash(null), 1400);
+                        const suggested = `calendar-${year}.html`;
+                        requestSaveHandle(suggested, {
+                          mime: 'text/html',
+                          description: 'HTML',
+                          extensions: ['.html'],
+                        })
+                          .then(async (handle) => {
+                            if (handle) {
+                              await saveTextToHandle(handle, html, 'text/html;charset=utf-8');
+                              setSaveFlash('ה‑HTML נשמר');
+                            } else {
+                              downloadHtmlFromPrintableHtml(suggested, html);
+                              setSaveFlash('ה‑HTML נשלח להורדה');
+                            }
+                            window.setTimeout(() => setSaveFlash(null), 1400);
+                          })
+                          .catch((e) => {
+                            const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                            setSaveFlash(`שגיאה בהורדת HTML: ${msg}`);
+                            window.setTimeout(() => setSaveFlash(null), 3500);
+                            // eslint-disable-next-line no-console
+                            console.error(e);
+                          });
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בהורדת HTML: ${msg}`);
@@ -940,9 +1015,32 @@ export function Calendar() {
                       try {
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);
-                        downloadCssFromPrintableHtml(`calendar-${year}.css`, html);
-                        setSaveFlash('ה‑CSS נשלח להורדה');
-                        window.setTimeout(() => setSaveFlash(null), 1400);
+                        const suggested = `calendar-${year}.css`;
+                        const parsed = new DOMParser().parseFromString(html, 'text/html');
+                        const css = parsed.head.querySelector('style')?.textContent ?? '';
+                        requestSaveHandle(suggested, {
+                          mime: 'text/css',
+                          description: 'CSS',
+                          extensions: ['.css'],
+                        })
+                          .then(async (handle) => {
+                            if (handle) {
+                              if (!css) throw new Error('לא נמצא CSS בתוך ה‑HTML (style tag חסר).');
+                              await saveTextToHandle(handle, css.trim() + '\n', 'text/css;charset=utf-8');
+                              setSaveFlash('ה‑CSS נשמר');
+                            } else {
+                              downloadCssFromPrintableHtml(suggested, html);
+                              setSaveFlash('ה‑CSS נשלח להורדה');
+                            }
+                            window.setTimeout(() => setSaveFlash(null), 1400);
+                          })
+                          .catch((e) => {
+                            const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                            setSaveFlash(`שגיאה בהורדת CSS: ${msg}`);
+                            window.setTimeout(() => setSaveFlash(null), 3500);
+                            // eslint-disable-next-line no-console
+                            console.error(e);
+                          });
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בהורדת CSS: ${msg}`);
