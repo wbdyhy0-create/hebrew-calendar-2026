@@ -981,20 +981,25 @@ export function Calendar() {
     onChange: (hex: string) => void;
     label: string;
   }) => (
-    <label className="text-sm text-slate-700">
-      {label}
-      <div className="mt-1 flex items-center gap-2">
+    <div className="text-sm text-slate-700">
+      <div className="mb-1">{label}</div>
+      <div className="flex items-center gap-2">
         <input
           className="w-full h-10 rounded-md border border-slate-200 bg-white px-2"
           type="color"
           value={normalizeToHexForColorInput(value)}
           onChange={(e) => onChange(e.target.value)}
+          onPointerDown={(e) => {
+            // Avoid any capture listeners interfering with the native picker.
+            e.stopPropagation();
+          }}
         />
         <button
           type="button"
           className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
           title="טפטפת חיה (תצוגה מיידית)"
-          aria-label="טפטפת"
+          aria-label="טפטפת חיה"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => {
             const original = normalizeToHexForColorInput(value);
             setSaveFlash('טפטפת פעילה: הזז את העכבר על הלוח, קליק לקיבוע, Esc לביטול');
@@ -1015,12 +1020,13 @@ export function Calendar() {
           className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
           title="טפטפת (בחירה בלחיצה אחת)"
           aria-label="טפטפת (בחירה בלחיצה אחת)"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => pickColorFromScreen(onChange)}
         >
           ⛏️
         </button>
       </div>
-    </label>
+    </div>
   );
 
   const openAndJumpToSetting = (anchorId: string) => {
