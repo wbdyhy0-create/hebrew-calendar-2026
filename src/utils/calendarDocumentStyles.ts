@@ -408,7 +408,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
 
   return `
       @page { size: ${pageWidthMm}mm ${pageHeightMm}mm; margin: ${settings.pdfMarginMm}mm; }
-      html, body { margin:0; padding:0; width: ${pageWidthMm}mm; height: ${pageHeightMm}mm; overflow: hidden; }
+      html, body { margin:0; padding:0; width:100%; height:100%; }
       *{
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
