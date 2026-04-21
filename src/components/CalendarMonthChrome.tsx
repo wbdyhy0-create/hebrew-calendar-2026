@@ -233,7 +233,12 @@ function HeaderBarClassic({
           <HebMonthTitle settings={settings}>{hebrewMonthTitle}</HebMonthTitle>
         </div>
 
-        <div className="min-w-0 justify-self-start overflow-visible">
+        <div
+          className="min-w-0 justify-self-start overflow-visible"
+          style={{
+            transform: `translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px)`,
+          }}
+        >
           <GregChip settings={settings}>{gregorianLabel}</GregChip>
         </div>
 

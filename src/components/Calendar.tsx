@@ -3743,8 +3743,8 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-60}
-                max={60}
+                min={-320}
+                max={320}
                 value={settings.headerBarTitlesOffsetXPx}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -3760,8 +3760,8 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-40}
-                max={40}
+                min={-160}
+                max={160}
                 value={settings.headerBarTitlesOffsetYPx}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -3777,8 +3777,8 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-60}
-                max={60}
+                min={-320}
+                max={320}
                 value={settings.headerBarMonthPillOffsetXPx}
                 onChange={(e) =>
                   setSettings((s) => ({
@@ -3794,8 +3794,8 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-40}
-                max={40}
+                min={-160}
+                max={160}
                 value={settings.headerBarMonthPillOffsetYPx}
                 onChange={(e) =>
                   setSettings((s) => ({

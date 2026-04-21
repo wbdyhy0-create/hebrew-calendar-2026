@@ -629,6 +629,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         grid-column: 3;
         justify-self: start;
         align-self: center;
+        transform: translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px);
         box-sizing: border-box;
         display:inline-flex;
         align-items:center;
