@@ -1666,7 +1666,10 @@ export function Calendar() {
                       key={a.anchorId + a.label}
                       type="button"
                       className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                      onClick={() => jumpToSetting(a.anchorId)}
+                      onClick={() => {
+                        setInspect((s) => ({ ...s, key: 'none' }));
+                        openAndJumpToSetting(a.anchorId);
+                      }}
                     >
                       {a.label}
                     </button>
