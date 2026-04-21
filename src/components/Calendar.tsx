@@ -96,6 +96,224 @@ import {
 } from '../utils/fontStore';
 import { makeUploadedFamilyName, registerStoredFont } from '../utils/fontRuntime';
 
+function FontFamilyPicker({
+  label,
+  value,
+  onPick,
+  uploadedFonts,
+  fontBusy,
+  onDeleteFamily,
+  fontLabelForValue,
+  builtins,
+  defaultValue,
+}: {
+  label: string;
+  value: string;
+  onPick: (v: string) => void;
+  uploadedFonts: Array<Omit<StoredFont, 'data'>>;
+  fontBusy: string | null;
+  onDeleteFamily: (family: string) => Promise<void>;
+  fontLabelForValue: (value: string) => string;
+  builtins: Array<{ label: string; value: string }>;
+  defaultValue: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const [menuRect, setMenuRect] = useState<{ left: number; top: number; width: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const compute = () => {
+      const el = btnRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const left = Math.max(8, Math.min(window.innerWidth - 8 - r.width, r.left));
+      setMenuRect({ left, top: r.bottom + 8, width: r.width });
+    };
+    compute();
+    const onResize = () => compute();
+    const onScroll = () => setOpen(false);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [open]);
+
+  return (
+    <div className="sm:col-span-2 lg:col-span-3">
+      <div className="text-sm text-slate-700">{label}</div>
+      <div className="relative mt-1">
+        <button
+          ref={btnRef}
+          type="button"
+          className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          <span className="truncate">{fontLabelForValue(value)}</span>
+          <span aria-hidden="true" className="text-slate-500">
+            ▾
+          </span>
+        </button>
+
+        {open
+          ? createPortal(
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-[89] cursor-default bg-transparent"
+                  aria-label="סגור רשימת גופנים"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpen(false);
+                  }}
+                />
+                <div
+                  role="listbox"
+                  className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
+                  style={{
+                    left: menuRect?.left ?? 8,
+                    top: menuRect?.top ?? 80,
+                    width: menuRect?.width ?? 300,
+                    maxWidth: 'calc(100vw - 16px)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    role="option"
+                    className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                    onClick={() => {
+                      setOpen(false);
+                      onPick(defaultValue);
+                    }}
+                  >
+                    <span className="truncate">ברירת מחדל</span>
+                    {value === defaultValue ? (
+                      <span className="text-emerald-600 text-xs">נבחר</span>
+                    ) : null}
+                  </button>
+
+                  {uploadedFonts.length ? (
+                    <>
+                      <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
+                        גופנים שהועלו
+                      </div>
+                      <div className="max-h-[240px] overflow-auto">
+                        {(() => {
+                          const groups = new Map<string, Omit<StoredFont, 'data'>[]>();
+                          for (const f of uploadedFonts) {
+                            const arr = groups.get(f.family) ?? [];
+                            arr.push(f);
+                            groups.set(f.family, arr);
+                          }
+                          const families = Array.from(groups.entries()).sort((a, b) =>
+                            a[0].localeCompare(b[0], 'he'),
+                          );
+                          return families.map(([family, faces]) => {
+                            const v = cssFontFamilyForUploaded(family);
+                            const isSelected = v === value;
+                            const weights = Array.from(
+                              new Set(
+                                faces
+                                  .map((x) => (typeof x.weight === 'string' ? x.weight : '400'))
+                                  .filter(Boolean),
+                              ),
+                            )
+                              .sort((a, b) => Number(a) - Number(b))
+                              .join(', ');
+                            return (
+                              <div
+                                key={family}
+                                className="w-full px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                              >
+                                <button
+                                  type="button"
+                                  role="option"
+                                  className="min-w-0 flex-1 text-right"
+                                  onClick={() => {
+                                    setOpen(false);
+                                    onPick(v);
+                                  }}
+                                  style={{ fontFamily: v }}
+                                >
+                                  <div className="truncate">{family}</div>
+                                  <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                                    משקלים שהועלו: {weights || '400'}
+                                  </div>
+                                </button>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {isSelected ? (
+                                    <span className="text-emerald-600 text-xs">נבחר</span>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                                    title="מחק גופן"
+                                    aria-label={`מחק גופן ${family}`}
+                                    disabled={fontBusy !== null}
+                                    onClick={async (e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      if (fontBusy) return;
+                                      await onDeleteFamily(family);
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </>
+                  ) : null}
+
+                  <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
+                    גופנים מובנים
+                  </div>
+                  {builtins.map((opt) => {
+                    const isSelected = opt.value === value;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        role="option"
+                        className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                        onClick={() => {
+                          setOpen(false);
+                          onPick(opt.value);
+                        }}
+                        style={{ fontFamily: opt.value }}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        {isSelected ? (
+                          <span className="text-emerald-600 text-xs">נבחר</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>,
+              document.body,
+            )
+          : null}
+      </div>
+    </div>
+  );
+}
+
 export function Calendar() {
   const [viewDate, setViewDate] = useState<Date>(() => new Date());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -128,7 +346,6 @@ export function Calendar() {
   const [fontBusy, setFontBusy] = useState<string | null>(null);
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const [fontDragActive, setFontDragActive] = useState(false);
-  const fontFamilyMenuRef = useRef<HTMLDivElement | null>(null);
 
   const fontTargets = settings.fontApplyTargets ?? ['all'];
   const hasFontTarget = (t: (typeof fontTargets)[number]) =>
@@ -263,212 +480,7 @@ export function Calendar() {
     }
   };
 
-  const FontFamilyPicker = ({
-    label,
-    value,
-    onPick,
-  }: {
-    label: string;
-    value: string;
-    onPick: (v: string) => void;
-  }) => {
-    const [open, setOpen] = useState(false);
-    const btnRef = useRef<HTMLButtonElement | null>(null);
-    const [menuRect, setMenuRect] = useState<{ left: number; top: number; width: number } | null>(
-      null,
-    );
-
-    useEffect(() => {
-      if (!open) return;
-      const compute = () => {
-        const el = btnRef.current;
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        const left = Math.max(8, Math.min(window.innerWidth - 8 - r.width, r.left));
-        setMenuRect({ left, top: r.bottom + 8, width: r.width });
-      };
-      compute();
-      const onResize = () => compute();
-      // Close on any scroll (including inside the settings panel), so it never looks “stuck”.
-      const onScroll = () => setOpen(false);
-      const onKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setOpen(false);
-      };
-      window.addEventListener('resize', onResize);
-      window.addEventListener('scroll', onScroll, true);
-      window.addEventListener('keydown', onKeyDown, true);
-      return () => {
-        window.removeEventListener('resize', onResize);
-        window.removeEventListener('scroll', onScroll, true);
-        window.removeEventListener('keydown', onKeyDown, true);
-      };
-    }, [open]);
-
-    return (
-      <div className="sm:col-span-2 lg:col-span-3">
-        <div className="text-sm text-slate-700">{label}</div>
-        <div className="relative mt-1">
-          <button
-            ref={btnRef}
-            type="button"
-            className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
-            onClick={() => {
-              setOpen((v) => !v);
-            }}
-            aria-haspopup="listbox"
-            aria-expanded={open}
-          >
-            <span className="truncate">{fontLabelForValue(value)}</span>
-            <span aria-hidden="true" className="text-slate-500">
-              ▾
-            </span>
-          </button>
-
-          {open
-            ? createPortal(
-                <>
-                  <button
-                    type="button"
-                    className="fixed inset-0 z-[89] cursor-default bg-transparent"
-                    aria-label="סגור רשימת גופנים"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setOpen(false);
-                    }}
-                  />
-                  <div
-                    role="listbox"
-                    className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
-                    style={{
-                      left: menuRect?.left ?? 8,
-                      top: menuRect?.top ?? 80,
-                      width: menuRect?.width ?? 300,
-                      maxWidth: 'calc(100vw - 16px)',
-                    }}
-                  >
-              <button
-                type="button"
-                role="option"
-                className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
-                onClick={() => {
-                  setOpen(false);
-                  onPick(DEFAULT_SETTINGS.fontFamily);
-                }}
-              >
-                <span className="truncate">ברירת מחדל</span>
-                {value === DEFAULT_SETTINGS.fontFamily ? (
-                  <span className="text-emerald-600 text-xs">נבחר</span>
-                ) : null}
-              </button>
-
-              {uploadedFonts.length ? (
-                <>
-                  <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
-                    גופנים שהועלו
-                  </div>
-                  <div className="max-h-[240px] overflow-auto">
-                    {(() => {
-                      const groups = new Map<string, Omit<StoredFont, 'data'>[]>();
-                      for (const f of uploadedFonts) {
-                        const arr = groups.get(f.family) ?? [];
-                        arr.push(f);
-                        groups.set(f.family, arr);
-                      }
-                      const families = Array.from(groups.entries()).sort((a, b) =>
-                        a[0].localeCompare(b[0], 'he'),
-                      );
-                      return families.map(([family, faces]) => {
-                        const v = cssFontFamilyForUploaded(family);
-                        const isSelected = v === value;
-                        const weights = Array.from(
-                          new Set(
-                            faces
-                              .map((x) => (typeof x.weight === 'string' ? x.weight : '400'))
-                              .filter(Boolean),
-                          ),
-                        )
-                          .sort((a, b) => Number(a) - Number(b))
-                          .join(', ');
-                      return (
-                        <div
-                          key={family}
-                          className="w-full px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
-                        >
-                          <button
-                            type="button"
-                            role="option"
-                            className="min-w-0 flex-1 text-right"
-                            onClick={() => {
-                              setOpen(false);
-                              onPick(v);
-                            }}
-                            style={{ fontFamily: v }}
-                          >
-                            <div className="truncate">{family}</div>
-                            <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                              משקלים שהועלו: {weights || '400'}
-                            </div>
-                          </button>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {isSelected ? (
-                              <span className="text-emerald-600 text-xs">נבחר</span>
-                            ) : null}
-                            <button
-                              type="button"
-                              className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                              title="מחק גופן"
-                              aria-label={`מחק גופן ${family}`}
-                              disabled={fontBusy !== null}
-                              onClick={async (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (fontBusy) return;
-                                await deleteUploadedFontEverywhere(family);
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </div>
-                      );
-                      });
-                    })()}
-                  </div>
-                </>
-              ) : null}
-
-              <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
-                גופנים מובנים
-              </div>
-              {FONT_BUILTINS.map((opt) => {
-                const isSelected = opt.value === value;
-                return (
-                  <button
-                    key={opt.label}
-                    type="button"
-                    role="option"
-                    className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
-                    onClick={() => {
-                      setOpen(false);
-                      onPick(opt.value);
-                    }}
-                    style={{ fontFamily: opt.value }}
-                  >
-                    <span className="truncate">{opt.label}</span>
-                    {isSelected ? <span className="text-emerald-600 text-xs">נבחר</span> : null}
-                  </button>
-                );
-              })}
-                  </div>
-                </>,
-                document.body,
-              )
-            : null}
-        </div>
-      </div>
-    );
-  };
+  // FontFamilyPicker is defined at module scope (above) so its open-state doesn't reset on every Calendar re-render.
   const ensureDownloadsWork = (): boolean => {
     // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
     // Best UX: open the calendar in a top-level tab and ask the user to download there.
@@ -2072,13 +2084,17 @@ export function Calendar() {
 
             <SettingsCategory icon="✏️" title="טיפוגרפיה">
             <div id="settings-anchor-header" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
-            <div ref={fontFamilyMenuRef} className="sm:col-span-2 lg:col-span-3">
-              <FontFamilyPicker
-                label="משפחת גופן — ברירת מחדל (Fallback)"
-                value={settings.fontFamily}
-                onPick={(v) => setSettings((s) => ({ ...s, fontFamily: v }))}
-              />
-            </div>
+            <FontFamilyPicker
+              label="משפחת גופן — ברירת מחדל (Fallback)"
+              value={settings.fontFamily}
+              onPick={(v) => setSettings((s) => ({ ...s, fontFamily: v }))}
+              uploadedFonts={uploadedFonts}
+              fontBusy={fontBusy}
+              onDeleteFamily={deleteUploadedFontEverywhere}
+              fontLabelForValue={fontLabelForValue}
+              builtins={FONT_BUILTINS}
+              defaultValue={DEFAULT_SETTINGS.fontFamily}
+            />
 
             <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
               <div className="text-sm font-semibold text-slate-900 mb-2">החל את הגופן על</div>
@@ -2197,6 +2213,12 @@ export function Calendar() {
                           fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), settings: v },
                         }))
                       }
+                      uploadedFonts={uploadedFonts}
+                      fontBusy={fontBusy}
+                      onDeleteFamily={deleteUploadedFontEverywhere}
+                      fontLabelForValue={fontLabelForValue}
+                      builtins={FONT_BUILTINS}
+                      defaultValue={DEFAULT_SETTINGS.fontFamily}
                     />
                   ) : null}
                   {settings.fontApplyTargets?.includes('calendarHeader') ? (
@@ -2209,6 +2231,12 @@ export function Calendar() {
                           fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), calendarHeader: v },
                         }))
                       }
+                      uploadedFonts={uploadedFonts}
+                      fontBusy={fontBusy}
+                      onDeleteFamily={deleteUploadedFontEverywhere}
+                      fontLabelForValue={fontLabelForValue}
+                      builtins={FONT_BUILTINS}
+                      defaultValue={DEFAULT_SETTINGS.fontFamily}
                     />
                   ) : null}
                   {settings.fontApplyTargets?.includes('cellDates') ? (
@@ -2221,6 +2249,12 @@ export function Calendar() {
                           fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), cellDates: v },
                         }))
                       }
+                      uploadedFonts={uploadedFonts}
+                      fontBusy={fontBusy}
+                      onDeleteFamily={deleteUploadedFontEverywhere}
+                      fontLabelForValue={fontLabelForValue}
+                      builtins={FONT_BUILTINS}
+                      defaultValue={DEFAULT_SETTINGS.fontFamily}
                     />
                   ) : null}
                   {settings.fontApplyTargets?.includes('cellTimes') ? (
@@ -2233,6 +2267,12 @@ export function Calendar() {
                           fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), cellTimes: v },
                         }))
                       }
+                      uploadedFonts={uploadedFonts}
+                      fontBusy={fontBusy}
+                      onDeleteFamily={deleteUploadedFontEverywhere}
+                      fontLabelForValue={fontLabelForValue}
+                      builtins={FONT_BUILTINS}
+                      defaultValue={DEFAULT_SETTINGS.fontFamily}
                     />
                   ) : null}
                   {settings.fontApplyTargets?.includes('cellEvents') ? (
@@ -2245,6 +2285,12 @@ export function Calendar() {
                           fontFamilyByTarget: { ...(s.fontFamilyByTarget ?? {}), cellEvents: v },
                         }))
                       }
+                      uploadedFonts={uploadedFonts}
+                      fontBusy={fontBusy}
+                      onDeleteFamily={deleteUploadedFontEverywhere}
+                      fontLabelForValue={fontLabelForValue}
+                      builtins={FONT_BUILTINS}
+                      defaultValue={DEFAULT_SETTINGS.fontFamily}
                     />
                   ) : null}
                 </div>
