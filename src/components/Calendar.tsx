@@ -2635,20 +2635,16 @@ export function Calendar() {
               <div className="text-sm font-semibold text-slate-900 mb-2">משבצות ריקות / ריפוד</div>
               <div id="settings-anchor-padding-cells" className="scroll-mt-24" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="text-sm text-slate-700">
-                  צבע בסיס (אפור)
-                  <input
-                    className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                    type="color"
-                    value={settings.paddingCellColor}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        paddingCellColor: e.target.value,
-                      }))
-                    }
-                  />
-                </label>
+                <ColorInput
+                  label="צבע בסיס (אפור)"
+                  value={settings.paddingCellColor}
+                  onChange={(hex) =>
+                    setSettings((s) => ({
+                      ...s,
+                      paddingCellColor: hex,
+                    }))
+                  }
+                />
 
                 <label className="text-sm text-slate-700">
                   עוצמת אפור (0–1):{' '}
@@ -2695,20 +2691,16 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע מסגרת חיצונית
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.gridBorderColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    gridBorderColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע מסגרת חיצונית"
+              value={settings.gridBorderColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  gridBorderColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               כותרות ימי השבוע (שורה עליונה)
@@ -2728,20 +2720,16 @@ export function Calendar() {
               </select>
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע רקע פס ימי השבוע
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.gridWeekdayHeaderBg}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    gridWeekdayHeaderBg: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע רקע פס ימי השבוע"
+              value={settings.gridWeekdayHeaderBg}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  gridWeekdayHeaderBg: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               גובה פס ימי השבוע ({settings.gridWeekdayHeaderHeightPx}px)
@@ -2777,20 +2765,16 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע טקסט כותרות ימי השבוע
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.gridWeekdayHeaderTextColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    gridWeekdayHeaderTextColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע טקסט כותרות ימי השבוע"
+              value={settings.gridWeekdayHeaderTextColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  gridWeekdayHeaderTextColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               גודל גופן כותרות ימי השבוע ({settings.gridWeekdayHeaderFontPx}px)
@@ -2844,20 +2828,16 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע קו תחתון לפס ימי השבוע
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.gridWeekdayHeaderBorderBottomColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    gridWeekdayHeaderBorderBottomColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע קו תחתון לפס ימי השבוע"
+              value={settings.gridWeekdayHeaderBorderBottomColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  gridWeekdayHeaderBorderBottomColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               היסט אנכי לפס ימי השבוע ({settings.gridWeekdayHeaderRowOffsetYPx}px)
@@ -2894,20 +2874,16 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע קווי תאים
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.cellBorderColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    cellBorderColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע קווי תאים"
+              value={settings.cellBorderColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  cellBorderColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
               <input
@@ -2923,42 +2899,24 @@ export function Calendar() {
               להציג קווי תאים
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע אירועים (חגים/ר״ח/יום העצמאות וכו׳)
-              <div id="settings-anchor-colors" className="scroll-mt-24" />
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.eventBg}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, eventBg: e.target.value }))
-                }
-              />
-            </label>
+            <div id="settings-anchor-colors" className="scroll-mt-24" />
+            <ColorInput
+              label="צבע אירועים (חגים/ר״ח/יום העצמאות וכו׳)"
+              value={settings.eventBg}
+              onChange={(hex) => setSettings((s) => ({ ...s, eventBg: hex }))}
+            />
 
-            <label className="text-sm text-slate-700">
-              צבע שבת
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.shabbatBg}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, shabbatBg: e.target.value }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע שבת"
+              value={settings.shabbatBg}
+              onChange={(hex) => setSettings((s) => ({ ...s, shabbatBg: hex }))}
+            />
 
-            <label className="text-sm text-slate-700">
-              צבע “היום”
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.todayBg}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, todayBg: e.target.value }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע “היום”"
+              value={settings.todayBg}
+              onChange={(hex) => setSettings((s) => ({ ...s, todayBg: hex }))}
+            />
 
             </SettingsCategory>
 
@@ -3149,42 +3107,34 @@ export function Calendar() {
               id="settings-anchor-headerbar-colors"
               className="sm:col-span-2 lg:col-span-3 scroll-mt-24"
             />
-            <label className="text-sm text-slate-700">
-              צבע רקע פס
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={
-                  (settings.headerBarBg ?? '').startsWith('#')
-                    ? (settings.headerBarBg as string)
-                    : '#FFFFFF'
-                }
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarBg: e.target.value,
-                  }))
-                }
-              />
-              <div className="mt-1 text-xs text-slate-500">
-                שים לב: בחירת צבע תחליף לרקע אטום (לא שקוף).
-              </div>
-            </label>
+            <ColorInput
+              label="צבע רקע פס"
+              value={
+                (settings.headerBarBg ?? '').startsWith('#')
+                  ? (settings.headerBarBg as string)
+                  : '#FFFFFF'
+              }
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerBarBg: hex,
+                }))
+              }
+            />
+            <div className="mt-1 text-xs text-slate-500 sm:col-span-2 lg:col-span-3">
+              שים לב: בחירת צבע תחליף לרקע אטום (לא שקוף).
+            </div>
 
-            <label className="text-sm text-slate-700">
-              צבע מסגרת פס
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.headerBarBorderColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarBorderColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע מסגרת פס"
+              value={settings.headerBarBorderColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerBarBorderColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               עובי מסגרת פס ({settings.headerBarBorderWidthPx}px)
@@ -3203,35 +3153,27 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע כותרת ראשית
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.headerBarTitleColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarTitleColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע כותרת ראשית"
+              value={settings.headerBarTitleColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerBarTitleColor: hex,
+                }))
+              }
+            />
 
-            <label className="text-sm text-slate-700">
-              צבע כותרת משנה
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.headerBarSubtitleColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarSubtitleColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע כותרת משנה"
+              value={settings.headerBarSubtitleColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerBarSubtitleColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3 font-semibold text-slate-900">
               תצוגת חודש (מרכז: עברי, שמאל: לועזי)
@@ -3275,35 +3217,27 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              צבע טקסט לועזי
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.headerGregMonthTextColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerGregMonthTextColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע טקסט לועזי"
+              value={settings.headerGregMonthTextColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerGregMonthTextColor: hex,
+                }))
+              }
+            />
 
-            <label className="text-sm text-slate-700">
-              צבע מסגרת תג עברי (מרכז)
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.headerHebMonthBorderColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthBorderColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע מסגרת תג עברי (מרכז)"
+              value={settings.headerHebMonthBorderColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerHebMonthBorderColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               עובי מסגרת תג עברי (מרכז) ({settings.headerHebMonthBorderWidthPx}px)
@@ -3322,42 +3256,34 @@ export function Calendar() {
               />
             </label>
 
-            <label className="text-sm text-slate-700">
-              רקע תג עברי (מרכז)
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={
-                  (settings.headerHebMonthBg ?? '').startsWith('#')
-                    ? (settings.headerHebMonthBg as string)
-                    : '#FFFFFF'
-                }
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthBg: e.target.value,
-                  }))
-                }
-              />
-              <div className="mt-1 text-xs text-slate-500">
-                שים לב: בחירת צבע תחליף לרקע אטום (לא שקוף).
-              </div>
-            </label>
+            <ColorInput
+              label="רקע תג עברי (מרכז)"
+              value={
+                (settings.headerHebMonthBg ?? '').startsWith('#')
+                  ? (settings.headerHebMonthBg as string)
+                  : '#FFFFFF'
+              }
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerHebMonthBg: hex,
+                }))
+              }
+            />
+            <div className="mt-1 text-xs text-slate-500 sm:col-span-2 lg:col-span-3">
+              שים לב: בחירת צבע תחליף לרקע אטום (לא שקוף).
+            </div>
 
-            <label className="text-sm text-slate-700">
-              צבע טקסט תג עברי (מרכז)
-              <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.headerHebMonthTextColor}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthTextColor: e.target.value,
-                  }))
-                }
-              />
-            </label>
+            <ColorInput
+              label="צבע טקסט תג עברי (מרכז)"
+              value={settings.headerHebMonthTextColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  headerHebMonthTextColor: hex,
+                }))
+              }
+            />
 
             <label className="text-sm text-slate-700">
               משקל גופן תג עברי (מרכז) ({settings.headerHebMonthFontWeight})
