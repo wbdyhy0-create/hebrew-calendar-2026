@@ -283,6 +283,28 @@ export async function exportPdfBlobFromHtml(
         root.style.setProperty('min-height', `${heightMm}mm`, 'important');
       }
 
+      // When exporting multi-page (year), we capture `.canvas` nodes. The printable HTML background
+      // is applied to `.printRoot`, not `.canvas`, so the photo can disappear in PDF.
+      // Copy the computed background from the root into each canvas in the clone.
+      if (root) {
+        const win = clonedDoc.defaultView;
+        const cs = win ? win.getComputedStyle(root) : null;
+        if (cs) {
+          const bgImage = cs.backgroundImage;
+          const bgSize = cs.backgroundSize;
+          const bgPosition = cs.backgroundPosition;
+          const bgRepeat = cs.backgroundRepeat;
+          const bgColor = cs.backgroundColor;
+          scope.querySelectorAll<HTMLElement>('.canvas').forEach((c) => {
+            if (bgImage && bgImage !== 'none') c.style.setProperty('background-image', bgImage, 'important');
+            if (bgSize) c.style.setProperty('background-size', bgSize, 'important');
+            if (bgPosition) c.style.setProperty('background-position', bgPosition, 'important');
+            if (bgRepeat) c.style.setProperty('background-repeat', bgRepeat, 'important');
+            if (bgColor && bgColor !== 'transparent') c.style.setProperty('background-color', bgColor, 'important');
+          });
+        }
+      }
+
       // Some CSS features can trip html2canvas parsers in certain builds/browsers.
       // Remove backdrop filters and other effects in the clone.
       scope.querySelectorAll<HTMLElement>('*').forEach((n) => {
