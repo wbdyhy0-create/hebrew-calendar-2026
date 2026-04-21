@@ -636,6 +636,108 @@ export function Calendar() {
     }
   };
 
+  const isLandingOnly =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('landing') === '1';
+  const LANDING_IMAGE_KEY = 'calendarLandingImageDataUrl';
+  const [landingImage, setLandingImage] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const v = window.localStorage.getItem(LANDING_IMAGE_KEY);
+      return v && v.startsWith('data:image/') ? v : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const landingPickerRef = useRef<HTMLInputElement | null>(null);
+  const setLandingImageSafe = (dataUrl: string | null) => {
+    setLandingImage(dataUrl);
+    if (typeof window === 'undefined') return;
+    try {
+      if (dataUrl) window.localStorage.setItem(LANDING_IMAGE_KEY, dataUrl);
+      else window.localStorage.removeItem(LANDING_IMAGE_KEY);
+    } catch {
+      // ignore quota / privacy errors
+    }
+  };
+
+  if (isLandingOnly) {
+    return (
+      <section dir="rtl" className="relative w-full max-w-6xl mx-auto p-4 sm:p-6 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="text-sm text-slate-700">
+            כאן אפשר להעלות תמונת תצוגה. למחיקת/החלפת התמונה השתמש בכפתורים.
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+              onClick={() => landingPickerRef.current?.click()}
+            >
+              {landingImage ? 'החלף תמונה' : 'בחר תמונה'}
+            </button>
+            <button
+              type="button"
+              className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+              onClick={() => setLandingImageSafe(null)}
+              disabled={!landingImage}
+            >
+              מחק
+            </button>
+            <a
+              className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+              href="/"
+            >
+              עבור ללוח שנה
+            </a>
+          </div>
+        </div>
+
+        <input
+          ref={landingPickerRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            (async () => {
+              const compressed = await compressImageToDataUrl(file);
+              if (compressed && compressed.startsWith('data:image/')) {
+                setLandingImageSafe(compressed);
+                return;
+              }
+              // fallback: read original
+              const reader = new FileReader();
+              reader.onload = () => {
+                const v = typeof reader.result === 'string' ? reader.result : null;
+                if (v && v.startsWith('data:image/')) setLandingImageSafe(v);
+              };
+              reader.readAsDataURL(file);
+            })();
+          }}
+        />
+
+        <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-sm">
+          <div className="relative w-full" style={{ aspectRatio: '16 / 7' }}>
+            {landingImage ? (
+              <img
+                src={landingImage}
+                alt="תצוגת לוח שנה"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-500">
+                אין תמונה — לחץ על “בחר תמונה”
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       dir="rtl"
