@@ -3817,7 +3817,7 @@ export function Calendar() {
         style={{ maxWidth: canvasSurfacePx.widthPx + 220 }}
       >
         {/* Category shortcuts (right of canvas, never overlapping) */}
-        <div className="hidden lg:flex w-[160px] shrink-0 flex-col gap-2 pt-2">
+        <div className="hidden md:flex w-[160px] shrink-0 flex-col gap-2 pt-2">
           {[
             {
               key: 'themes',
