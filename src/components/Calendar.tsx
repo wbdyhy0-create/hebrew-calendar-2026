@@ -134,16 +134,13 @@ function FontFamilyPicker({
     };
     compute();
     const onResize = () => compute();
-    const onScroll = () => setOpen(false);
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
     window.addEventListener('resize', onResize);
-    window.addEventListener('scroll', onScroll, true);
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
       window.removeEventListener('resize', onResize);
-      window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('keydown', onKeyDown, true);
     };
   }, [open]);
