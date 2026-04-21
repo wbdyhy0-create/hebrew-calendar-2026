@@ -768,7 +768,7 @@ export function Calendar() {
                           html,
                           settings,
                         );
-                        setSaveFlash('ה‑PDF ירד');
+                        setSaveFlash('ה‑PDF נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -797,7 +797,7 @@ export function Calendar() {
                           html,
                           settings,
                         );
-                        setSaveFlash('ה‑PNG ירד');
+                        setSaveFlash('ה‑PNG נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -824,7 +824,7 @@ export function Calendar() {
                           `calendar-${format(viewDate, 'yyyy-MM')}.html`,
                           html,
                         );
-                        setSaveFlash('ה‑HTML ירד');
+                        setSaveFlash('ה‑HTML נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -851,7 +851,7 @@ export function Calendar() {
                           `calendar-${format(viewDate, 'yyyy-MM')}.css`,
                           html,
                         );
-                        setSaveFlash('ה‑CSS ירד');
+                        setSaveFlash('ה‑CSS נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -883,7 +883,7 @@ export function Calendar() {
                         await downloadPdfFromHtml(`calendar-${year}.pdf`, html, settings, {
                           multiPage: true,
                         });
-                        setSaveFlash('ה‑PDF ירד');
+                        setSaveFlash('ה‑PDF נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1600);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -906,7 +906,7 @@ export function Calendar() {
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);
                         downloadHtmlFromPrintableHtml(`calendar-${year}.html`, html);
-                        setSaveFlash('ה‑HTML ירד');
+                        setSaveFlash('ה‑HTML נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
@@ -929,7 +929,7 @@ export function Calendar() {
                         const year = viewDate.getFullYear();
                         const html = buildPrintableYearPdfHtml(year, settings, overrides);
                         downloadCssFromPrintableHtml(`calendar-${year}.css`, html);
-                        setSaveFlash('ה‑CSS ירד');
+                        setSaveFlash('ה‑CSS נשלח להורדה');
                         window.setTimeout(() => setSaveFlash(null), 1400);
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
