@@ -895,6 +895,56 @@ export function Calendar() {
   );
   const cellRadiusPx = Math.max(0, Math.round(Number(settings.cellCornerRadiusPx) || 0));
 
+  const [livePicker, setLivePicker] = useState<null | {
+    label: string;
+    original: string;
+    current: string;
+    commit: (hex: string) => void;
+    revert: () => void;
+  }>(null);
+
+  const rgbToHex = (rgb: string): string | null => {
+    // Supports: rgb(r,g,b) / rgba(r,g,b,a)
+    const m = rgb
+      .replace(/\s+/g, '')
+      .match(/^rgba?\((\d{1,3}),(\d{1,3}),(\d{1,3})(?:,([0-9.]+))?\)$/i);
+    if (!m) return null;
+    const r = Math.max(0, Math.min(255, Number(m[1])));
+    const g = Math.max(0, Math.min(255, Number(m[2])));
+    const b = Math.max(0, Math.min(255, Number(m[3])));
+    const to2 = (n: number) => n.toString(16).padStart(2, '0');
+    return `#${to2(r)}${to2(g)}${to2(b)}`.toUpperCase();
+  };
+
+  const isTransparent = (v: string) => {
+    const s = v.trim().toLowerCase();
+    return s === 'transparent' || s === 'rgba(0,0,0,0)' || s === 'rgba(0, 0, 0, 0)';
+  };
+
+  const sampleHexAtPoint = (clientX: number, clientY: number): string | null => {
+    const stack = document.elementsFromPoint(clientX, clientY);
+    const overlay = stack.find((el) => (el as HTMLElement)?.dataset?.liveEyedropper === '1');
+    const el =
+      stack.find((n) => n !== overlay && (n as HTMLElement).nodeType === 1) ??
+      document.elementFromPoint(clientX, clientY);
+    if (!el || !(el instanceof HTMLElement)) return null;
+
+    // Prefer a visible background; fall back to text color.
+    let cur: HTMLElement | null = el;
+    for (let i = 0; i < 6 && cur; i++) {
+      const cs = getComputedStyle(cur);
+      const bg = cs.backgroundColor;
+      if (bg && !isTransparent(bg)) {
+        const hex = rgbToHex(bg);
+        if (hex) return hex;
+      }
+      cur = cur.parentElement;
+    }
+    const cs = getComputedStyle(el);
+    const hex = rgbToHex(cs.color);
+    return hex;
+  };
+
   const pickColorFromScreen = async (apply: (hex: string) => void) => {
     try {
       const AnyWindow = window as any;
@@ -933,11 +983,29 @@ export function Calendar() {
         <button
           type="button"
           className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-          title="טפטפת"
+          title="טפטפת חיה (תצוגה מיידית)"
           aria-label="טפטפת"
-          onClick={() => pickColorFromScreen(onChange)}
+          onClick={() => {
+            const original = value;
+            setLivePicker({
+              label,
+              original,
+              current: original,
+              commit: (hex) => onChange(hex),
+              revert: () => onChange(original),
+            });
+          }}
         >
           🎯
+        </button>
+        <button
+          type="button"
+          className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+          title="טפטפת (בחירה בלחיצה אחת)"
+          aria-label="טפטפת (בחירה בלחיצה אחת)"
+          onClick={() => pickColorFromScreen(onChange)}
+        >
+          ⛏️
         </button>
       </div>
     </label>
@@ -1190,6 +1258,61 @@ export function Calendar() {
         fontWeight: settings.fontWeight,
       }}
     >
+      {livePicker ? (
+        <div
+          data-live-eyedropper="1"
+          className="fixed inset-0 z-[120] cursor-crosshair"
+          onMouseMove={(e) => {
+            const hex = sampleHexAtPoint(e.clientX, e.clientY);
+            if (!hex) return;
+            setLivePicker((p) => {
+              if (!p || p.current === hex) return p;
+              p.commit(hex); // live preview
+              return { ...p, current: hex };
+            });
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // left click commits; right click cancels
+            if (e.button === 2) {
+              livePicker.revert();
+              setLivePicker(null);
+              return;
+            }
+            setLivePicker(null);
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            livePicker.revert();
+            setLivePicker(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              e.stopPropagation();
+              livePicker.revert();
+              setLivePicker(null);
+            }
+          }}
+          tabIndex={0}
+          ref={(node) => node?.focus()}
+        >
+          <div className="absolute left-3 top-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-800 shadow-sm">
+            <div className="font-semibold text-slate-900">טפטפת: {livePicker.label}</div>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="inline-block h-4 w-6 rounded border border-slate-300"
+                style={{ background: livePicker.current }}
+              />
+              <span className="font-mono">{livePicker.current}</span>
+              <span className="text-slate-500">• קליק לקיבוע • Esc לביטול</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <input
         ref={imgPickerRef}
         type="file"
