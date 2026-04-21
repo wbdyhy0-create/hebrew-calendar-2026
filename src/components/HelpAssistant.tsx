@@ -30,8 +30,27 @@ export function HelpAssistant({
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const matches = useMemo(() => searchHelp(entries, query, 6), [entries, query]);
-  const best = matches[0]?.entry ?? null;
+  const best =
+    (selectedId ? matches.find((m) => m.entry.id === selectedId)?.entry : null) ??
+    matches[0]?.entry ??
+    null;
+
+  const QUICK_TOPICS = useMemo(
+    () => [
+      { label: 'ריפוד', q: 'ריפוד' },
+      { label: 'תמונה בתא', q: 'תמונה בתא' },
+      { label: 'זמנים', q: 'זמנים' },
+      { label: 'אירועים', q: 'אירועים' },
+      { label: 'תאריכים', q: 'תאריך עברי לועזי' },
+      { label: 'מסגרות', q: 'מסגרת תאים' },
+      { label: 'רקע', q: 'רקע' },
+      { label: 'מרכוז', q: 'מרכוז קנבס' },
+      { label: 'PDF', q: 'PDF' },
+    ],
+    [],
+  );
 
   return (
     <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/40 p-4">
@@ -62,6 +81,21 @@ export function HelpAssistant({
           <div className="mt-2 text-[11px] text-slate-500">
             טיפ: אפשר לכתוב גם “זמנים”, “תמונה”, “מרכוז”, “צבע תא”, “גודל גופן” וכו׳.
           </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {QUICK_TOPICS.map((t) => (
+              <button
+                key={t.label}
+                type="button"
+                className="px-3 py-1.5 text-xs rounded-full border border-slate-200 bg-white hover:bg-slate-50"
+                onClick={() => {
+                  setQuery(t.q);
+                  setSelectedId(null);
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-auto">
@@ -69,7 +103,9 @@ export function HelpAssistant({
             <div className="border-b lg:border-b-0 lg:border-l border-slate-200 p-3">
               <div className="text-xs font-normal text-slate-600 mb-2">התאמות</div>
               {query.trim().length === 0 ? (
-                <div className="text-sm text-slate-500">הקלד שאלה כדי לראות תשובות.</div>
+                <div className="text-sm text-slate-500">
+                  הקלד מילה אחת (למשל: “ריפוד”) כדי לראות רשימת שאלות, או כתוב משפט מלא.
+                </div>
               ) : matches.length === 0 ? (
                 <div className="text-sm text-slate-500">
                   לא מצאתי תשובה מדויקת. נסה לנסח עם מילים כמו “תמונה”, “גופן”, “זמנים”, “מרכוז”.
@@ -87,7 +123,7 @@ export function HelpAssistant({
                           : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700',
                       ].join(' ')}
                       onClick={() => {
-                        setQuery(m.entry.title);
+                        setSelectedId(m.entry.id);
                       }}
                       title={m.matched.length ? `מילים שזוהו: ${m.matched.slice(0, 6).join(', ')}` : undefined}
                     >
