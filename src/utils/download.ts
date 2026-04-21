@@ -82,6 +82,39 @@ export function openInNewTab(url: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+export function openDownloadPopup(): Window | null {
+  // Must be called synchronously from a click handler.
+  // We intentionally do NOT set `noopener` so we can write into the popup.
+  try {
+    return window.open('', '_blank');
+  } catch {
+    return null;
+  }
+}
+
+export function downloadBlobViaPopup(popup: Window, filename: string, blob: Blob) {
+  if (!(blob instanceof Blob)) throw new Error('הורדה נכשלה: לא התקבל Blob תקין.');
+  const url = URL.createObjectURL(blob);
+  try {
+    popup.document.open();
+    popup.document.write(`<!doctype html>
+<html>
+  <head><meta charset="utf-8" /><title>Downloading…</title></head>
+  <body>
+    <a id="dl" download="${String(filename).replaceAll('"', '&quot;')}" href="${url}">download</a>
+    <script>
+      const a = document.getElementById('dl');
+      try { a.click(); } catch {}
+      setTimeout(() => { try { window.close(); } catch {} }, 1200);
+    </script>
+  </body>
+</html>`);
+    popup.document.close();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+}
+
 export function downloadBlobFile(filename: string, blob: Blob) {
   if (!(blob instanceof Blob)) {
     throw new Error('הורדה נכשלה: לא התקבל Blob תקין.');

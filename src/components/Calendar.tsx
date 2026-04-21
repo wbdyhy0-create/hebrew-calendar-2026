@@ -34,7 +34,15 @@ import {
   exportPngBlobFromPrintableHtml,
   downloadPngFromPrintableHtml,
 } from '../utils/exportDownloads';
-import { isEmbeddedFrame, openInNewTab, requestSaveHandle, saveBlobToHandle, saveTextToHandle } from '../utils/download';
+import {
+  downloadBlobViaPopup,
+  isEmbeddedFrame,
+  openDownloadPopup,
+  openInNewTab,
+  requestSaveHandle,
+  saveBlobToHandle,
+  saveTextToHandle,
+} from '../utils/download';
 import {
   resolveCalendarLayoutZoomPercent,
   resolveCanvasOuterRadiusPx,
@@ -964,8 +972,15 @@ export function Calendar() {
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PDF נשמר');
                         } else {
-                          await downloadPdfFromHtml(suggested, html, settings, { multiPage: true });
-                          setSaveFlash('ה‑PDF נשלח להורדה');
+                          const popup = openDownloadPopup();
+                          const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
+                          if (popup) {
+                            downloadBlobViaPopup(popup, suggested, blob);
+                            setSaveFlash('ה‑PDF נשלח להורדה');
+                          } else {
+                            await downloadPdfFromHtml(suggested, html, settings, { multiPage: true });
+                            setSaveFlash('ה‑PDF נשלח להורדה');
+                          }
                         }
                         window.setTimeout(() => setSaveFlash(null), 1600);
                       } catch (e) {
