@@ -973,30 +973,6 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         max-width: none !important;
         min-width: 0 !important;
       }
-      .pdfMode .headerBar,
-      .pdfMode .headerRightBlockShell,
-      .pdfMode .headerCenteredPillShell,
-      .pdfMode .headerMinimal{
-        margin-left: auto !important;
-        margin-right: auto !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-      }
-      .pdfMode .calendarLayoutZoom{
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }
-      .pdfMode .tableOffsetWrap{
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }
       .pdfMode.printRoot{
         width: ${pageWidthMm}mm;
         min-height: ${pageHeightMm}mm;

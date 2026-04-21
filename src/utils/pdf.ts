@@ -379,7 +379,6 @@ export async function exportPdfBlobFromHtml(
         el.style.removeProperty('--layoutScale');
         (el.style as any).zoom = String(scale);
         el.style.width = '100%';
-        el.style.maxWidth = '100%';
         el.style.transform = 'none';
         el.style.margin = '0';
         el.style.boxSizing = 'border-box';
@@ -394,7 +393,6 @@ export async function exportPdfBlobFromHtml(
 
       scope.querySelectorAll<HTMLElement>('.tableOffsetWrap').forEach((w) => {
         w.style.setProperty('width', '100%', 'important');
-        w.style.setProperty('max-width', '100%', 'important');
         w.style.setProperty('box-sizing', 'border-box', 'important');
         w.style.removeProperty('margin-left');
         w.style.removeProperty('margin-right');
