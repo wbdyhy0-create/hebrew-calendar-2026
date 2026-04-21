@@ -126,6 +126,8 @@ export function Calendar() {
   const [fontBusy, setFontBusy] = useState<string | null>(null);
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const [fontDragActive, setFontDragActive] = useState(false);
+  const [fontFamilyMenuOpen, setFontFamilyMenuOpen] = useState(false);
+  const fontFamilyMenuRef = useRef<HTMLDivElement | null>(null);
 
   const fontTargets = settings.fontApplyTargets ?? ['all'];
   const hasFontTarget = (t: (typeof fontTargets)[number]) =>
@@ -175,6 +177,26 @@ export function Calendar() {
       }
     }
   };
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!fontFamilyMenuOpen) return;
+      const el = fontFamilyMenuRef.current;
+      if (!el) return;
+      if (e.target && el.contains(e.target as Node)) return;
+      setFontFamilyMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!fontFamilyMenuOpen) return;
+      if (e.key === 'Escape') setFontFamilyMenuOpen(false);
+    };
+    window.addEventListener('mousedown', onDown, true);
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('mousedown', onDown, true);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, [fontFamilyMenuOpen]);
   const ensureDownloadsWork = (): boolean => {
     // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
     // Best UX: open the calendar in a top-level tab and ask the user to download there.
@@ -1776,34 +1798,176 @@ export function Calendar() {
             <div id="settings-anchor-header" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             <label className="text-sm text-slate-700">
               משפחת גופן
-              <select
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                value={settings.fontFamily}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, fontFamily: e.target.value }))
-                }
-              >
-                <option value={DEFAULT_SETTINGS.fontFamily}>ברירת מחדל</option>
-                {uploadedFonts.length ? (
-                  <optgroup label="גופנים שהועלו">
-                    {uploadedFonts.map((f) => (
-                      <option key={f.id} value={cssFontFamilyForUploaded(f.family)}>
-                        {f.family}
-                      </option>
-                    ))}
-                  </optgroup>
-                ) : null}
-                <option value='"Heebo", system-ui, "Segoe UI", Arial, sans-serif'>
-                  Heebo (אם מותקן)
-                </option>
-                <option value='"Assistant", system-ui, "Segoe UI", Arial, sans-serif'>
-                  Assistant (אם מותקן)
-                </option>
-                <option value='system-ui, -apple-system, "Segoe UI", Arial, sans-serif'>
-                  System
-                </option>
-                <option value='Georgia, "Times New Roman", serif'>Serif</option>
-              </select>
+              <div ref={fontFamilyMenuRef} className="relative mt-1">
+                {(() => {
+                  const current = settings.fontFamily;
+                  const uploadedMatch = uploadedFonts.find(
+                    (f) => cssFontFamilyForUploaded(f.family) === current,
+                  );
+                  const currentLabel =
+                    current === DEFAULT_SETTINGS.fontFamily
+                      ? 'ברירת מחדל'
+                      : uploadedMatch
+                        ? uploadedMatch.family
+                        : current.includes('Heebo')
+                          ? 'Heebo (אם מותקן)'
+                          : current.includes('Assistant')
+                            ? 'Assistant (אם מותקן)'
+                            : current.startsWith('system-ui')
+                              ? 'System'
+                              : current.includes('Georgia')
+                                ? 'Serif'
+                                : 'בחירה';
+
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
+                        onClick={() => setFontFamilyMenuOpen((v) => !v)}
+                        aria-haspopup="listbox"
+                        aria-expanded={fontFamilyMenuOpen}
+                      >
+                        <span className="truncate">{currentLabel}</span>
+                        <span aria-hidden="true" className="text-slate-500">
+                          ▾
+                        </span>
+                      </button>
+
+                      {fontFamilyMenuOpen ? (
+                        <div
+                          role="listbox"
+                          className="absolute right-0 top-full mt-2 w-full min-w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
+                        >
+                          <button
+                            type="button"
+                            role="option"
+                            className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                            onClick={() => {
+                              setFontFamilyMenuOpen(false);
+                              setSettings((s) => ({ ...s, fontFamily: DEFAULT_SETTINGS.fontFamily }));
+                            }}
+                          >
+                            <span className="truncate">ברירת מחדל</span>
+                            {current === DEFAULT_SETTINGS.fontFamily ? (
+                              <span className="text-emerald-600 text-xs">נבחר</span>
+                            ) : null}
+                          </button>
+
+                          {uploadedFonts.length ? (
+                            <>
+                              <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
+                                גופנים שהועלו
+                              </div>
+                              <div className="max-h-[240px] overflow-auto">
+                                {uploadedFonts.map((f) => {
+                                  const v = cssFontFamilyForUploaded(f.family);
+                                  const isSelected = v === current;
+                                  return (
+                                    <div
+                                      key={f.id}
+                                      className="w-full px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                                    >
+                                      <button
+                                        type="button"
+                                        role="option"
+                                        className="min-w-0 flex-1 text-right"
+                                        onClick={() => {
+                                          setFontFamilyMenuOpen(false);
+                                          setSettings((s) => ({ ...s, fontFamily: v }));
+                                        }}
+                                        style={{ fontFamily: v }}
+                                      >
+                                        <span className="truncate">{f.family}</span>
+                                      </button>
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        {isSelected ? (
+                                          <span className="text-emerald-600 text-xs">נבחר</span>
+                                        ) : null}
+                                        <button
+                                          type="button"
+                                          className="h-7 w-7 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                                          title="מחק גופן"
+                                          aria-label={`מחק גופן ${f.family}`}
+                                          onClick={async (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (fontBusy) return;
+                                            const ok = window.confirm(
+                                              `האם למחוק את הגופן "${f.family}" מהאפליקציה?`,
+                                            );
+                                            if (!ok) return;
+                                            try {
+                                              setFontBusy(f.id);
+                                              await deleteStoredFont(f.id);
+                                              setUploadedFonts((prev) => prev.filter((x) => x.id !== f.id));
+                                              setSaveFlash('הגופן נמחק');
+                                              window.setTimeout(() => setSaveFlash(null), 1500);
+                                              if (settings.fontFamily === v) {
+                                                setSettings((s) => ({
+                                                  ...s,
+                                                  fontFamily: DEFAULT_SETTINGS.fontFamily,
+                                                }));
+                                              }
+                                            } finally {
+                                              setFontBusy(null);
+                                            }
+                                          }}
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          ) : null}
+
+                          <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-t border-slate-200">
+                            גופנים מובנים
+                          </div>
+                          {[
+                            {
+                              label: 'Heebo (אם מותקן)',
+                              value: '"Heebo", system-ui, "Segoe UI", Arial, sans-serif',
+                            },
+                            {
+                              label: 'Assistant (אם מותקן)',
+                              value: '"Assistant", system-ui, "Segoe UI", Arial, sans-serif',
+                            },
+                            {
+                              label: 'System',
+                              value: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
+                            },
+                            { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
+                          ].map((opt) => {
+                            const isSelected = opt.value === current;
+                            return (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                role="option"
+                                className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
+                                onClick={() => {
+                                  setFontFamilyMenuOpen(false);
+                                  setSettings((s) => ({ ...s, fontFamily: opt.value }));
+                                }}
+                                style={{ fontFamily: opt.value }}
+                              >
+                                <span className="truncate">{opt.label}</span>
+                                {isSelected ? (
+                                  <span className="text-emerald-600 text-xs">נבחר</span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </>
+                  );
+                })()}
+              </div>
             </label>
 
             <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
