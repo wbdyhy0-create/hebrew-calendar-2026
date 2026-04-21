@@ -133,6 +133,8 @@ export type CalendarSettings = {
   layoutAutoFitToCanvas: boolean;
   canvasBorderWidthPx: number;
   canvasBorderColor: string;
+  /** Rounded corners for the outer canvas frame (px). */
+  canvasOuterRadiusPx: number;
   gridBorderWidthPx: number;
   gridBorderColor: string;
   /** שורת כותרות ימי השבוע מעל הטבלה: א׳ ב׳… או שמות מלאים */
@@ -264,6 +266,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   layoutAutoFitToCanvas: true,
   canvasBorderWidthPx: 2,
   canvasBorderColor: '#D8DEE9',
+  canvasOuterRadiusPx: 18,
   gridBorderWidthPx: 2,
   gridBorderColor: '#E2E8F0',
   weekdayHeaderMode: 'shortLetter',
@@ -356,6 +359,7 @@ export function loadSettings(): CalendarSettings {
       'tableOffsetYPx',
       // layout booleans are coerced below
       'canvasBorderWidthPx',
+      'canvasOuterRadiusPx',
       'gridBorderWidthPx',
       'gridWeekdayHeaderHeightPx',
       'gridWeekdayHeaderRowOffsetYPx',

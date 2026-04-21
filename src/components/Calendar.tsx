@@ -895,6 +895,54 @@ export function Calendar() {
   );
   const cellRadiusPx = Math.max(0, Math.round(Number(settings.cellCornerRadiusPx) || 0));
 
+  const pickColorFromScreen = async (apply: (hex: string) => void) => {
+    try {
+      const AnyWindow = window as any;
+      if (!AnyWindow.EyeDropper) {
+        setSaveFlash('הטפטפת זמינה כרגע רק בדפדפנים תומכים (Chrome/Edge).');
+        window.setTimeout(() => setSaveFlash(null), 2200);
+        return;
+      }
+      const ed = new AnyWindow.EyeDropper();
+      const res = await ed.open();
+      const hex = String(res?.sRGBHex ?? '').trim();
+      if (hex) apply(hex);
+    } catch (e) {
+      // user cancelled or permission denied - ignore quietly
+    }
+  };
+
+  const ColorInput = ({
+    value,
+    onChange,
+    label,
+  }: {
+    value: string;
+    onChange: (hex: string) => void;
+    label: string;
+  }) => (
+    <label className="text-sm text-slate-700">
+      {label}
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          className="w-full h-10 rounded-md border border-slate-200 bg-white px-2"
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button
+          type="button"
+          className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+          title="טפטפת"
+          aria-label="טפטפת"
+          onClick={() => pickColorFromScreen(onChange)}
+        >
+          🎯
+        </button>
+      </div>
+    </label>
+  );
+
   const openAndJumpToSetting = (anchorId: string) => {
     setSettingsOpen(true);
     // Wait a tick for the settings panel to mount before searching for anchors.
@@ -3794,19 +3842,32 @@ export function Calendar() {
               />
             </label>
             <label className="text-sm text-slate-700">
-              צבע מסגרת קנבס
+              עיגול פינות מסגרת קנבס ({settings.canvasOuterRadiusPx}px)
               <input
-                className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-2"
-                type="color"
-                value={settings.canvasBorderColor}
+                className="mt-2 w-full"
+                type="range"
+                min={0}
+                max={28}
+                value={settings.canvasOuterRadiusPx}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    canvasBorderColor: e.target.value,
+                    canvasOuterRadiusPx: Number(e.target.value),
                   }))
                 }
               />
             </label>
+
+            <ColorInput
+              label="צבע מסגרת קנבס"
+              value={settings.canvasBorderColor}
+              onChange={(hex) =>
+                setSettings((s) => ({
+                  ...s,
+                  canvasBorderColor: hex,
+                }))
+              }
+            />
             </SettingsCategory>
           </div>
         </div>

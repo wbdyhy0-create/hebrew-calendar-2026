@@ -26,7 +26,7 @@ export function resolveCalendarLayoutZoomPercent(settings: CalendarSettings): nu
 
 /** Outer canvas corner radius — aligns with `rounded-2xl` and scales slightly with theme. */
 export function resolveCanvasOuterRadiusPx(settings: CalendarSettings): number {
-  return Math.min(22, Math.max(12, settings.headerBarRadiusPx));
+  return Math.min(28, Math.max(0, Math.round(Number(settings.canvasOuterRadiusPx) || 0)));
 }
 
 /** Detached month grid shell — aligns with `rounded-xl`, scaled from header radius. */
