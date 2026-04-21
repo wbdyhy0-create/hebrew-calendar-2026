@@ -495,7 +495,6 @@ export function Calendar() {
   const [previewTitle, setPreviewTitle] = useState<string>('');
   const [previewKind, setPreviewKind] = useState<'pdf' | 'png' | 'html'>('pdf');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewDisplayUrl, setPreviewDisplayUrl] = useState<string | null>(null);
   const [previewSrcDoc, setPreviewSrcDoc] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewSuggested, setPreviewSuggested] = useState<string>('');
@@ -503,9 +502,8 @@ export function Calendar() {
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
-      if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
     };
-  }, [previewUrl, previewDisplayUrl]);
+  }, [previewUrl]);
 
   const [bgMonthIdx, setBgMonthIdx] = useState<number>(() => new Date().getMonth());
   const [themePickerOpen, setThemePickerOpen] = useState(false);
@@ -574,12 +572,6 @@ export function Calendar() {
         return;
       }
 
-      // Manual edit mode uses direct clicks on cells (e.g. upload/drag images).
-      // Do not swallow the event in capture-phase, otherwise the cell onClick won't fire.
-      if (key === 'cell' && settings.enableManualEdits) {
-        return;
-      }
-
       if (key === 'header' || key === 'weekdays' || key === 'cell' || key === 'background') {
         setInspect({ key, x: e.clientX, y: e.clientY });
         e.stopPropagation();
@@ -591,7 +583,7 @@ export function Calendar() {
 
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [settingsOpen, settings.enableManualEdits]);
+  }, [settingsOpen]);
 
   /** Download menu: close on outside click or Escape. */
   useEffect(() => {
@@ -1465,10 +1457,6 @@ export function Calendar() {
               type="button"
               className="h-8 w-8 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
               aria-label="סגור פלטת צבעים"
-              onPointerDown={(e) => {
-                // Prevent the draggable header from capturing the pointer, which can swallow the click.
-                e.stopPropagation();
-              }}
               onClick={(e) => {
                 e.stopPropagation();
                 setColorPaletteOpen(false);
@@ -1678,10 +1666,7 @@ export function Calendar() {
                       key={a.anchorId + a.label}
                       type="button"
                       className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                      onClick={() => {
-                        setInspect((s) => ({ ...s, key: 'none' }));
-                        openAndJumpToSetting(a.anchorId);
-                      }}
+                      onClick={() => jumpToSetting(a.anchorId)}
                     >
                       {a.label}
                     </button>
@@ -1773,15 +1758,6 @@ export function Calendar() {
                           setPreviewBlob(blob);
                           if (previewUrl) URL.revokeObjectURL(previewUrl);
                           setPreviewUrl(URL.createObjectURL(blob));
-                          // Electron PDF viewer can mis-render alignment/centering inside an iframe.
-                          // Show a PNG snapshot for preview, while keeping the PDF blob for export.
-                          try {
-                            const pngBlob = await exportPngBlobFromPrintableHtml(html, settings, { scale: 2 });
-                            if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
-                            setPreviewDisplayUrl(URL.createObjectURL(pngBlob));
-                          } catch {
-                            setPreviewDisplayUrl(null);
-                          }
                         } catch (e) {
                           const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                           setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
@@ -2004,14 +1980,6 @@ export function Calendar() {
                         setPreviewBlob(blob);
                         if (previewUrl) URL.revokeObjectURL(previewUrl);
                         setPreviewUrl(URL.createObjectURL(blob));
-                        // Show first-page snapshot as PNG to avoid Electron PDF iframe quirks.
-                        try {
-                          const pngBlob = await exportPngBlobFromPrintableHtml(html, settings, { scale: 2 });
-                          if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
-                          setPreviewDisplayUrl(URL.createObjectURL(pngBlob));
-                        } catch {
-                          setPreviewDisplayUrl(null);
-                        }
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
@@ -2273,8 +2241,6 @@ export function Calendar() {
                     setPreviewKind('pdf');
                     if (previewUrl) URL.revokeObjectURL(previewUrl);
                     setPreviewUrl(null);
-                    if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
-                    setPreviewDisplayUrl(null);
                     setPreviewSrcDoc(null);
                     setPreviewBlob(null);
                     setPreviewSuggested('');
@@ -2287,23 +2253,8 @@ export function Calendar() {
             <div className="flex-1 bg-white">
               {previewKind === 'html' ? (
                 <iframe title="preview" className="w-full h-full" srcDoc={previewSrcDoc ?? ''} />
-              ) : previewKind === 'pdf' && previewDisplayUrl ? (
-                <div className="h-full w-full overflow-auto bg-slate-100 p-3">
-                  <div className="mx-auto w-fit rounded-lg border border-slate-200 bg-white shadow-sm">
-                    <img
-                      alt="PDF preview (rendered as image)"
-                      src={previewDisplayUrl}
-                      className="block max-w-none"
-                    />
-                  </div>
-                </div>
               ) : previewUrl ? (
-                <iframe
-                  title="preview"
-                  className="w-full h-full"
-                  style={{ direction: 'ltr' }}
-                  src={previewUrl}
-                />
+                <iframe title="preview" className="w-full h-full" src={previewUrl} />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-sm text-slate-600">
                   טוען תצוגה מקדימה…
@@ -2507,7 +2458,6 @@ export function Calendar() {
             </div>
 
             <fieldset className="sm:col-span-2 lg:col-span-3 min-w-0 rounded-lg border border-slate-200 bg-white/80 p-3">
-              <div id="settings-anchor-zmanim-candle" className="scroll-mt-24" />
               <legend className="text-sm font-medium text-slate-800">זמן כניסה — דקות לפני השקיעה (נרות)</legend>
               <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-700">
                 <label className="flex cursor-pointer items-center gap-2">
@@ -2578,7 +2528,6 @@ export function Calendar() {
               </label>
               {settings.fastTzaitStyle === 'sunset_minutes' ? (
                 <label className="mt-3 block text-sm text-slate-700">
-                  <div id="settings-anchor-fast-tzait-offset" className="scroll-mt-24" />
                   צאת צומות — דקות אחרי השקיעה ({settings.fastSunsetOffsetMins})
                   <input
                     className="mt-2 w-full"
@@ -2601,7 +2550,6 @@ export function Calendar() {
 
             <SettingsCategory icon="✏️" title="טיפוגרפיה">
             <div id="settings-anchor-header" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
-            <div id="settings-anchor-typography-family" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             <FontFamilyPicker
               label="משפחת גופן — ברירת מחדל (Fallback)"
               value={settings.fontFamily}
@@ -2615,7 +2563,6 @@ export function Calendar() {
             />
 
             <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-              <div id="settings-anchor-typography-apply" className="scroll-mt-24" />
               <div className="text-sm font-semibold text-slate-900 mb-2">החל את הגופן על</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -2820,7 +2767,6 @@ export function Calendar() {
             </div>
 
             <div className="sm:col-span-2 lg:col-span-3 min-w-0 rounded-lg border border-slate-200 bg-white/80 p-3">
-              <div id="settings-anchor-typography-upload" className="scroll-mt-24" />
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-normal text-slate-900">העלאת גופן מהמחשב</div>
@@ -3058,7 +3004,6 @@ export function Calendar() {
             </div>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-typography-weight" className="scroll-mt-24" />
               משקל
               <select
                 className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
@@ -3076,7 +3021,6 @@ export function Calendar() {
               </select>
             </label>
 
-            <div id="settings-anchor-typography-sizes" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             </SettingsCategory>
 
             <SettingsCategory icon="🖌️" title="צבעים, מסגרות וריפוד">
@@ -3084,7 +3028,6 @@ export function Calendar() {
               <div className="text-sm font-semibold text-slate-900 mb-2">משבצות ריקות / ריפוד</div>
               <div id="settings-anchor-padding-cells" className="scroll-mt-24" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div id="settings-anchor-padding-color" className="scroll-mt-24" />
                 <ColorInput
                   label="צבע בסיס (אפור)"
                   value={settings.paddingCellColor}
@@ -3097,7 +3040,6 @@ export function Calendar() {
                 />
 
                 <label className="text-sm text-slate-700">
-                  <div id="settings-anchor-padding-strength" className="scroll-mt-24" />
                   עוצמת אפור (0–1):{' '}
                   {Number(settings.paddingCellStrength).toFixed(2)}
                   <input
@@ -3126,7 +3068,6 @@ export function Calendar() {
             </div>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-grid-border-width" className="scroll-mt-24" />
               קווי טבלה (מסגרת חיצונית) {settings.gridBorderWidthPx}px
               <input
                 className="mt-2 w-full"
@@ -3153,12 +3094,10 @@ export function Calendar() {
                 }))
               }
             />
-            <div id="settings-anchor-grid-border-color" className="scroll-mt-24" />
 
             <label className="text-sm text-slate-700">
               כותרות ימי השבוע (שורה עליונה)
               <div id="settings-anchor-weekdays" className="scroll-mt-24" />
-              <div id="settings-anchor-weekdays-mode" className="scroll-mt-24" />
               <select
                 className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
                 value={settings.weekdayHeaderMode}
@@ -3174,7 +3113,6 @@ export function Calendar() {
               </select>
             </label>
 
-            <div id="settings-anchor-weekdays-bg" className="scroll-mt-24" />
             <ColorInput
               label="צבע רקע פס ימי השבוע"
               value={settings.gridWeekdayHeaderBg}
@@ -3187,7 +3125,6 @@ export function Calendar() {
             />
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-weekdays-height" className="scroll-mt-24" />
               גובה פס ימי השבוע ({settings.gridWeekdayHeaderHeightPx}px)
               <input
                 className="mt-2 w-full"
@@ -3205,7 +3142,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-weekdays-text-offset" className="scroll-mt-24" />
               הזזת טקסט ימי השבוע למעלה/למטה ({settings.gridWeekdayHeaderTextOffsetYPx}px)
               <input
                 className="mt-2 w-full"
@@ -3233,10 +3169,7 @@ export function Calendar() {
               }
             />
 
-            <div id="settings-anchor-weekdays-text-color" className="scroll-mt-24" />
-
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-weekdays-font" className="scroll-mt-24" />
               גודל גופן כותרות ימי השבוע ({settings.gridWeekdayHeaderFontPx}px)
               <input
                 className="mt-2 w-full"
@@ -3272,7 +3205,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-weekdays-underline" className="scroll-mt-24" />
               עובי קו תחתון לפס ימי השבוע ({settings.gridWeekdayHeaderBorderBottomWidthPx}px)
               <input
                 className="mt-2 w-full"
@@ -3301,7 +3233,6 @@ export function Calendar() {
             />
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-weekdays-row-offset" className="scroll-mt-24" />
               היסט אנכי לפס ימי השבוע ({settings.gridWeekdayHeaderRowOffsetYPx}px)
               <input
                 className="mt-2 w-full"
@@ -3348,7 +3279,6 @@ export function Calendar() {
             />
 
             <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
-              <div id="settings-anchor-borders-toggle" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.showCellBorders}
@@ -3368,21 +3298,18 @@ export function Calendar() {
               value={settings.eventBg}
               onChange={(hex) => setSettings((s) => ({ ...s, eventBg: hex }))}
             />
-            <div id="settings-anchor-colors-event" className="scroll-mt-24" />
 
             <ColorInput
               label="צבע שבת"
               value={settings.shabbatBg}
               onChange={(hex) => setSettings((s) => ({ ...s, shabbatBg: hex }))}
             />
-            <div id="settings-anchor-colors-shabbat" className="scroll-mt-24" />
 
             <ColorInput
               label="צבע “היום”"
               value={settings.todayBg}
               onChange={(hex) => setSettings((s) => ({ ...s, todayBg: hex }))}
             />
-            <div id="settings-anchor-colors-today" className="scroll-mt-24" />
 
             </SettingsCategory>
 
@@ -3397,7 +3324,6 @@ export function Calendar() {
             </div>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-export-page" className="scroll-mt-24" />
               גודל עמוד (תבנית)
               <select
                 className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
@@ -3416,7 +3342,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-export-orientation" className="scroll-mt-24" />
               כיוון עמוד
               <select
                 className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
@@ -3471,7 +3396,6 @@ export function Calendar() {
             ) : null}
 
             <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
-              <div id="settings-anchor-export-margin" className="scroll-mt-24" />
               שוליים סביב העמוד ({settings.pdfMarginMm} מ״מ)
               <input
                 className="mt-2 w-full"
@@ -3975,7 +3899,6 @@ export function Calendar() {
               <div className="mt-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
-                    <div id="settings-anchor-background-mode" className="scroll-mt-24" />
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"
@@ -4034,7 +3957,6 @@ export function Calendar() {
                 </div>
 
                 <input
-                  id="settings-anchor-background-upload"
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
@@ -4076,7 +3998,6 @@ export function Calendar() {
                   הסר רקע
                 </button>
                 <button
-                  id="settings-anchor-background-remove"
                   type="button"
                   onClick={() =>
                     setSettings((s) => ({
@@ -4090,7 +4011,6 @@ export function Calendar() {
                   הסר הכל
                 </button>
                 <div className="text-sm text-slate-600">
-                  <div id="settings-anchor-background-opacity" className="scroll-mt-24" />
                   אטימות ({Math.round(settings.backgroundOpacity * 100)}%)
                   <input
                     className="ml-2 align-middle"
@@ -4125,7 +4045,6 @@ export function Calendar() {
             </div>
 
             <label className="text-sm text-slate-700 flex items-center gap-2 sm:col-span-2 lg:col-span-3">
-              <div id="settings-anchor-canvas-autofit" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.layoutAutoFitToCanvas}
@@ -4142,7 +4061,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700 flex items-center gap-2 sm:col-span-2 lg:col-span-3">
-              <div id="settings-anchor-canvas-fillheight" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.layoutFillHeight}
@@ -4157,7 +4075,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-canvas-zoom" className="scroll-mt-24" />
               זום הלוח ({resolveCalendarLayoutZoomPercent(settings)}%)
               <input
                 className="mt-2 w-full"
@@ -4179,7 +4096,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700 flex items-center gap-2 sm:col-span-2 lg:col-span-3">
-              <div id="settings-anchor-canvas-center" className="scroll-mt-24" />
               <input
                 type="checkbox"
                 checked={settings.layoutCenterVertically}
@@ -4194,7 +4110,6 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-canvas-padding" className="scroll-mt-24" />
               רווח מסביב בקנבס ({settings.canvasPaddingPx}px)
               <input
                 className="mt-2 w-full"
@@ -4230,7 +4145,6 @@ export function Calendar() {
               </div>
             </label>
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-canvas-border" className="scroll-mt-24" />
               מסגרת הקנבס ({settings.canvasBorderWidthPx}px)
               <input
                 className="mt-2 w-full"
@@ -4247,23 +4161,7 @@ export function Calendar() {
               />
             </label>
             <label className="text-sm text-slate-700">
-              <div id="settings-anchor-canvas-radius" className="scroll-mt-24" />
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>עיגול פינות מסגרת קנבס ({settings.canvasOuterRadiusPx}px)</div>
-                <button
-                  type="button"
-                  className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
-                  onClick={() =>
-                    setSettings((s) => ({
-                      ...s,
-                      canvasOuterRadiusPx: s.canvasOuterRadiusPx > 0 ? 0 : DEFAULT_SETTINGS.canvasOuterRadiusPx,
-                    }))
-                  }
-                  title={settings.canvasOuterRadiusPx > 0 ? 'זוויות חדות (0px)' : 'פינות מעוגלות'}
-                >
-                  {settings.canvasOuterRadiusPx > 0 ? 'זוויות' : 'עגול'}
-                </button>
-              </div>
+              עיגול פינות מסגרת קנבס ({settings.canvasOuterRadiusPx}px)
               <input
                 className="mt-2 w-full"
                 type="range"
@@ -4323,67 +4221,35 @@ export function Calendar() {
               key: 'zmanim',
               label: 'זמנים',
               cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
-              items: [
-                { label: 'כללי (Hebcal)', anchorId: 'settings-anchor-zmanim' },
-                { label: 'נרות — דקות לפני שקיעה', anchorId: 'settings-anchor-zmanim-candle' },
-                { label: 'צאת צומות — שיטה', anchorId: 'settings-anchor-fast-tzait' },
-                { label: 'צאת צומות — דקות אחרי שקיעה', anchorId: 'settings-anchor-fast-tzait-offset' },
-              ],
+              items: [{ label: 'כניסה/יציאה', anchorId: 'settings-anchor-zmanim' }],
             },
             {
               key: 'typography',
               label: 'טיפוגרפיה',
               cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100',
-              items: [
-                { label: 'משפחת גופן (Fallback)', anchorId: 'settings-anchor-typography-family' },
-                { label: 'איפה להחיל גופן', anchorId: 'settings-anchor-typography-apply' },
-                { label: 'העלאת/מחיקת גופנים', anchorId: 'settings-anchor-typography-upload' },
-                { label: 'משקל כללי', anchorId: 'settings-anchor-typography-weight' },
-                { label: 'גדלי טקסט בתאים', anchorId: 'settings-anchor-typography-sizes' },
-              ],
+              items: [{ label: 'גופנים/משקלים', anchorId: 'settings-anchor-header' }],
             },
             {
               key: 'colors',
               label: 'צבעים',
               cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100',
               items: [
-                { label: 'ריפוד — צבע בסיס', anchorId: 'settings-anchor-padding-color' },
-                { label: 'ריפוד — עוצמה', anchorId: 'settings-anchor-padding-strength' },
-                { label: 'מסגרת חיצונית — עובי', anchorId: 'settings-anchor-grid-border-width' },
-                { label: 'מסגרת חיצונית — צבע', anchorId: 'settings-anchor-grid-border-color' },
-                { label: 'קווי תאים — עובי/צבע', anchorId: 'settings-anchor-borders' },
-                { label: 'הצג/הסתר קווי תאים', anchorId: 'settings-anchor-borders-toggle' },
-                { label: 'צבעי ימים (אירועים/שבת/היום)', anchorId: 'settings-anchor-colors' },
-                { label: 'אירועים', anchorId: 'settings-anchor-colors-event' },
-                { label: 'שבת', anchorId: 'settings-anchor-colors-shabbat' },
-                { label: 'היום', anchorId: 'settings-anchor-colors-today' },
+                { label: 'צבעי ימים', anchorId: 'settings-anchor-colors' },
+                { label: 'ריפוד תאים', anchorId: 'settings-anchor-padding-cells' },
+                { label: 'קווים/מסגרות', anchorId: 'settings-anchor-borders' },
               ],
             },
             {
               key: 'weekdays',
               label: 'ימי שבוע',
               cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
-              items: [
-                { label: 'פורמט (מקוצר/מלא)', anchorId: 'settings-anchor-weekdays-mode' },
-                { label: 'רקע הפס', anchorId: 'settings-anchor-weekdays-bg' },
-                { label: 'גובה הפס', anchorId: 'settings-anchor-weekdays-height' },
-                { label: 'הזזת טקסט', anchorId: 'settings-anchor-weekdays-text-offset' },
-                { label: 'צבע טקסט', anchorId: 'settings-anchor-weekdays-text-color' },
-                { label: 'גודל/משקל גופן', anchorId: 'settings-anchor-weekdays-font' },
-                { label: 'קו תחתון (עובי/צבע)', anchorId: 'settings-anchor-weekdays-underline' },
-                { label: 'היסט אנכי לפס', anchorId: 'settings-anchor-weekdays-row-offset' },
-              ],
+              items: [{ label: 'פורמט/צבע/גובה', anchorId: 'settings-anchor-weekdays' }],
             },
             {
               key: 'export',
               label: 'ייצוא',
               cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
-              items: [
-                { label: 'כללי ייצוא', anchorId: 'settings-anchor-export' },
-                { label: 'גודל עמוד (A4/A5/מותאם)', anchorId: 'settings-anchor-export-page' },
-                { label: 'כיוון עמוד', anchorId: 'settings-anchor-export-orientation' },
-                { label: 'שוליים', anchorId: 'settings-anchor-export-margin' },
-              ],
+              items: [{ label: 'PDF/HTML/PNG', anchorId: 'settings-anchor-export' }],
             },
             {
               key: 'background',
@@ -4391,18 +4257,7 @@ export function Calendar() {
               cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
               items: [
                 { label: 'תמונת רקע', anchorId: 'settings-anchor-background' },
-                { label: 'מצב תמונה (שנה/חודש)', anchorId: 'settings-anchor-background-mode' },
-                { label: 'העלאת תמונה', anchorId: 'settings-anchor-background-upload' },
-                { label: 'הסרה/איפוס רקע', anchorId: 'settings-anchor-background-remove' },
-                { label: 'אטימות רקע', anchorId: 'settings-anchor-background-opacity' },
-                { label: 'מידות קנבס', anchorId: 'settings-anchor-canvas-surface' },
-                { label: 'מתח למילוי (Auto‑fit)', anchorId: 'settings-anchor-canvas-autofit' },
-                { label: 'מלא גובה', anchorId: 'settings-anchor-canvas-fillheight' },
-                { label: 'זום לוח', anchorId: 'settings-anchor-canvas-zoom' },
-                { label: 'מרכוז אנכי', anchorId: 'settings-anchor-canvas-center' },
-                { label: 'ריפוד קנבס', anchorId: 'settings-anchor-canvas-padding' },
-                { label: 'מסגרת קנבס', anchorId: 'settings-anchor-canvas-border' },
-                { label: 'עיגול פינות מסגרת קנבס', anchorId: 'settings-anchor-canvas-radius' },
+                { label: 'גודל/זום', anchorId: 'settings-anchor-canvas-surface' },
               ],
             },
             {
@@ -4639,7 +4494,9 @@ export function Calendar() {
                   borderRadius: cellRadiusPx ? `${cellRadiusPx}px` : undefined,
                   cursor: settings.enableManualEdits ? 'pointer' : undefined,
                 }}
-                onClick={() => {
+                onClick={(e) => {
+                  // Only open picker when clicking the empty cell background (not image drag/delete).
+                  if (e.target !== e.currentTarget) return;
                   if (!settings.enableManualEdits) return;
                   pickImageForCell(m.gKey);
                 }}

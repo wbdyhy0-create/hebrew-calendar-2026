@@ -276,25 +276,6 @@ export async function exportPdfBlobFromHtml(
       const root = clonedDoc.querySelector('#calendar-container') as HTMLElement | null;
       const scope = root ?? clonedDoc.body;
 
-      // Enforce RTL in the cloned DOM. In some Electron/Chromium builds, the clone can default to LTR,
-      // which flips weekday order and header alignment compared to the app.
-      try {
-        clonedDoc.documentElement?.setAttribute('dir', 'rtl');
-        (clonedDoc.documentElement as any)?.style?.setProperty?.('direction', 'rtl', 'important');
-        clonedDoc.body?.setAttribute('dir', 'rtl');
-        (clonedDoc.body as any)?.style?.setProperty?.('direction', 'rtl', 'important');
-      } catch {
-        // ignore
-      }
-      if (root) {
-        try {
-          root.setAttribute('dir', 'rtl');
-          root.style.setProperty('direction', 'rtl', 'important');
-        } catch {
-          // ignore
-        }
-      }
-
       if (root) {
         // Force full-page box in the clone so the background fills the capture.
         root.style.setProperty('width', `${widthMm}mm`, 'important');

@@ -502,8 +502,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         font-family: ${settings.fontFamily};
         font-size: ${settings.fontSizePx}px;
         color: #0f172a;
-        min-height: ${pageHeightMm}mm;
-        height: ${pageHeightMm}mm;
+        min-height: 100%;
         background-color: ${settings.calendarCanvasFill};
         ${canvasBackgroundSnippet}
         background-size: 24px 24px, 24px 24px, cover, cover;
@@ -673,14 +672,6 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         background: ${settings.gridShellBg};
         display:grid;
         grid-template-columns: repeat(7, 1fr);
-        grid-template-rows: ${settings.gridWeekdayHeaderHeightPx}px repeat(6, ${Math.min(
-          170,
-          Math.max(90, Math.round(Number(settings.pdfExportCellHeightPx) || 92)),
-        )}px);
-        height: calc(${settings.gridWeekdayHeaderHeightPx}px + ${
-          Math.min(170, Math.max(90, Math.round(Number(settings.pdfExportCellHeightPx) || 92))) * 6
-        }px);
-        align-content: stretch;
         direction: rtl;
       }
       ${
@@ -774,8 +765,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       .cell{
         position:relative;
         min-width: 0;
-        min-height: ${Math.min(170, Math.max(90, Math.round(Number(settings.pdfExportCellHeightPx) || 92)))}px;
-        height: ${Math.min(170, Math.max(90, Math.round(Number(settings.pdfExportCellHeightPx) || 92)))}px;
+        min-height: ${Math.min(150, Math.max(90, Math.round(Number(settings.pdfExportCellHeightPx) || 92)))}px;
         padding: 8px 10px;
         box-sizing:border-box;
         overflow-x: hidden;

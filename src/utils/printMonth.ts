@@ -19,7 +19,6 @@ import {
   getDayEventsByGregorianDate,
   formatTodayYmdJerusalem,
   formatYmdJerusalem,
-  addJerusalemCivilDays,
   getGregorianDayMonthJerusalem,
   getIsoWeekdaySun0Jerusalem,
   isTaanitEstherFastNameHe,
@@ -59,18 +58,9 @@ export function buildPrintableMonthHtml(
   overrides: OverridesMap,
   _opts?: { location?: 'Jerusalem' | 'TelAviv' },
 ) {
-  const weeksRaw = getMonthGridWeeks(viewDate);
-  // Always render 6 weeks in printable HTML so every month has identical page height.
-  // This prevents month-to-month height differences (28/29/30/31) and avoids Chrome print pagination inside grids.
-  const weeks: Date[][] = [...weeksRaw];
-  while (weeks.length < 6) {
-    const lastWeek = weeks.at(-1);
-    const lastDay = lastWeek?.at(-1) ?? viewDate;
-    const nextWeek = Array.from({ length: 7 }, (_, i) => addJerusalemCivilDays(lastDay, i + 1));
-    weeks.push(nextWeek);
-  }
-  // Auto-fit PDF: compute a cell height that fills the page vertically using 6 rows (even if the month is 5 weeks).
-  const weekCount = 6;
+  const weeks = getMonthGridWeeks(viewDate);
+  // Auto-fit PDF: when enabled, compute a cell height that fills the page vertically.
+  const weekCount = Math.max(5, Math.min(6, weeks.length || 6));
   const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96);
   const approxHeaderH =
     settings.headerLayoutStyle === 'minimal_text' ? 120 : settings.headerBarHeightPx + settings.headerBarMarginBottomPx;
@@ -83,8 +73,10 @@ export function buildPrintableMonthHtml(
   // to the next page (leaving a blank gap). Ensure the printable HTML uses a cell height that fits
   // a full month into a single page.
   const fittedCellH = Math.min(170, Math.max(90, autoCellH));
-  // For printable HTML (preview + "Year HTML"), always use a fitted cell height so each month prints as 1 page.
-  const effectiveSettings = { ...settings, pdfExportCellHeightPx: fittedCellH };
+  const effectiveSettings =
+    weekCount >= 6 || settings.layoutAutoFitToCanvas
+      ? { ...settings, pdfExportCellHeightPx: fittedCellH }
+      : settings;
   const paddingStrength = Number(effectiveSettings.paddingCellStrength);
   const paddingBg = mixHexWithWhite(
     effectiveSettings.paddingCellColor,
