@@ -2,30 +2,22 @@ import type { CalendarSettings } from './settings';
 import type { OverridesMap } from './overrides';
 import { buildPrintableMonthHtml } from './printMonth';
 
-function extractBetween(haystack: string, startNeedle: string, endNeedle: string) {
-  const start = haystack.indexOf(startNeedle);
-  if (start < 0) return null;
-  const end = haystack.indexOf(endNeedle, start + startNeedle.length);
-  if (end < 0) return null;
-  return haystack.slice(start + startNeedle.length, end);
+function parseDoc(html: string) {
+  // In the browser runtime (web + Electron), DOMParser is available.
+  // Parsing is more robust than string slicing (which breaks on whitespace changes).
+  return new DOMParser().parseFromString(html, 'text/html');
 }
 
 function extractStyleBlock(html: string) {
-  const style = extractBetween(html, '<style>', '</style>');
-  return style ?? '';
+  const doc = parseDoc(html);
+  const style = doc.head.querySelector('style');
+  return style?.textContent ?? '';
 }
 
 function extractCalendarContainer(html: string) {
-  const marker = '<div id="calendar-container"';
-  const start = html.indexOf(marker);
-  if (start < 0) return null;
-  const end = html.indexOf('</div>\n    </div>\n  </body>', start);
-  if (end < 0) return null;
-  // Grab the container div (and its inner content) up to its matching closing.
-  // `printMonth` ends with: <div id="calendar-container" class="printRoot"> ... </div>
-  const closeIdx = html.lastIndexOf('</div>', end);
-  if (closeIdx < 0) return null;
-  return html.slice(start, closeIdx + '</div>'.length);
+  const doc = parseDoc(html);
+  const el = doc.querySelector('#calendar-container') as HTMLElement | null;
+  return el ? el.outerHTML : null;
 }
 
 export function buildPrintableYearPdfHtml(
