@@ -328,8 +328,12 @@ export function Calendar() {
             type="button"
             className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
             onClick={() => {
+              if (open) {
+                setFontFamilyMenuOpen(false);
+                return;
+              }
               setFontFamilyMenuKey(menuKey);
-              setFontFamilyMenuOpen((v) => (menuKey === fontFamilyMenuKey ? !v : true));
+              setFontFamilyMenuOpen(true);
             }}
             aria-haspopup="listbox"
             aria-expanded={open}
