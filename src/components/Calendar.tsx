@@ -1236,93 +1236,87 @@ export function Calendar() {
         className="relative flex flex-col gap-3 mb-4 mx-auto"
         style={{ width: `min(100%, ${canvasSurfacePx.widthPx}px)` }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="text-right">
-            <p className="text-xs sm:text-sm text-slate-500">
-              {gMonthDays} ימים בחודש (לועזי)
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
-          <button
-            type="button"
-            onClick={() => setThemePickerOpen(true)}
-            className="px-3 py-2 text-sm rounded-md border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 active:bg-violet-100/80 transition flex items-center gap-2"
-          >
-            <span aria-hidden="true">🎨</span>
-            ערכות עיצוב
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSettingsOpen((v) => !v)}
-            className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
-          >
-            <span aria-hidden="true">⚙️</span>
-            הגדרות עיצוב
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setHelpOpen(true)}
-            className="px-3 py-2 text-sm rounded-md border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 active:bg-emerald-100/80 transition flex items-center gap-2"
-          >
-            <span aria-hidden="true">📘</span>
-            מדריך תפעולי
-          </button>
-
-          <div ref={downloadMenuRef} className="relative">
+        <div dir="ltr" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div dir="rtl" className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
             <button
               type="button"
-              onClick={() => setDownloadMenuOpen((v) => !v)}
-              className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100 active:bg-amber-100/80 transition flex items-center gap-2"
-              aria-haspopup="menu"
-              aria-expanded={downloadMenuOpen}
+              onClick={() => setThemePickerOpen(true)}
+              className="px-3 py-2 text-sm rounded-md border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 active:bg-violet-100/80 transition flex items-center gap-2"
             >
-              <span aria-hidden="true">⬇️</span>
-              הורדה
+              <span aria-hidden="true">🎨</span>
+              ערכות עיצוב
             </button>
-            {downloadMenuOpen ? (
-              <div
-                role="menu"
-                className="absolute right-0 top-full mt-2 w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
+
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((v) => !v)}
+              className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
+            >
+              <span aria-hidden="true">⚙️</span>
+              הגדרות עיצוב
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="px-3 py-2 text-sm rounded-md border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 active:bg-emerald-100/80 transition flex items-center gap-2"
+            >
+              <span aria-hidden="true">📘</span>
+              מדריך תפעולי
+            </button>
+
+            <div ref={downloadMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setDownloadMenuOpen((v) => !v)}
+                className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100 active:bg-amber-100/80 transition flex items-center gap-2"
+                aria-haspopup="menu"
+                aria-expanded={downloadMenuOpen}
               >
-                <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-b border-slate-200">
-                  חודש
-                </div>
-                <div className="p-2 grid grid-cols-1 gap-2">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={async () => {
-                      setDownloadMenuOpen(false);
-                      if (!ensureDownloadsWork()) return;
-                      try {
-                        setPreviewOpen(true);
-                        setPreviewTitle('תצוגה מקדימה — חודש PDF');
-                        setPreviewKind('pdf');
-                        const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
-                          location: 'Jerusalem',
-                        });
-                        const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
-                        setPreviewSuggested(suggested);
-                        setPreviewSrcDoc(html);
-                        const blob = await exportPdfBlobFromHtml(html, settings);
-                        setPreviewBlob(blob);
-                        if (previewUrl) URL.revokeObjectURL(previewUrl);
-                        setPreviewUrl(URL.createObjectURL(blob));
-                      } catch (e) {
-                        const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
-                        setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
-                        window.setTimeout(() => setSaveFlash(null), 3500);
-                        // eslint-disable-next-line no-console
-                        console.error(e);
-                      }
-                    }}
-                    className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100"
-                  >
-                    תצוגה מקדימה — PDF
-                  </button>
+                <span aria-hidden="true">⬇️</span>
+                הורדה
+              </button>
+              {downloadMenuOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
+                >
+                  <div className="px-3 py-2 text-[11px] font-normal text-slate-600 bg-slate-50 border-b border-slate-200">
+                    חודש
+                  </div>
+                  <div className="p-2 grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={async () => {
+                        setDownloadMenuOpen(false);
+                        if (!ensureDownloadsWork()) return;
+                        try {
+                          setPreviewOpen(true);
+                          setPreviewTitle('תצוגה מקדימה — חודש PDF');
+                          setPreviewKind('pdf');
+                          const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
+                            location: 'Jerusalem',
+                          });
+                          const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
+                          setPreviewSuggested(suggested);
+                          setPreviewSrcDoc(html);
+                          const blob = await exportPdfBlobFromHtml(html, settings);
+                          setPreviewBlob(blob);
+                          if (previewUrl) URL.revokeObjectURL(previewUrl);
+                          setPreviewUrl(URL.createObjectURL(blob));
+                        } catch (e) {
+                          const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                          setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
+                          window.setTimeout(() => setSaveFlash(null), 3500);
+                          // eslint-disable-next-line no-console
+                          console.error(e);
+                        }
+                      }}
+                      className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100"
+                    >
+                      תצוגה מקדימה — PDF
+                    </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -1664,8 +1658,14 @@ export function Calendar() {
                   </button>
                 </div>
               </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
+
+          <div className="text-left">
+            <p className="text-xs sm:text-sm text-slate-500">
+              {gMonthDays} ימים בחודש (לועזי)
+            </p>
           </div>
         </div>
 
@@ -1701,130 +1701,10 @@ export function Calendar() {
         </div>
       </header>
 
-      {/* Category shortcuts (right side of canvas) */}
-      <div className="hidden lg:flex fixed right-3 top-[180px] z-[60] w-[168px] flex-col gap-2">
-        {[
-          {
-            key: 'themes',
-            label: 'ערכות עיצוב',
-            icon: '🎨',
-            cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100',
-            items: [{ label: 'בורר ערכות', anchorId: 'settings-anchor-themes' }],
-          },
-          {
-            key: 'header',
-            label: 'פס עליון',
-            icon: '🧾',
-            cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
-            items: [
-              { label: 'גובה/עיגול/מסגרת', anchorId: 'settings-anchor-headerbar-size' },
-              { label: 'צבעים', anchorId: 'settings-anchor-headerbar-colors' },
-              { label: 'חודש עברי/לועזי', anchorId: 'settings-anchor-header-month' },
-              { label: 'מיקום/רוחב', anchorId: 'settings-anchor-header-position' },
-            ],
-          },
-          {
-            key: 'zmanim',
-            label: 'זמנים',
-            icon: '🕯️',
-            cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
-            items: [{ label: 'כניסה/יציאה', anchorId: 'settings-anchor-zmanim' }],
-          },
-          {
-            key: 'typography',
-            label: 'טיפוגרפיה',
-            icon: '✏️',
-            cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100',
-            items: [{ label: 'גופנים/משקלים', anchorId: 'settings-anchor-header' }],
-          },
-          {
-            key: 'colors',
-            label: 'צבעים',
-            icon: '🖌️',
-            cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100',
-            items: [
-              { label: 'צבעי ימים', anchorId: 'settings-anchor-colors' },
-              { label: 'ריפוד תאים', anchorId: 'settings-anchor-padding-cells' },
-              { label: 'קווים/מסגרות', anchorId: 'settings-anchor-borders' },
-            ],
-          },
-          {
-            key: 'weekdays',
-            label: 'ימי שבוע',
-            icon: '📅',
-            cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
-            items: [{ label: 'פורמט/צבע/גובה', anchorId: 'settings-anchor-weekdays' }],
-          },
-          {
-            key: 'export',
-            label: 'ייצוא',
-            icon: '⬇️',
-            cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
-            items: [{ label: 'PDF/HTML/PNG', anchorId: 'settings-anchor-export' }],
-          },
-          {
-            key: 'background',
-            label: 'רקע/קנבס',
-            icon: '🖼️',
-            cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
-            items: [
-              { label: 'תמונת רקע', anchorId: 'settings-anchor-background' },
-              { label: 'גודל/זום', anchorId: 'settings-anchor-canvas-surface' },
-            ],
-          },
-          {
-            key: 'manual',
-            label: 'עריכה ידנית',
-            icon: '📝',
-            cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-            items: [{ label: 'אפשרויות', anchorId: 'settings-anchor-manual-edits' }],
-          },
-        ].map((b) => (
-          <div key={b.key} className="w-full">
-            <button
-              type="button"
-              className={[
-                'w-full text-right px-3 py-2 text-sm rounded-md border transition flex items-center justify-between gap-2 shadow-sm',
-                b.cls,
-              ].join(' ')}
-              onClick={() => {
-                setSettingsOpen(true);
-                setShortcutOpen((prev) => (prev === b.key ? null : b.key));
-              }}
-            >
-              <span className="truncate">{b.label}</span>
-              <span aria-hidden="true">{b.icon}</span>
-            </button>
-            {shortcutOpen === b.key ? (
-              <div className="mt-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden">
-                {b.items.map((it) => (
-                  <button
-                    key={it.anchorId}
-                    type="button"
-                    className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
-                    onClick={() => jumpToSetting(it.anchorId)}
-                  >
-                    {it.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ))}
-
-        <button
-          type="button"
-          className="mt-2 w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 transition flex items-center justify-between gap-2"
-          onClick={() => {
-            setSettingsOpen(false);
-            setShortcutOpen(null);
-          }}
-        >
-          <span>סגור עריכה</span>
-          <span aria-hidden="true">✕</span>
-        </button>
-      </div>
-
+      {/*
+        Category shortcuts are rendered next to the canvas below (in the canvas row),
+        so they never overlap the canvas border.
+      */}
       {helpOpen ? (
         <HelpAssistant
           entries={HELP_ENTRIES}
@@ -3916,25 +3796,141 @@ export function Calendar() {
         </div>
       )}
 
-      {/* Ornamental canvas around the table — גודל כמו עמוד PDF (ברירת מחדל A4 לרוחב) */}
       <div
-        className={[
-          'relative mx-auto shadow-sm',
-          settings.layoutAutoFitToCanvas ? 'overflow-hidden' : 'overflow-auto',
-        ].join(' ')}
-        data-inspect="background"
-        style={{
-          border: `${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor}`,
-          borderRadius: resolveCanvasOuterRadiusPx(settings),
-          padding: settings.canvasPaddingPx,
-          paddingTop: settings.canvasPaddingTopPx,
-          backgroundColor: settings.calendarCanvasFill,
-          ...canvasBgStyle,
-          width: `min(100%, ${canvasSurfacePx.widthPx}px)`,
-          height: canvasSurfacePx.heightPx,
-          boxSizing: 'border-box',
-        }}
+        className="relative mx-auto flex w-full justify-center gap-3"
+        style={{ maxWidth: canvasSurfacePx.widthPx + 220 }}
       >
+        {/* Category shortcuts (right of canvas, never overlapping) */}
+        <div className="hidden lg:flex w-[160px] shrink-0 flex-col gap-2 pt-2">
+          {[
+            {
+              key: 'themes',
+              label: 'ערכות עיצוב',
+              cls: 'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100',
+              items: [{ label: 'בורר ערכות', anchorId: 'settings-anchor-themes' }],
+            },
+            {
+              key: 'header',
+              label: 'פס עליון',
+              cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
+              items: [
+                { label: 'גובה/מסגרת', anchorId: 'settings-anchor-headerbar-size' },
+                { label: 'צבעים', anchorId: 'settings-anchor-headerbar-colors' },
+                { label: 'חודש עברי/לועזי', anchorId: 'settings-anchor-header-month' },
+                { label: 'מיקום/רוחב', anchorId: 'settings-anchor-header-position' },
+              ],
+            },
+            {
+              key: 'zmanim',
+              label: 'זמנים',
+              cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
+              items: [{ label: 'כניסה/יציאה', anchorId: 'settings-anchor-zmanim' }],
+            },
+            {
+              key: 'typography',
+              label: 'טיפוגרפיה',
+              cls: 'border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100',
+              items: [{ label: 'גופנים/משקלים', anchorId: 'settings-anchor-header' }],
+            },
+            {
+              key: 'colors',
+              label: 'צבעים',
+              cls: 'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100',
+              items: [
+                { label: 'צבעי ימים', anchorId: 'settings-anchor-colors' },
+                { label: 'ריפוד תאים', anchorId: 'settings-anchor-padding-cells' },
+                { label: 'קווים/מסגרות', anchorId: 'settings-anchor-borders' },
+              ],
+            },
+            {
+              key: 'weekdays',
+              label: 'ימי שבוע',
+              cls: 'border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100',
+              items: [{ label: 'פורמט/צבע/גובה', anchorId: 'settings-anchor-weekdays' }],
+            },
+            {
+              key: 'export',
+              label: 'ייצוא',
+              cls: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100',
+              items: [{ label: 'PDF/HTML/PNG', anchorId: 'settings-anchor-export' }],
+            },
+            {
+              key: 'background',
+              label: 'רקע/קנבס',
+              cls: 'border-indigo-200 bg-indigo-50 text-indigo-900 hover:bg-indigo-100',
+              items: [
+                { label: 'תמונת רקע', anchorId: 'settings-anchor-background' },
+                { label: 'גודל/זום', anchorId: 'settings-anchor-canvas-surface' },
+              ],
+            },
+            {
+              key: 'manual',
+              label: 'עריכה ידנית',
+              cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+              items: [{ label: 'אפשרויות', anchorId: 'settings-anchor-manual-edits' }],
+            },
+          ].map((b) => (
+            <div key={b.key} className="w-full">
+              <button
+                type="button"
+                className={[
+                  'w-full text-right px-3 py-2 text-sm rounded-md border transition shadow-sm',
+                  b.cls,
+                ].join(' ')}
+                onClick={() => {
+                  setSettingsOpen(true);
+                  setShortcutOpen((prev) => (prev === b.key ? null : b.key));
+                }}
+              >
+                <span className="truncate">{b.label}</span>
+              </button>
+              {shortcutOpen === b.key ? (
+                <div className="mt-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  {b.items.map((it) => (
+                    <button
+                      key={it.anchorId}
+                      type="button"
+                      className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                      onClick={() => jumpToSetting(it.anchorId)}
+                    >
+                      {it.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="mt-2 w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 transition"
+            onClick={() => {
+              setSettingsOpen(false);
+              setShortcutOpen(null);
+            }}
+          >
+            סגור עריכה
+          </button>
+        </div>
+
+        {/* Ornamental canvas around the table — גודל כמו עמוד PDF (ברירת מחדל A4 לרוחב) */}
+        <div
+          className={[
+            'relative shadow-sm',
+            settings.layoutAutoFitToCanvas ? 'overflow-hidden' : 'overflow-auto',
+          ].join(' ')}
+          data-inspect="background"
+          style={{
+            border: `${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor}`,
+            borderRadius: resolveCanvasOuterRadiusPx(settings),
+            padding: settings.canvasPaddingPx,
+            paddingTop: settings.canvasPaddingTopPx,
+            backgroundColor: settings.calendarCanvasFill,
+            ...canvasBgStyle,
+            width: `min(100%, ${canvasSurfacePx.widthPx}px)`,
+            height: canvasSurfacePx.heightPx,
+            boxSizing: 'border-box',
+          }}
+        >
         {/* background is baked into the canvas layer for better PDF parity */}
 
         <div
@@ -4611,6 +4607,7 @@ export function Calendar() {
           />
             </div>
           </div>
+        </div>
         </div>
       </div>
 
