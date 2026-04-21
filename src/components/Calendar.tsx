@@ -510,6 +510,17 @@ export function Calendar() {
   const [stylePackOpen, setStylePackOpen] = useState(false);
   const [shortcutOpen, setShortcutOpen] = useState<string | null>(null);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
+  const [colorPalettePos, setColorPalettePos] = useState<{ x: number; y: number }>(() => ({
+    x: 24,
+    y: 160,
+  }));
+  const paletteDragRef = useRef<null | {
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPosX: number;
+    startPosY: number;
+  }>(null);
   const [inspect, setInspect] = useState<{
     key: 'none' | 'header' | 'weekdays' | 'cell' | 'background';
     x: number;
@@ -1393,6 +1404,177 @@ export function Calendar() {
             <div className="mt-1 text-[11px] text-slate-500">
               מעל תמונה/רקע — קליק יפתח טפטפת מערכת לדגימה מדויקת.
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {colorPaletteOpen ? (
+        <div
+          className="fixed z-[115] w-[380px] rounded-xl border border-slate-200 bg-white shadow-xl"
+          style={{
+            left: Math.max(8, Math.round(colorPalettePos.x)),
+            top: Math.max(8, Math.round(colorPalettePos.y)),
+          }}
+        >
+          <div
+            className="flex items-center justify-between gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-3 py-2 cursor-move select-none"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+              paletteDragRef.current = {
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                startPosX: colorPalettePos.x,
+                startPosY: colorPalettePos.y,
+              };
+            }}
+            onPointerMove={(e) => {
+              const st = paletteDragRef.current;
+              if (!st || st.pointerId !== e.pointerId) return;
+              const dx = e.clientX - st.startX;
+              const dy = e.clientY - st.startY;
+              setColorPalettePos({ x: st.startPosX + dx, y: st.startPosY + dy });
+            }}
+            onPointerUp={(e) => {
+              const st = paletteDragRef.current;
+              if (!st || st.pointerId !== e.pointerId) return;
+              paletteDragRef.current = null;
+              try {
+                (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+              } catch {
+                // ignore
+              }
+            }}
+            onPointerCancel={(e) => {
+              const st = paletteDragRef.current;
+              if (!st || st.pointerId !== e.pointerId) return;
+              paletteDragRef.current = null;
+            }}
+          >
+            <div className="text-sm font-semibold text-slate-900">צבעים לדגימה ידנית</div>
+            <button
+              type="button"
+              className="h-8 w-8 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+              aria-label="סגור פלטת צבעים"
+              onClick={(e) => {
+                e.stopPropagation();
+                setColorPaletteOpen(false);
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="px-3 py-2 text-[11px] text-slate-600 border-b border-slate-100">
+            טיפ: הפעל טפטפת 🎯 באחד הצבעים ואז רחף/הקלק על ריבועים כאן כדי לדגום.
+          </div>
+          <div className="max-h-[420px] overflow-auto p-3">
+            {[
+              {
+                name: 'כחולים',
+                colors: [
+                  '#0B1220',
+                  '#0F172A',
+                  '#1E3A8A',
+                  '#1D4ED8',
+                  '#2563EB',
+                  '#3B82F6',
+                  '#60A5FA',
+                  '#93C5FD',
+                  '#BFDBFE',
+                  '#DBEAFE',
+                ],
+              },
+              {
+                name: 'אדומים/ורודים',
+                colors: [
+                  '#450A0A',
+                  '#7F1D1D',
+                  '#B91C1C',
+                  '#DC2626',
+                  '#EF4444',
+                  '#F87171',
+                  '#FDA4AF',
+                  '#FB7185',
+                  '#BE123C',
+                  '#FFE4E6',
+                ],
+              },
+              {
+                name: 'צהובים/כתומים',
+                colors: [
+                  '#451A03',
+                  '#7C2D12',
+                  '#C2410C',
+                  '#EA580C',
+                  '#F97316',
+                  '#FB923C',
+                  '#FDBA74',
+                  '#FACC15',
+                  '#FDE047',
+                  '#FEF9C3',
+                ],
+              },
+              {
+                name: 'ירוקים/טורקיז',
+                colors: [
+                  '#052E16',
+                  '#14532D',
+                  '#166534',
+                  '#16A34A',
+                  '#22C55E',
+                  '#4ADE80',
+                  '#86EFAC',
+                  '#0F766E',
+                  '#14B8A6',
+                  '#CCFBF1',
+                ],
+              },
+              {
+                name: 'אפור/שחור',
+                colors: [
+                  '#000000',
+                  '#111827',
+                  '#1F2937',
+                  '#334155',
+                  '#475569',
+                  '#64748B',
+                  '#94A3B8',
+                  '#CBD5E1',
+                  '#E2E8F0',
+                  '#F8FAFC',
+                ],
+              },
+              {
+                name: 'סגולים',
+                colors: [
+                  '#2E1065',
+                  '#4C1D95',
+                  '#6D28D9',
+                  '#7C3AED',
+                  '#8B5CF6',
+                  '#A78BFA',
+                  '#C4B5FD',
+                  '#DDD6FE',
+                  '#F3E8FF',
+                  '#FAF5FF',
+                ],
+              },
+            ].map((group) => (
+              <div key={group.name} className="mb-3 last:mb-0">
+                <div className="mb-2 text-xs font-semibold text-slate-800">{group.name}</div>
+                <div className="grid grid-cols-10 gap-2">
+                  {group.colors.map((c) => (
+                    <div
+                      key={c}
+                      title={c}
+                      className="h-6 w-6 rounded border border-slate-200"
+                      style={{ background: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : null}
@@ -4133,126 +4315,6 @@ export function Calendar() {
             >
               <span className="truncate">פלטת צבעים</span>
             </button>
-            {colorPaletteOpen ? (
-              <div
-                className={[
-                  'absolute top-0 z-30 w-[260px] rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden',
-                  'right-full mr-2',
-                ].join(' ')}
-              >
-                <div className="px-3 py-2 text-[11px] text-slate-600 bg-slate-50 border-b border-slate-200">
-                  טיפ: הפעל טפטפת 🎯 באחד הצבעים ואז רחף/הקלק על ריבועים כאן כדי לדגום.
-                </div>
-                <div className="max-h-[320px] overflow-auto p-3">
-                  {[
-                    {
-                      name: 'כחולים',
-                      colors: [
-                        '#0B1220',
-                        '#0F172A',
-                        '#1E3A8A',
-                        '#1D4ED8',
-                        '#2563EB',
-                        '#3B82F6',
-                        '#60A5FA',
-                        '#93C5FD',
-                        '#BFDBFE',
-                        '#DBEAFE',
-                      ],
-                    },
-                    {
-                      name: 'אדומים/ורודים',
-                      colors: [
-                        '#450A0A',
-                        '#7F1D1D',
-                        '#B91C1C',
-                        '#DC2626',
-                        '#EF4444',
-                        '#F87171',
-                        '#FDA4AF',
-                        '#FB7185',
-                        '#BE123C',
-                        '#FFE4E6',
-                      ],
-                    },
-                    {
-                      name: 'צהובים/כתומים',
-                      colors: [
-                        '#451A03',
-                        '#7C2D12',
-                        '#C2410C',
-                        '#EA580C',
-                        '#F97316',
-                        '#FB923C',
-                        '#FDBA74',
-                        '#FACC15',
-                        '#FDE047',
-                        '#FEF9C3',
-                      ],
-                    },
-                    {
-                      name: 'ירוקים/טורקיז',
-                      colors: [
-                        '#052E16',
-                        '#14532D',
-                        '#166534',
-                        '#16A34A',
-                        '#22C55E',
-                        '#4ADE80',
-                        '#86EFAC',
-                        '#0F766E',
-                        '#14B8A6',
-                        '#CCFBF1',
-                      ],
-                    },
-                    {
-                      name: 'אפור/שחור',
-                      colors: [
-                        '#000000',
-                        '#111827',
-                        '#1F2937',
-                        '#334155',
-                        '#475569',
-                        '#64748B',
-                        '#94A3B8',
-                        '#CBD5E1',
-                        '#E2E8F0',
-                        '#F8FAFC',
-                      ],
-                    },
-                    {
-                      name: 'סגולים',
-                      colors: [
-                        '#2E1065',
-                        '#4C1D95',
-                        '#6D28D9',
-                        '#7C3AED',
-                        '#8B5CF6',
-                        '#A78BFA',
-                        '#C4B5FD',
-                        '#DDD6FE',
-                        '#F3E8FF',
-                        '#FAF5FF',
-                      ],
-                    },
-                  ].map((group) => (
-                    <div key={group.name} className="mb-3 last:mb-0">
-                      <div className="mb-2 text-xs font-semibold text-slate-800">{group.name}</div>
-                      <div className="grid grid-cols-10 gap-2">
-                        {group.colors.map((c) => (
-                          <div
-                            key={c}
-                            title={c}
-                            className="h-5 w-5 rounded border border-slate-200"
-                            style={{ background: c }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
           <button
             type="button"
