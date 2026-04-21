@@ -69,9 +69,13 @@ export function buildPrintableMonthHtml(
   const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8;
   const availForCells = Math.max(220, pagePxH - approxHeaderH - approxDowH - approxCanvasPad - approxBorders);
   const autoCellH = Math.round(availForCells / weekCount);
+  // Chrome print-to-PDF can paginate inside CSS grids. In 6-week months, this may push the last row
+  // to the next page (leaving a blank gap). Ensure the printable HTML uses a cell height that fits
+  // a full month into a single page.
+  const fittedCellH = Math.min(170, Math.max(90, autoCellH));
   const effectiveSettings =
-    settings.layoutAutoFitToCanvas
-      ? { ...settings, pdfExportCellHeightPx: Math.min(170, Math.max(90, autoCellH)) }
+    weekCount >= 6 || settings.layoutAutoFitToCanvas
+      ? { ...settings, pdfExportCellHeightPx: fittedCellH }
       : settings;
   const paddingStrength = Number(effectiveSettings.paddingCellStrength);
   const paddingBg = mixHexWithWhite(
