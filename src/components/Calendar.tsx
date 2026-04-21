@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   addMonths,
   format,
@@ -127,9 +128,7 @@ export function Calendar() {
   const [fontBusy, setFontBusy] = useState<string | null>(null);
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const [fontDragActive, setFontDragActive] = useState(false);
-  const [fontFamilyMenuOpen, setFontFamilyMenuOpen] = useState(false);
   const fontFamilyMenuRef = useRef<HTMLDivElement | null>(null);
-  const [fontFamilyMenuKey, setFontFamilyMenuKey] = useState<string>('default');
 
   const fontTargets = settings.fontApplyTargets ?? ['all'];
   const hasFontTarget = (t: (typeof fontTargets)[number]) =>
@@ -209,7 +208,7 @@ export function Calendar() {
     }
   };
 
-  // Note: font picker dropdown closing is handled by an overlay + Escape (inside the picker),
+  // Note: font picker dropdown closing is handled by an overlay + Escape (inside each picker),
   // to avoid tricky event ordering with capture listeners inside scroll/overflow containers.
 
   const FONT_BUILTINS: Array<{ label: string; value: string }> = [
@@ -265,17 +264,15 @@ export function Calendar() {
   };
 
   const FontFamilyPicker = ({
-    menuKey,
     label,
     value,
     onPick,
   }: {
-    menuKey: string;
     label: string;
     value: string;
     onPick: (v: string) => void;
   }) => {
-    const open = fontFamilyMenuOpen && fontFamilyMenuKey === menuKey;
+    const [open, setOpen] = useState(false);
     const btnRef = useRef<HTMLButtonElement | null>(null);
     const [menuRect, setMenuRect] = useState<{ left: number; top: number; width: number } | null>(
       null,
@@ -293,9 +290,9 @@ export function Calendar() {
       compute();
       const onResize = () => compute();
       // Close on any scroll (including inside the settings panel), so it never looks “stuck”.
-      const onScroll = () => setFontFamilyMenuOpen(false);
+      const onScroll = () => setOpen(false);
       const onKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setFontFamilyMenuOpen(false);
+        if (e.key === 'Escape') setOpen(false);
       };
       window.addEventListener('resize', onResize);
       window.addEventListener('scroll', onScroll, true);
@@ -316,12 +313,7 @@ export function Calendar() {
             type="button"
             className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-right hover:bg-slate-50 active:bg-slate-100 flex items-center justify-between gap-2"
             onClick={() => {
-              if (open) {
-                setFontFamilyMenuOpen(false);
-                return;
-              }
-              setFontFamilyMenuKey(menuKey);
-              setFontFamilyMenuOpen(true);
+              setOpen((v) => !v);
             }}
             aria-haspopup="listbox"
             aria-expanded={open}
@@ -332,34 +324,35 @@ export function Calendar() {
             </span>
           </button>
 
-          {open ? (
-            <>
-              <button
-                type="button"
-                className="fixed inset-0 z-[89] cursor-default bg-transparent"
-                aria-label="סגור רשימת גופנים"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setFontFamilyMenuOpen(false);
-                }}
-              />
-              <div
-                role="listbox"
-                className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
-                style={{
-                  left: menuRect?.left ?? 8,
-                  top: menuRect?.top ?? 80,
-                  width: menuRect?.width ?? 300,
-                  maxWidth: 'calc(100vw - 16px)',
-                }}
-              >
+          {open
+            ? createPortal(
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-[89] cursor-default bg-transparent"
+                    aria-label="סגור רשימת גופנים"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpen(false);
+                    }}
+                  />
+                  <div
+                    role="listbox"
+                    className="fixed rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-[90]"
+                    style={{
+                      left: menuRect?.left ?? 8,
+                      top: menuRect?.top ?? 80,
+                      width: menuRect?.width ?? 300,
+                      maxWidth: 'calc(100vw - 16px)',
+                    }}
+                  >
               <button
                 type="button"
                 role="option"
                 className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
                 onClick={() => {
-                  setFontFamilyMenuOpen(false);
+                  setOpen(false);
                   onPick(DEFAULT_SETTINGS.fontFamily);
                 }}
               >
@@ -407,7 +400,7 @@ export function Calendar() {
                             role="option"
                             className="min-w-0 flex-1 text-right"
                             onClick={() => {
-                              setFontFamilyMenuOpen(false);
+                              setOpen(false);
                               onPick(v);
                             }}
                             style={{ fontFamily: v }}
@@ -457,7 +450,7 @@ export function Calendar() {
                     role="option"
                     className="w-full text-right px-3 py-2 text-sm hover:bg-slate-50 flex items-center justify-between gap-2"
                     onClick={() => {
-                      setFontFamilyMenuOpen(false);
+                      setOpen(false);
                       onPick(opt.value);
                     }}
                     style={{ fontFamily: opt.value }}
@@ -467,9 +460,11 @@ export function Calendar() {
                   </button>
                 );
               })}
-              </div>
-            </>
-          ) : null}
+                  </div>
+                </>,
+                document.body,
+              )
+            : null}
         </div>
       </div>
     );
@@ -2079,7 +2074,6 @@ export function Calendar() {
             <div id="settings-anchor-header" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             <div ref={fontFamilyMenuRef} className="sm:col-span-2 lg:col-span-3">
               <FontFamilyPicker
-                menuKey="default"
                 label="משפחת גופן — ברירת מחדל (Fallback)"
                 value={settings.fontFamily}
                 onPick={(v) => setSettings((s) => ({ ...s, fontFamily: v }))}
@@ -2195,7 +2189,6 @@ export function Calendar() {
                 <div className="mt-3 grid grid-cols-1 gap-3">
                   {settings.fontApplyTargets?.includes('settings') ? (
                     <FontFamilyPicker
-                      menuKey="target-settings"
                       label="גופן לחלונית ההגדרות"
                       value={settings.fontFamilyByTarget?.settings ?? settings.fontFamily}
                       onPick={(v) =>
@@ -2208,7 +2201,6 @@ export function Calendar() {
                   ) : null}
                   {settings.fontApplyTargets?.includes('calendarHeader') ? (
                     <FontFamilyPicker
-                      menuKey="target-header"
                       label="גופן לפס העליון (כותרת חודש)"
                       value={settings.fontFamilyByTarget?.calendarHeader ?? settings.fontFamily}
                       onPick={(v) =>
@@ -2221,7 +2213,6 @@ export function Calendar() {
                   ) : null}
                   {settings.fontApplyTargets?.includes('cellDates') ? (
                     <FontFamilyPicker
-                      menuKey="target-cellDates"
                       label="גופן לתאריכים במשבצות"
                       value={settings.fontFamilyByTarget?.cellDates ?? settings.fontFamily}
                       onPick={(v) =>
@@ -2234,7 +2225,6 @@ export function Calendar() {
                   ) : null}
                   {settings.fontApplyTargets?.includes('cellTimes') ? (
                     <FontFamilyPicker
-                      menuKey="target-cellTimes"
                       label="גופן לזמני שבת במשבצות"
                       value={settings.fontFamilyByTarget?.cellTimes ?? settings.fontFamily}
                       onPick={(v) =>
@@ -2247,7 +2237,6 @@ export function Calendar() {
                   ) : null}
                   {settings.fontApplyTargets?.includes('cellEvents') ? (
                     <FontFamilyPicker
-                      menuKey="target-cellEvents"
                       label="גופן לאירועים/טקסט במרכז התא"
                       value={settings.fontFamilyByTarget?.cellEvents ?? settings.fontFamily}
                       onPick={(v) =>
