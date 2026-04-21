@@ -572,6 +572,12 @@ export function Calendar() {
         return;
       }
 
+      // Manual edit mode uses direct clicks on cells (e.g. upload/drag images).
+      // Do not swallow the event in capture-phase, otherwise the cell onClick won't fire.
+      if (key === 'cell' && settings.enableManualEdits) {
+        return;
+      }
+
       if (key === 'header' || key === 'weekdays' || key === 'cell' || key === 'background') {
         setInspect({ key, x: e.clientX, y: e.clientY });
         e.stopPropagation();
@@ -583,7 +589,7 @@ export function Calendar() {
 
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [settingsOpen]);
+  }, [settingsOpen, settings.enableManualEdits]);
 
   /** Download menu: close on outside click or Escape. */
   useEffect(() => {
