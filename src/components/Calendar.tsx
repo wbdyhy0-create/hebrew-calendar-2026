@@ -541,6 +541,9 @@ export function Calendar() {
       const el = e.target as Element | null;
       if (!el) return;
 
+      // Never interfere with clicks inside the settings panel (e.g. color inputs, sliders).
+      if (el.closest('[data-settings-panel]')) return;
+
       if (el.closest('[data-inspect-panel]')) return;
 
       const hit = el.closest('[data-inspect]') as HTMLElement | null;
@@ -1032,7 +1035,7 @@ export function Calendar() {
             });
           }}
         >
-          🎯
+          {livePicker?.label === label ? '✕' : '🎯'}
         </button>
         {supportsEyeDropper ? (
           <button
@@ -1302,12 +1305,22 @@ export function Calendar() {
           data-live-eyedropper="1"
           ref={livePickerOverlayRef}
           className="fixed inset-0 z-[120] cursor-crosshair bg-black/10"
+          style={{ cursor: 'crosshair' }}
           onMouseMove={(e) => {
             const hex = sampleHexAtPoint(e.clientX, e.clientY);
             if (!hex) return;
             setLivePicker((p) => {
               if (!p || p.current === hex) return p;
               p.commit(hex); // live preview
+              return { ...p, current: hex };
+            });
+          }}
+          onPointerMove={(e) => {
+            const hex = sampleHexAtPoint(e.clientX, e.clientY);
+            if (!hex) return;
+            setLivePicker((p) => {
+              if (!p || p.current === hex) return p;
+              p.commit(hex);
               return { ...p, current: hex };
             });
           }}
@@ -2040,6 +2053,7 @@ export function Calendar() {
 
       {settingsOpen && (
         <div
+          data-settings-panel="1"
           className="relative mb-4 flex max-h-[min(92vh,940px)] flex-col rounded-xl border border-slate-200 bg-white/95 shadow-sm sm:max-h-[min(88vh,900px)]"
           style={
             shouldApplyFontTo('settings')
