@@ -4262,9 +4262,11 @@ export function Calendar() {
             },
             {
               key: 'manual',
-              label: 'עריכה ידנית',
+              label: settings.enableManualEdits && settings.showEditButtonInCells
+                ? 'סגור עריכה ידנית'
+                : 'ערוך עריכה ידנית',
               cls: 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
-              items: [{ label: 'אפשרויות', anchorId: 'settings-anchor-manual-edits' }],
+              items: [],
             },
           ].map((b) => (
             <div key={b.key} className="relative w-full">
@@ -4275,12 +4277,25 @@ export function Calendar() {
                   b.cls,
                 ].join(' ')}
                 onClick={() => {
+                  if (b.key === 'manual') {
+                    setSettings((s) => {
+                      const on = !(s.enableManualEdits && s.showEditButtonInCells);
+                      return {
+                        ...s,
+                        enableManualEdits: on,
+                        showEditButtonInCells: on,
+                      };
+                    });
+                    setShortcutOpen(null);
+                    setSettingsOpen(false);
+                    return;
+                  }
                   setShortcutOpen((prev) => (prev === b.key ? null : b.key));
                 }}
               >
                 <span className="truncate">{b.label}</span>
               </button>
-              {shortcutOpen === b.key ? (
+              {shortcutOpen === b.key && b.items.length > 0 ? (
                 <div
                   className={[
                     'absolute top-0 z-30 w-[220px] rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden',
