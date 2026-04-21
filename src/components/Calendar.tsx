@@ -84,6 +84,15 @@ import { SettingsSearchBar } from './SettingsSearchBar';
 import { HebcalZmanimLine } from './HebcalZmanimLine';
 import { HelpAssistant } from './HelpAssistant';
 import { HELP_ENTRIES } from '../utils/helpKnowledge';
+import {
+  cssFontFamilyForUploaded,
+  deleteStoredFont,
+  getStoredFont,
+  listStoredFonts,
+  putStoredFont,
+  type StoredFont,
+} from '../utils/fontStore';
+import { makeUploadedFamilyName, registerStoredFont } from '../utils/fontRuntime';
 
 export function Calendar() {
   const [viewDate, setViewDate] = useState<Date>(() => new Date());
@@ -113,6 +122,9 @@ export function Calendar() {
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [uploadedFonts, setUploadedFonts] = useState<Omit<StoredFont, 'data'>[]>([]);
+  const [fontBusy, setFontBusy] = useState<string | null>(null);
+  const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const ensureDownloadsWork = (): boolean => {
     // When embedded in a cross-origin iframe, Chrome can block both file pickers and repeated downloads.
     // Best UX: open the calendar in a top-level tab and ask the user to download there.
@@ -217,6 +229,23 @@ export function Calendar() {
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [downloadMenuOpen]);
+
+  // Load uploaded fonts from IndexedDB and register them.
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const list = await listStoredFonts();
+        setUploadedFonts(list);
+        for (const meta of list) {
+          const full = await getStoredFont(meta.id);
+          if (full) await registerStoredFont(full);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    run();
+  }, []);
 
   const openEditorForDay = (gKey: string, suggested: string) => {
     const existing = resolveDayTextOverride(overrides, gKey);
@@ -1698,6 +1727,15 @@ export function Calendar() {
                 }
               >
                 <option value={DEFAULT_SETTINGS.fontFamily}>ברירת מחדל</option>
+                {uploadedFonts.length ? (
+                  <optgroup label="גופנים שהועלו">
+                    {uploadedFonts.map((f) => (
+                      <option key={f.id} value={cssFontFamilyForUploaded(f.family)}>
+                        {f.family}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
                 <option value='"Heebo", system-ui, "Segoe UI", Arial, sans-serif'>
                   Heebo (אם מותקן)
                 </option>
@@ -1710,6 +1748,104 @@ export function Calendar() {
                 <option value='Georgia, "Times New Roman", serif'>Serif</option>
               </select>
             </label>
+
+            <div className="sm:col-span-2 lg:col-span-3 min-w-0 rounded-lg border border-slate-200 bg-white/80 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-normal text-slate-900">העלאת גופן מהמחשב</div>
+                  <div className="text-xs text-slate-600 mt-1">
+                    TTF / OTF / WOFF / WOFF2. נשמר מקומית בדפדפן (IndexedDB) וייטען אוטומטית בפעם הבאה.
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+                    onClick={() => fontPickerRef.current?.click()}
+                    disabled={fontBusy !== null}
+                  >
+                    {fontBusy ? 'מעלה…' : 'בחר קובץ גופן'}
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition disabled:opacity-40"
+                    disabled={!uploadedFonts.length || fontBusy !== null}
+                    onClick={async () => {
+                      try {
+                        if (!uploadedFonts.length) return;
+                        const last = uploadedFonts.at(-1);
+                        if (!last) return;
+                        setFontBusy(last.id);
+                        await deleteStoredFont(last.id);
+                        setUploadedFonts((prev) => prev.filter((x) => x.id !== last.id));
+                        if (settings.fontFamily.includes(last.family)) {
+                          setSettings((s) => ({ ...s, fontFamily: DEFAULT_SETTINGS.fontFamily }));
+                        }
+                      } finally {
+                        setFontBusy(null);
+                      }
+                    }}
+                    title="מוחק את הגופן האחרון שהועלה"
+                  >
+                    מחק גופן אחרון
+                  </button>
+                </div>
+              </div>
+              <input
+                ref={fontPickerRef}
+                type="file"
+                accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  (async () => {
+                    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+                    setFontBusy(id);
+                    try {
+                      const data = await file.arrayBuffer();
+                      const family = makeUploadedFamilyName(file.name, id);
+                      const rec: StoredFont = {
+                        id,
+                        family,
+                        fileName: file.name,
+                        mime: file.type || 'font/ttf',
+                        data,
+                        createdAt: Date.now(),
+                      };
+                      await putStoredFont(rec);
+                      await registerStoredFont(rec);
+                      setUploadedFonts((prev) => [
+                        ...prev,
+                        {
+                          id: rec.id,
+                          family: rec.family,
+                          fileName: rec.fileName,
+                          mime: rec.mime,
+                          createdAt: rec.createdAt,
+                        },
+                      ]);
+                      setSettings((s) => ({ ...s, fontFamily: cssFontFamilyForUploaded(rec.family) }));
+                    } catch (err) {
+                      // eslint-disable-next-line no-console
+                      console.error(err);
+                      setSaveFlash('שגיאה בהעלאת גופן (ייתכן שהקובץ גדול מדי או לא נתמך)');
+                      window.setTimeout(() => setSaveFlash(null), 3500);
+                    } finally {
+                      setFontBusy(null);
+                    }
+                  })();
+                }}
+              />
+              {uploadedFonts.length ? (
+                <div className="mt-3 text-xs text-slate-600">
+                  גופנים שהועלו: {uploadedFonts.map((f) => f.family).join(' • ')}
+                </div>
+              ) : (
+                <div className="mt-3 text-xs text-slate-500">עדיין לא הועלו גופנים.</div>
+              )}
+            </div>
 
             <label className="text-sm text-slate-700">
               גודל גופן ({settings.fontSizePx}px)
