@@ -895,6 +895,10 @@ export function Calendar() {
   );
   const cellRadiusPx = Math.max(0, Math.round(Number(settings.cellCornerRadiusPx) || 0));
 
+  const supportsEyeDropper =
+    typeof (window as any).EyeDropper !== 'undefined' &&
+    typeof (window as any).EyeDropper === 'function';
+
   const [livePicker, setLivePicker] = useState<null | {
     label: string;
     original: string;
@@ -1030,16 +1034,18 @@ export function Calendar() {
         >
           🎯
         </button>
-        <button
-          type="button"
-          className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-          title="טפטפת (בחירה בלחיצה אחת)"
-          aria-label="טפטפת (בחירה בלחיצה אחת)"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => pickColorFromScreen(onChange)}
-        >
-          ⛏️
-        </button>
+        {supportsEyeDropper ? (
+          <button
+            type="button"
+            className="h-10 w-10 shrink-0 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+            title="טפטפת מערכת (EyeDropper)"
+            aria-label="טפטפת מערכת (EyeDropper)"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => pickColorFromScreen(onChange)}
+          >
+            ⛏️
+          </button>
+        ) : null}
       </div>
     </div>
   );
