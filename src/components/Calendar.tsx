@@ -895,6 +895,12 @@ export function Calendar() {
   );
   const cellRadiusPx = Math.max(0, Math.round(Number(settings.cellCornerRadiusPx) || 0));
 
+  const openAndJumpToSetting = (anchorId: string) => {
+    setSettingsOpen(true);
+    // Wait a tick for the settings panel to mount before searching for anchors.
+    window.setTimeout(() => jumpToSetting(anchorId), 0);
+  };
+
   const jumpToSetting = (anchorId: string) => {
     setSettingsOpen(true);
     window.setTimeout(() => {
@@ -3880,7 +3886,7 @@ export function Calendar() {
               items: [{ label: 'אפשרויות', anchorId: 'settings-anchor-manual-edits' }],
             },
           ].map((b) => (
-            <div key={b.key} className="w-full">
+            <div key={b.key} className="relative w-full">
               <button
                 type="button"
                 className={[
@@ -3888,36 +3894,34 @@ export function Calendar() {
                   b.cls,
                 ].join(' ')}
                 onClick={() => {
-                  setSettingsOpen(true);
                   setShortcutOpen((prev) => (prev === b.key ? null : b.key));
                 }}
               >
                 <span className="truncate">{b.label}</span>
               </button>
               {shortcutOpen === b.key ? (
-                <div className="mt-1 rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden p-2">
-                  <select
-                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-800"
-                    defaultValue=""
-                    onChange={(e) => {
-                      const anchorId = e.target.value;
-                      if (!anchorId) return;
-                      jumpToSetting(anchorId);
-                      // close the menu so the sidebar stays compact
-                      setShortcutOpen(null);
-                      // reset selection so user can pick again easily
-                      e.currentTarget.value = '';
-                    }}
-                  >
-                    <option value="" disabled>
-                      בחר אפשרות…
-                    </option>
+                <div
+                  className={[
+                    'absolute top-0 z-30 w-[220px] rounded-md border border-slate-200 bg-white shadow-lg overflow-hidden',
+                    // Open the submenu to the left of the sidebar (so it never covers the list below).
+                    'right-full mr-2',
+                  ].join(' ')}
+                >
+                  <div className="max-h-[260px] overflow-auto">
                     {b.items.map((it) => (
-                      <option key={it.anchorId} value={it.anchorId}>
+                      <button
+                        key={it.anchorId}
+                        type="button"
+                        className="w-full text-right px-3 py-2 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                        onClick={() => {
+                          openAndJumpToSetting(it.anchorId);
+                          setShortcutOpen(null);
+                        }}
+                      >
                         {it.label}
-                      </option>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               ) : null}
             </div>
