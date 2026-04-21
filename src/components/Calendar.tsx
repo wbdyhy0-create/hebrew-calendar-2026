@@ -495,6 +495,7 @@ export function Calendar() {
   const [previewTitle, setPreviewTitle] = useState<string>('');
   const [previewKind, setPreviewKind] = useState<'pdf' | 'png' | 'html'>('pdf');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewDisplayUrl, setPreviewDisplayUrl] = useState<string | null>(null);
   const [previewSrcDoc, setPreviewSrcDoc] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewSuggested, setPreviewSuggested] = useState<string>('');
@@ -502,8 +503,9 @@ export function Calendar() {
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
     };
-  }, [previewUrl]);
+  }, [previewUrl, previewDisplayUrl]);
 
   const [bgMonthIdx, setBgMonthIdx] = useState<number>(() => new Date().getMonth());
   const [themePickerOpen, setThemePickerOpen] = useState(false);
@@ -1770,7 +1772,16 @@ export function Calendar() {
                           const blob = await exportPdfBlobFromHtml(html, settings);
                           setPreviewBlob(blob);
                           if (previewUrl) URL.revokeObjectURL(previewUrl);
-                          setPreviewUrl(`${URL.createObjectURL(blob)}#zoom=page-width`);
+                          setPreviewUrl(URL.createObjectURL(blob));
+                          // Electron PDF viewer can mis-render alignment/centering inside an iframe.
+                          // Show a PNG snapshot for preview, while keeping the PDF blob for export.
+                          try {
+                            const pngBlob = await exportPngBlobFromPrintableHtml(html, settings, { scale: 2 });
+                            if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
+                            setPreviewDisplayUrl(URL.createObjectURL(pngBlob));
+                          } catch {
+                            setPreviewDisplayUrl(null);
+                          }
                         } catch (e) {
                           const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                           setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
@@ -1992,7 +2003,15 @@ export function Calendar() {
                         const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
                         setPreviewBlob(blob);
                         if (previewUrl) URL.revokeObjectURL(previewUrl);
-                        setPreviewUrl(`${URL.createObjectURL(blob)}#zoom=page-width`);
+                        setPreviewUrl(URL.createObjectURL(blob));
+                        // Show first-page snapshot as PNG to avoid Electron PDF iframe quirks.
+                        try {
+                          const pngBlob = await exportPngBlobFromPrintableHtml(html, settings, { scale: 2 });
+                          if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
+                          setPreviewDisplayUrl(URL.createObjectURL(pngBlob));
+                        } catch {
+                          setPreviewDisplayUrl(null);
+                        }
                       } catch (e) {
                         const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
                         setSaveFlash(`שגיאה בתצוגה מקדימה: ${msg}`);
@@ -2254,6 +2273,8 @@ export function Calendar() {
                     setPreviewKind('pdf');
                     if (previewUrl) URL.revokeObjectURL(previewUrl);
                     setPreviewUrl(null);
+                    if (previewDisplayUrl) URL.revokeObjectURL(previewDisplayUrl);
+                    setPreviewDisplayUrl(null);
                     setPreviewSrcDoc(null);
                     setPreviewBlob(null);
                     setPreviewSuggested('');
@@ -2266,6 +2287,16 @@ export function Calendar() {
             <div className="flex-1 bg-white">
               {previewKind === 'html' ? (
                 <iframe title="preview" className="w-full h-full" srcDoc={previewSrcDoc ?? ''} />
+              ) : previewKind === 'pdf' && previewDisplayUrl ? (
+                <div className="h-full w-full overflow-auto bg-slate-100 p-3">
+                  <div className="mx-auto w-fit rounded-lg border border-slate-200 bg-white shadow-sm">
+                    <img
+                      alt="PDF preview (rendered as image)"
+                      src={previewDisplayUrl}
+                      className="block max-w-none"
+                    />
+                  </div>
+                </div>
               ) : previewUrl ? (
                 <iframe
                   title="preview"
