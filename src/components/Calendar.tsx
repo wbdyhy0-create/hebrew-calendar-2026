@@ -349,6 +349,7 @@ export function Calendar() {
   const [saveFlash, setSaveFlash] = useState<string | null>(null);
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
+  const printInProgressRef = useRef(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [uploadedFonts, setUploadedFonts] = useState<Omit<StoredFont, 'data'>[]>([]);
   const [fontBusy, setFontBusy] = useState<string | null>(null);
@@ -499,6 +500,30 @@ export function Calendar() {
       return false;
     }
     return true;
+  };
+
+  const printMonth = async () => {
+    if (printInProgressRef.current) return;
+    printInProgressRef.current = true;
+    try {
+      const html = buildPrintableMonthHtml(viewDate, settings, overrides, { location: 'Jerusalem' });
+      const w = window.open('', '_blank', 'noopener,noreferrer');
+      if (!w) throw new Error('חלון ההדפסה נחסם. אפשר לאפשר popups או לפתוח בטאב חדש.');
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      // Give the browser a moment to load fonts/images before print.
+      w.focus();
+      window.setTimeout(() => {
+        try {
+          w.print();
+        } catch {
+          // ignore
+        }
+      }, 350);
+    } finally {
+      printInProgressRef.current = false;
+    }
   };
 
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -1755,6 +1780,25 @@ export function Calendar() {
               >
                 <span aria-hidden="true">⬇️</span>
                 הורדה
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!ensureDownloadsWork()) return;
+                  try {
+                    await printMonth();
+                  } catch (e) {
+                    const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                    setSaveFlash(`שגיאה בהדפסה: ${msg}`);
+                    window.setTimeout(() => setSaveFlash(null), 3500);
+                    // eslint-disable-next-line no-console
+                    console.error(e);
+                  }
+                }}
+                className="ml-2 px-3 py-2 text-sm rounded-md border border-amber-200 bg-white text-amber-950 hover:bg-amber-50 active:bg-amber-100/60 transition inline-flex items-center gap-2"
+              >
+                <span aria-hidden="true">🖨️</span>
+                הדפסה
               </button>
               {downloadMenuOpen ? (
                 <div
