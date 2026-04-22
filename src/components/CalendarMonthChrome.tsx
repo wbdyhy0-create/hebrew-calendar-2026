@@ -101,6 +101,7 @@ function headerOffsetsPx(settings: CalendarSettings) {
 function GregChip({ settings, children }: { settings: CalendarSettings; children: ReactNode }) {
   return (
     <div
+      dir="ltr"
       className="leading-none"
       style={{
         fontSize: settings.headerGregMonthFontPx,
@@ -127,6 +128,7 @@ function GregChip({ settings, children }: { settings: CalendarSettings; children
 function HebMonthTitle({ settings, children }: { settings: CalendarSettings; children: ReactNode }) {
   return (
     <span
+      dir="rtl"
       className="hebPill leading-none"
       style={{
         fontSize: settings.headerHebMonthFontPx,
@@ -187,7 +189,12 @@ function HeaderBarClassic({
     const dragScale = resolveCalendarLayoutZoomPercent(settings) / 100;
     const align = settings.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN;
     return (
-      <div className={[outerClassName, 'overflow-visible'].join(' ')} data-inspect="header" style={barStyle}>
+      <div
+        dir="ltr"
+        className={[outerClassName, 'overflow-visible'].join(' ')}
+        data-inspect="header"
+        style={barStyle}
+      >
         <HeaderWysiwygClassicStage
           pct={settings.headerWysiwygClassicPct}
           align={align}
@@ -199,6 +206,7 @@ function HeaderBarClassic({
           titlesContent={
             <>
               <div
+                dir="rtl"
                 className="break-words font-normal leading-snug tracking-tight"
                 style={{
                   color: settings.headerBarTitleColor,
@@ -209,6 +217,7 @@ function HeaderBarClassic({
                 {settings.titleMain}
               </div>
               <div
+                dir="rtl"
                 className="break-words leading-snug"
                 style={{
                   color: settings.headerBarSubtitleColor,
@@ -242,12 +251,18 @@ function HeaderBarClassic({
   const { titlesDx, titlesDy, monthDx, monthDy, gregDx, gregDy } = headerOffsetsPx(settings);
 
   return (
-    <div className={[outerClassName, 'overflow-visible'].join(' ')} data-inspect="header" style={barStyle}>
+    <div
+      dir="ltr"
+      className={[outerClassName, 'overflow-visible'].join(' ')}
+      data-inspect="header"
+      style={barStyle}
+    >
       <div
         className="relative grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 overflow-visible px-5 py-1.5 sm:px-6"
         style={{ minHeight: barMinH }}
       >
         <div
+          dir="rtl"
           className="min-w-0 max-w-full justify-self-end overflow-visible text-right"
           style={{
             transform: `translate(${titlesDx}px, ${titlesDy}px)`,
