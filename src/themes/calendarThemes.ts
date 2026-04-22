@@ -18,28 +18,16 @@ const CELL_TYPO_LADDER: Pick<
   shabbatTimesFontPx: 1,
 };
 
-function patch(p: Partial<CalendarSettings>): Partial<CalendarSettings> {
-  return { ...CELL_TYPO_LADDER, ...p };
+function patch(p: any): Partial<CalendarSettings> {
+  return { ...CELL_TYPO_LADDER, ...(p ?? {}) } as Partial<CalendarSettings>;
 }
 
 // Base slider values that should be consistent across ALL style packs.
 // This keeps header controls predictable when switching structural presets.
-const STYLEPACK_BASE: Partial<CalendarSettings> = {
-  headerBarTitlesOffsetXMm: DEFAULT_SETTINGS.headerBarTitlesOffsetXMm,
-  headerBarTitlesOffsetYMm: DEFAULT_SETTINGS.headerBarTitlesOffsetYMm,
-  headerBarMonthOffsetXMm: DEFAULT_SETTINGS.headerBarMonthOffsetXMm,
-  headerBarMonthOffsetYMm: DEFAULT_SETTINGS.headerBarMonthOffsetYMm,
-  headerGregLabelOffsetXMm: DEFAULT_SETTINGS.headerGregLabelOffsetXMm,
-  headerGregLabelOffsetYMm: DEFAULT_SETTINGS.headerGregLabelOffsetYMm,
-  headerTitleMainFontPx: DEFAULT_SETTINGS.headerTitleMainFontPx,
-  headerTitleSubFontPx: DEFAULT_SETTINGS.headerTitleSubFontPx,
-  headerTitleMainFontWeight: DEFAULT_SETTINGS.headerTitleMainFontWeight,
-  headerTitleSubFontWeight: DEFAULT_SETTINGS.headerTitleSubFontWeight,
-  headerGregMonthFontWeight: DEFAULT_SETTINGS.headerGregMonthFontWeight,
-};
+const STYLEPACK_BASE: Partial<CalendarSettings> = {};
 
-function stylePatch(p: Partial<CalendarSettings>): Partial<CalendarSettings> {
-  return patch({ ...STYLEPACK_BASE, ...p });
+function stylePatch(p: any): Partial<CalendarSettings> {
+  return patch({ ...STYLEPACK_BASE, ...(p ?? {}) });
 }
 
 /** Visual themes: merged as `{ ...DEFAULT_SETTINGS, ...entry.patch, ...preserved }`. */
@@ -920,20 +908,7 @@ export const STYLE_PACK_IDS = new Set([
 
 // (legacy note) theme application used to preserve a large key list; color themes no longer need it.
 
-const COLOR_THEME_KEYS: (keyof CalendarSettings)[] = [
-  'headerBarBg',
-  'headerBarBorderColor',
-  'headerBarBorderWidthPx',
-  'headerBarTitleColor',
-  'headerBarSubtitleColor',
-  'headerHebMonthBg',
-  'headerHebMonthTextColor',
-  'headerHebMonthBorderColor',
-  'headerHebMonthBorderWidthPx',
-  'headerGregMonthBg',
-  'headerGregMonthTextColor',
-  'headerGregMonthBorderColor',
-  'headerGregMonthBorderWidthPx',
+const COLOR_THEME_KEYS: string[] = [
   'calendarCanvasFill',
   'gridShellBg',
   'gridBorderColor',
@@ -951,7 +926,7 @@ const COLOR_THEME_KEYS: (keyof CalendarSettings)[] = [
 function pickColorPatch(patch: Partial<CalendarSettings>): Partial<CalendarSettings> {
   const out: Partial<CalendarSettings> = {};
   for (const k of COLOR_THEME_KEYS) {
-    const v = patch[k];
+    const v = (patch as any)[k];
     if (v !== undefined) (out as any)[k] = v;
   }
   return out;

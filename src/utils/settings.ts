@@ -1,5 +1,4 @@
-import type { HeaderWysiwygClassicAlign, HeaderWysiwygClassicPct } from './headerWysiwyg';
-import { coerceHeaderWysiwygClassicAlign, coerceHeaderWysiwygClassicPct } from './headerWysiwyg';
+
 
 /** מבנה כותרת החודש ביחס לרשת — נשלט מערכת נושא ומהגדרות. */
 export const HEADER_LAYOUT_STYLES = [
@@ -21,73 +20,12 @@ export function sanitizeHeaderLayoutStyle(v: unknown): HeaderLayoutStyle {
 /** יציאת צומות רגילים (לא יום כיפור) — נפרד מהבדלת שבת/יום כיפור. */
 export type FastTzaitStyle = 'hebcal_tzeit' | 'sunset_minutes';
 
-export type { HeaderWysiwygClassicAlign, HeaderWysiwygClassicPct } from './headerWysiwyg';
 
 export type CalendarSettings = {
   titleMain: string;
   titleSub: string;
   /** צורת הכותרת והחיבור לרשת (לא רק צבעים). */
   headerLayoutStyle: HeaderLayoutStyle;
-  headerBarHeightPx: number;
-  headerBarRadiusPx: number;
-  headerBarBg: string;
-  headerBarBorderColor: string;
-  headerBarBorderWidthPx: number;
-  headerBarTitleColor: string;
-  headerBarSubtitleColor: string;
-  headerBarShowEditButton: boolean;
-  /** Extra vertical spacing between the header bar and the grid (below the bar). */
-  headerBarMarginBottomPx: number;
-  /** Fine vertical nudge for the whole header bar (positive = down). */
-  headerBarOffsetYPx: number;
-  /**
-   * Max width for the header bar (px). 0 = no max-width (full width of the canvas).
-   * The bar stays centered when constrained.
-   */
-  headerBarMaxWidthPx: number;
-  /**
-   * Fine position nudges inside the header bar.
-   * Stored in millimeters so values stay consistent between live view and PDF/PNG export.
-   */
-  headerBarTitlesOffsetXMm: number;
-  headerBarTitlesOffsetYMm: number;
-  headerBarMonthOffsetXMm: number;
-  headerBarMonthOffsetYMm: number;
-  /** Fine nudge for the left Gregorian month/year label (mm). */
-  headerGregLabelOffsetXMm: number;
-  headerGregLabelOffsetYMm: number;
-  /**
-   * כשמופעל: פס כותרת קלאסי (צף / חיבור חלק) משתמש ב־`headerWysiwygClassicPct` (אחוזים מתוך הפס)
-   * לוויץ׳וויו ול־PDF — ללא חישוב px נפרד.
-   */
-  headerWysiwygManualActive: boolean;
-  headerWysiwygClassicPct: HeaderWysiwygClassicPct | null;
-  headerWysiwygClassicAlign: HeaderWysiwygClassicAlign | null;
-  /** Explicit font sizes for the header main/sub titles (px). */
-  headerTitleMainFontPx: number;
-  headerTitleSubFontPx: number;
-  /** Explicit font weights for the header main/sub titles (400..900). */
-  headerTitleMainFontWeight: number;
-  headerTitleSubFontWeight: number;
-  // Month labels inside header bar
-  headerHebMonthFontPx: number;
-  headerGregMonthFontPx: number;
-  headerHebMonthBorderColor: string;
-  headerHebMonthBorderWidthPx: number;
-  headerHebMonthBg: string;
-  headerHebMonthTextColor: string;
-  headerHebMonthRadiusPx: number;
-  headerHebMonthPaddingXPx: number;
-  headerHebMonthPaddingYPx: number;
-  headerHebMonthFontWeight: number; // 400..900
-  headerGregMonthTextColor: string;
-  headerGregMonthBorderColor: string;
-  headerGregMonthBorderWidthPx: number;
-  headerGregMonthBg: string;
-  headerGregMonthRadiusPx: number;
-  headerGregMonthPaddingXPx: number;
-  headerGregMonthPaddingYPx: number;
-  headerGregMonthFontWeight: number; // 400..900
   fontFamily: string;
   /**
    * Optional per-area font override. When omitted, `fontFamily` is used as fallback.
@@ -217,48 +155,6 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   titleMain: 'לוח שנה עברי‑לועזי',
   titleSub: 'מועדים · ראשי חודשים · זמני שבת',
   headerLayoutStyle: 'floating',
-  headerBarHeightPx: 78,
-  headerBarRadiusPx: 16,
-  headerBarBg: 'rgba(255,255,255,0.88)',
-  headerBarBorderColor: '#E2E8F0',
-  headerBarBorderWidthPx: 2,
-  headerBarTitleColor: '#0F172A',
-  headerBarSubtitleColor: '#64748B',
-  headerBarShowEditButton: true,
-  headerBarMarginBottomPx: 12,
-  headerBarOffsetYPx: 0,
-  headerBarMaxWidthPx: 0,
-  headerBarTitlesOffsetXMm: 0,
-  headerBarTitlesOffsetYMm: 0,
-  headerBarMonthOffsetXMm: 0,
-  headerBarMonthOffsetYMm: 0,
-  headerGregLabelOffsetXMm: 0,
-  headerGregLabelOffsetYMm: 0,
-  headerWysiwygManualActive: false,
-  headerWysiwygClassicPct: null,
-  headerWysiwygClassicAlign: null,
-  headerTitleMainFontPx: 20,
-  headerTitleSubFontPx: 13,
-  headerTitleMainFontWeight: 400,
-  headerTitleSubFontWeight: 400,
-  headerHebMonthFontPx: 22,
-  headerGregMonthFontPx: 16,
-  headerHebMonthBorderColor: '#E2E8F0',
-  headerHebMonthBorderWidthPx: 2,
-  headerHebMonthBg: 'rgba(255,255,255,0.95)',
-  headerHebMonthTextColor: '#0F172A',
-  headerHebMonthRadiusPx: 999,
-  headerHebMonthPaddingXPx: 16,
-  headerHebMonthPaddingYPx: 8,
-  headerHebMonthFontWeight: 400,
-  headerGregMonthTextColor: '#0F172A',
-  headerGregMonthBorderColor: '#E2E8F0',
-  headerGregMonthBorderWidthPx: 0,
-  headerGregMonthBg: 'transparent',
-  headerGregMonthRadiusPx: 999,
-  headerGregMonthPaddingXPx: 12,
-  headerGregMonthPaddingYPx: 6,
-  headerGregMonthFontWeight: 400,
   fontFamily:
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
   fontFamilyByTarget: {},
@@ -352,34 +248,6 @@ export function loadSettings(): CalendarSettings {
       'hebDayFontPx',
       'eventTitleFontPx',
       'shabbatTimesFontPx',
-      'headerBarHeightPx',
-      'headerBarRadiusPx',
-      'headerBarBorderWidthPx',
-      'headerBarMarginBottomPx',
-      'headerBarOffsetYPx',
-      'headerBarMaxWidthPx',
-      'headerBarTitlesOffsetXMm',
-      'headerBarTitlesOffsetYMm',
-      'headerBarMonthOffsetXMm',
-      'headerBarMonthOffsetYMm',
-      'headerGregLabelOffsetXMm',
-      'headerGregLabelOffsetYMm',
-      'headerTitleMainFontPx',
-      'headerTitleSubFontPx',
-      'headerTitleMainFontWeight',
-      'headerTitleSubFontWeight',
-      'headerHebMonthFontPx',
-      'headerGregMonthFontPx',
-      'headerHebMonthBorderWidthPx',
-      'headerHebMonthRadiusPx',
-      'headerHebMonthPaddingXPx',
-      'headerHebMonthPaddingYPx',
-      'headerHebMonthFontWeight',
-      'headerGregMonthBorderWidthPx',
-      'headerGregMonthRadiusPx',
-      'headerGregMonthPaddingXPx',
-      'headerGregMonthPaddingYPx',
-      'headerGregMonthFontWeight',
       'canvasPaddingPx',
       'canvasPaddingTopPx',
       'calendarLayoutScalePercent',
@@ -412,38 +280,7 @@ export function loadSettings(): CalendarSettings {
       merged[key] = n;
     }
 
-    // Migration: older versions stored header nudges in px. Convert to mm once.
-    // 96 CSS px per inch → 3.779527559 px per mm.
-    const PX_PER_MM = 96 / 25.4;
-    const pxToMm = (v: any) =>
-      Number.isFinite(Number(v)) ? Math.round((Number(v) / PX_PER_MM) * 10) / 10 : 0;
-    if (merged.headerBarTitlesOffsetXMm === undefined && (merged as any).headerBarTitlesOffsetXPx !== undefined) {
-      merged.headerBarTitlesOffsetXMm = pxToMm((merged as any).headerBarTitlesOffsetXPx);
-    }
-    if (merged.headerBarTitlesOffsetYMm === undefined && (merged as any).headerBarTitlesOffsetYPx !== undefined) {
-      merged.headerBarTitlesOffsetYMm = pxToMm((merged as any).headerBarTitlesOffsetYPx);
-    }
-    if (merged.headerBarMonthOffsetXMm === undefined && (merged as any).headerBarMonthPillOffsetXPx !== undefined) {
-      merged.headerBarMonthOffsetXMm = pxToMm((merged as any).headerBarMonthPillOffsetXPx);
-    }
-    if (merged.headerBarMonthOffsetYMm === undefined && (merged as any).headerBarMonthPillOffsetYPx !== undefined) {
-      merged.headerBarMonthOffsetYMm = pxToMm((merged as any).headerBarMonthPillOffsetYPx);
-    }
-    if (merged.headerGregLabelOffsetXMm === undefined && (merged as any).headerGregLabelOffsetXPx !== undefined) {
-      merged.headerGregLabelOffsetXMm = pxToMm((merged as any).headerGregLabelOffsetXPx);
-    }
-    if (merged.headerGregLabelOffsetYMm === undefined && (merged as any).headerGregLabelOffsetYPx !== undefined) {
-      merged.headerGregLabelOffsetYMm = pxToMm((merged as any).headerGregLabelOffsetYPx);
-    }
-
-    // Clamp mm nudges to a reasonable range to prevent content leaving the header bar.
-    const clamp = (n: any, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number(n) || 0));
-    merged.headerBarTitlesOffsetXMm = clamp(merged.headerBarTitlesOffsetXMm, -30, 30);
-    merged.headerBarTitlesOffsetYMm = clamp(merged.headerBarTitlesOffsetYMm, -15, 15);
-    merged.headerBarMonthOffsetXMm = clamp(merged.headerBarMonthOffsetXMm, -30, 30);
-    merged.headerBarMonthOffsetYMm = clamp(merged.headerBarMonthOffsetYMm, -15, 15);
-    merged.headerGregLabelOffsetXMm = clamp(merged.headerGregLabelOffsetXMm, -30, 30);
-    merged.headerGregLabelOffsetYMm = clamp(merged.headerGregLabelOffsetYMm, -15, 15);
+    // header bar migrations removed
 
     // ברירת מחדל ישנה: 6px לכל סוגי הטקסט בתא — מחליפים בסולם קריא (ללא לדרוס התאמות ידניות אחרות).
     if (
@@ -501,11 +338,6 @@ export function loadSettings(): CalendarSettings {
       merged.stylePackId = DEFAULT_SETTINGS.stylePackId;
     }
     merged.headerLayoutStyle = sanitizeHeaderLayoutStyle(merged.headerLayoutStyle);
-    merged.headerWysiwygManualActive = Boolean(merged.headerWysiwygManualActive);
-    merged.headerWysiwygClassicPct = coerceHeaderWysiwygClassicPct(merged.headerWysiwygClassicPct);
-    merged.headerWysiwygClassicAlign = coerceHeaderWysiwygClassicAlign(
-      merged.headerWysiwygClassicAlign,
-    );
     merged.layoutCenterVertically = merged.layoutCenterVertically !== false;
     merged.layoutAutoFitToCanvas = merged.layoutAutoFitToCanvas !== false;
     merged.layoutFillHeight = merged.layoutFillHeight !== false;

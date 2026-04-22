@@ -3,8 +3,6 @@
  * Keep pixel math here so UI and export stay aligned when sliders or themes change.
  */
 import type { CalendarSettings, HeaderLayoutStyle } from './settings';
-import { sanitizeHeaderLayoutStyle } from './settings';
-import { buildHeaderWysiwygClassicPrintCss } from './headerWysiwyg';
 
 /** Horizontal padding inside the classic header bar (Tailwind `px-6` at sm). */
 export const DOCUMENT_HEADER_BAR_INLINE_PAD_PX = 24;
@@ -30,21 +28,19 @@ export function resolveCanvasOuterRadiusPx(settings: CalendarSettings): number {
 }
 
 /** Detached month grid shell — aligns with `rounded-xl`, scaled from header radius. */
-export function resolveDetachedGridBorderRadiusPx(settings: CalendarSettings): number {
-  return Math.min(16, Math.max(10, Math.round(settings.headerBarRadiusPx * 0.75)));
+export function resolveDetachedGridBorderRadiusPx(_settings: CalendarSettings): number {
+  return 12;
 }
 
 /** Classic / right-block primary title row (Tailwind `text-lg` / `sm:text-xl` midpoint). */
 export function resolveHeaderBarPrimaryTitleFontPx(settings: CalendarSettings): number {
-  const n = Number((settings as any).headerTitleMainFontPx);
-  if (Number.isFinite(n) && n > 0) return Math.round(n);
+  // header bar removed; keep a stable, readable fallback
   return Math.max(17, Math.min(22, Math.round(settings.fontSizePx * 1.28)));
 }
 
 /** Classic / right-block subtitle row (`text-xs` / `sm:text-sm`). */
 export function resolveHeaderBarSecondaryTitleFontPx(settings: CalendarSettings): number {
-  const n = Number((settings as any).headerTitleSubFontPx);
-  if (Number.isFinite(n) && n > 0) return Math.round(n);
+  // header bar removed; keep a stable, readable fallback
   return Math.max(11, Math.min(15, Math.round(settings.fontSizePx * 0.88)));
 }
 
@@ -63,7 +59,8 @@ export function resolveMinimalHebrewMonthFontPx(settings: CalendarSettings): num
 }
 
 export function resolveMinimalGregorianFontPx(settings: CalendarSettings): number {
-  return Math.max(15, Math.min(19, Math.round(settings.headerGregMonthFontPx * 0.98)));
+  // fallback to global font size (header bar removed)
+  return Math.max(15, Math.min(19, Math.round(settings.fontSizePx * 1.05)));
 }
 
 /** Titles under the pill in `centered_pill` (`text-base` / `sm:text-lg`). */
@@ -75,48 +72,12 @@ export function resolveCenteredPillCatalogSubtitleFontPx(settings: CalendarSetti
   return Math.max(11, Math.min(14, Math.round(settings.fontSizePx * 0.86)));
 }
 
-export function resolveMinimalHeaderMarginBottomPx(settings: CalendarSettings): number {
-  return Math.max(settings.headerBarMarginBottomPx, 16);
+export function resolveMinimalHeaderMarginBottomPx(_settings: CalendarSettings): number {
+  return 16;
 }
 
-function escAttr(s: string): string {
-  return s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-/** Greg month chip — same inline recipe as `GregChip` in `CalendarMonthChrome`. */
-export function buildGregChipPrintHtml(
-  settings: CalendarSettings,
-  esc: (s: string) => string,
-  label: string,
-): string {
-  return `<span class="gregChipPrint" style="font-size:${settings.headerGregMonthFontPx}px;color:${escAttr(
-    settings.headerGregMonthTextColor,
-  )};font-weight:${settings.headerGregMonthFontWeight};border:none;background:transparent;border-radius:0;padding:0;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;box-sizing:border-box;max-width:100%;">${esc(
-    label,
-  )}</span>`;
-}
-
-/** Hebrew month title chip — same as `HebMonthTitle` in live preview. */
-export function buildHebMonthTitlePrintHtml(
-  settings: CalendarSettings,
-  esc: (s: string) => string,
-  text: string,
-): string {
-  return `<span class="hebPill" style="font-size:${settings.headerHebMonthFontPx}px;font-weight:${
-    settings.headerHebMonthFontWeight
-  };color:${escAttr(settings.headerHebMonthTextColor)};border:none;background:transparent;border-radius:0;padding:0;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;box-sizing:border-box;max-width:100%;">${esc(
-    text,
-  )}</span>`;
-}
-
-function headerMaxWidthStyle(settings: CalendarSettings): string {
-  return settings.headerBarMaxWidthPx > 0 ? `max-width:${settings.headerBarMaxWidthPx}px;` : '';
-}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// (header bar helpers removed)
 
 /**
  * Month chrome HTML (header + grid) for printable month, mirroring `CalendarMonthChrome` layouts.
@@ -127,93 +88,11 @@ export function buildPrintMonthChromeHtml(
   esc: (s: string) => string,
   parts: { gregTitle: string; hebTitle: string; gMonthDays: number; gridHtml: string },
 ): string {
-  const layout = sanitizeHeaderLayoutStyle(headerLayoutRaw);
-  const { gregTitle, hebTitle, gMonthDays, gridHtml } = parts;
-  const titlesDx = (settings as any).headerBarTitlesOffsetXMm ?? 0;
-  const titlesDy = (settings as any).headerBarTitlesOffsetYMm ?? 0;
-  const monthDx = (settings as any).headerBarMonthOffsetXMm ?? 0;
-  const monthDy = (settings as any).headerBarMonthOffsetYMm ?? 0;
-
-  const classicInner = `
-        <div class="titles" dir="rtl">
-          <div class="main" dir="rtl">${esc(settings.titleMain)}</div>
-          <div class="sub" dir="rtl">${esc(settings.titleSub)} • ${gMonthDays} ימים בחודש</div>
-        </div>
-        <span class="hebPill" dir="rtl">${esc(hebTitle)}</span>
-        <div class="gregLabel" dir="ltr" style="color:${esc(settings.headerGregMonthTextColor)}">${esc(
-    gregTitle,
-  )}</div>`;
-  const useWysiwygPrint =
-    Boolean(settings.headerWysiwygManualActive) &&
-    settings.headerWysiwygClassicPct !== null &&
-    (layout === 'floating' || layout === 'seamless');
-  const classicHeaderBar = `<div class="headerBar calendarHeader${
-    useWysiwygPrint ? ' headerWysiwyg' : ''
-  }">${classicInner}</div>`;
-
-  if (layout === 'minimal_text') {
-    return `<div class="headerMinimal calendarHeader" style="margin-bottom:${resolveMinimalHeaderMarginBottomPx(
-      settings,
-    )}px;">
-          <div style="transform:translate(${titlesDx}mm,${titlesDy}mm);">
-            <div class="minimalMain">${esc(settings.titleMain)}</div>
-            <div class="minimalSub">${esc(settings.titleSub)} • ${gMonthDays} ימים בחודש</div>
-          </div>
-          <div style="transform:translate(${monthDx}mm,${monthDy}mm);">
-            <div class="minimalHeb">${esc(hebTitle)}</div>
-            <div class="minimalGreg">${esc(gregTitle)}</div>
-          </div>
-        </div>${gridHtml}`;
-  }
-  if (layout === 'seamless') {
-    return `<div class="chromeJoined">${classicHeaderBar}${gridHtml}</div>`;
-  }
-  if (layout === 'right_block') {
-    const r = settings.headerBarRadiusPx;
-    return `<div class="headerRightBlockShell calendarHeader" style="margin-bottom:${
-      settings.headerBarMarginBottomPx
-    }px;transform:translateY(${settings.headerBarOffsetYPx}px);${headerMaxWidthStyle(settings)}">
-        <div class="headerRightBlockBar" style="min-height:${settings.headerBarHeightPx}px;background:${escAttr(
-      settings.headerBarBg,
-    )};border-color:${escAttr(settings.headerBarBorderColor)};border-width:${
-      settings.headerBarBorderWidthPx
-    }px;border-style:solid;border-radius:${r}px;">
-          <div class="headerRightBlockMonthCol" style="border-color:${escAttr(
-            settings.headerBarBorderColor,
-          )};background:${escAttr(settings.headerHebMonthBg)};transform:translate(${
-            monthDx
-          }mm,${monthDy}mm);">
-            ${buildHebMonthTitlePrintHtml(settings, esc, hebTitle)}
-            <div style="margin-top:8px;">${buildGregChipPrintHtml(settings, esc, gregTitle)}</div>
-          </div>
-          <div class="headerRightBlockTitlesCol" style="transform:translate(${titlesDx}mm,${titlesDy}mm);">
-            <div class="headerRightMain">${esc(settings.titleMain)}</div>
-            <div class="headerRightSub">${esc(settings.titleSub)}</div>
-          </div>
-        </div>
-      </div>${gridHtml}`;
-  }
-  if (layout === 'centered_pill') {
-    return `<div class="headerCenteredPillShell calendarHeader" style="margin-bottom:${
-      settings.headerBarMarginBottomPx
-    }px;transform:translateY(${settings.headerBarOffsetYPx}px);${headerMaxWidthStyle(settings)}">
-        <div class="headerPillRow" style="background:${escAttr(settings.headerBarBg)};border-color:${escAttr(
-      settings.headerBarBorderColor,
-    )};border-width:${settings.headerBarBorderWidthPx}px;border-style:solid;transform:translate(${
-      monthDx
-    }mm,${monthDy}mm);">
-          ${buildGregChipPrintHtml(settings, esc, gregTitle)}
-          <span style="display:inline-block;width:12px;"></span>
-          ${buildHebMonthTitlePrintHtml(settings, esc, hebTitle)}
-        </div>
-        <div class="headerPillCatalogBlock" style="transform:translate(${titlesDx}mm,${titlesDy}mm);">
-          <div class="headerPillCatalogMain">${esc(settings.titleMain)}</div>
-          <div class="headerPillCatalogSub">${esc(settings.titleSub)}</div>
-        </div>
-      </div>${gridHtml}`;
-  }
-
-  return `${classicHeaderBar}${gridHtml}`;
+  void settings;
+  void headerLayoutRaw;
+  void esc;
+  void parts;
+  return '';
 }
 
 export type PrintMonthStyleParams = {
@@ -231,6 +110,7 @@ export type PrintMonthStyleParams = {
 export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): string {
   const { settings, headerLayout, pageWidthMm, pageHeightMm, canvasBackgroundSnippet } = p;
   const pad = DOCUMENT_HEADER_BAR_INLINE_PAD_PX;
+  void pad;
   const gridDetachedR = resolveDetachedGridBorderRadiusPx(settings);
   const canvasR = resolveCanvasOuterRadiusPx(settings);
   const titlePx = resolveHeaderBarPrimaryTitleFontPx(settings);
@@ -241,6 +121,14 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
   const minGreg = resolveMinimalGregorianFontPx(settings);
   const pillMain = resolveCenteredPillCatalogTitleFontPx(settings);
   const pillSub = resolveCenteredPillCatalogSubtitleFontPx(settings);
+  void titlePx;
+  void subPx;
+  void minMain;
+  void minSub;
+  void minHeb;
+  void minGreg;
+  void pillMain;
+  void pillSub;
 
   // A4 landscape reference area: 297×210mm. Scale fonts down proportionally for smaller pages.
   const A4_AREA = 297 * 210;
@@ -250,155 +138,12 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
   const pxToPt = (px: number) => `${(px * 0.75 * pageScale).toFixed(2)}pt`;
   const pdfCanvasExtraTopPadPx = headerLayout === 'right_block' ? 28 : 0;
 
-  const wysiwygClassicCss =
-    settings.headerWysiwygManualActive &&
-    settings.headerWysiwygClassicPct &&
-    (headerLayout === 'floating' || headerLayout === 'seamless')
-      ? buildHeaderWysiwygClassicPrintCss(
-          settings.headerWysiwygClassicPct,
-          settings.headerWysiwygClassicAlign,
-        )
-      : '';
+  const wysiwygClassicCss = '';
+  void wysiwygClassicCss;
 
-  const rightBlockRules =
-    headerLayout === 'right_block'
-      ? `
-      .headerRightBlockShell{
-        position:relative;
-        margin-left:auto;
-        margin-right:auto;
-        width:100%;
-        max-width:100%;
-        box-sizing:border-box;
-        overflow:visible;
-      }
-      .headerRightBlockBar{
-        display:flex;
-        flex-direction:row;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        padding:12px ${Math.max(20, pad)}px;
-        box-sizing:border-box;
-        width:100%;
-        max-width:100%;
-        min-width:0;
-        overflow:visible;
-      }
-      .headerRightBlockMonthCol{
-        flex-shrink:0;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        gap:8px;
-        border-style:solid;
-        border-width:${Math.max(1, settings.headerBarBorderWidthPx)}px;
-        border-radius:8px;
-        padding:12px 14px;
-        text-align:center;
-        box-shadow:0 1px 2px rgba(15,23,42,0.06);
-        min-width:max-content;
-        max-width:min(100%,45%);
-        overflow:visible;
-      }
-      .headerRightBlockTitlesCol{
-        min-width:0;
-        flex:1 1 auto;
-        max-width:100%;
-        display:flex;
-        flex-direction:column;
-        align-items:flex-end;
-        gap:4px;
-        text-align:right;
-        overflow:visible;
-      }
-      .headerRightMain{
-        font-weight:${settings.fontWeight};
-        font-size:${titlePx}px;
-        color:${settings.headerBarTitleColor};
-        white-space:normal;
-        word-break:break-word;
-        overflow:visible;
-        max-width:100%;
-        line-height:1.3;
-      }
-      .headerRightSub{
-        font-size:${subPx}px;
-        color:${settings.headerBarSubtitleColor};
-        white-space:normal;
-        word-break:break-word;
-        overflow:visible;
-        max-width:100%;
-        line-height:1.35;
-      }
-      `
-      : '';
+  const rightBlockRules = '';
 
-  const centeredPillRules =
-    headerLayout === 'centered_pill'
-      ? `
-      .headerCenteredPillShell{
-        position:relative;
-        margin-left:auto;
-        margin-right:auto;
-        width:100%;
-        max-width:100%;
-        min-width:0;
-        box-sizing:border-box;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        padding:0 20px;
-        overflow:visible;
-      }
-      .headerPillRow{
-        margin-top:24px;
-        display:inline-flex;
-        flex-wrap:wrap;
-        align-items:center;
-        justify-content:center;
-        gap:12px;
-        padding:12px 20px;
-        border-radius:9999px;
-        box-shadow:0 4px 14px rgba(15,23,42,0.12);
-        box-sizing:border-box;
-        width:max-content;
-        max-width:100%;
-        min-width:0;
-        overflow:visible;
-      }
-      .headerPillCatalogBlock{
-        margin-top:12px;
-        width:100%;
-        max-width:100%;
-        min-width:0;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        gap:4px;
-        text-align:center;
-        padding:0 16px;
-        box-sizing:border-box;
-        overflow:visible;
-      }
-      .headerPillCatalogMain{
-        font-weight:${settings.fontWeight};
-        font-size:${pillMain}px;
-        color:${settings.headerBarTitleColor};
-        max-width:100%;
-        word-break:break-word;
-        overflow:visible;
-      }
-      .headerPillCatalogSub{
-        font-size:${pillSub}px;
-        color:${settings.headerBarSubtitleColor};
-        max-width:100%;
-        word-break:break-word;
-        overflow:visible;
-      }
-      `
-      : '';
+  const centeredPillRules = '';
 
   return `
       @page { size: ${pageWidthMm}mm ${pageHeightMm}mm; margin: ${settings.pdfMarginMm}mm; }
@@ -433,7 +178,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
           letter-spacing: normal !important;
           font-kerning: normal !important;
         }
-        body, .printRoot, .canvas, .grid, .cell, .dow, .headerBar, .headerMinimal, .headerRightBlockShell, .headerCenteredPillShell{
+        body, .printRoot, .canvas, .grid, .cell, .dow{
           font-family:${settings.fontFamily} !important;
         }
         body{ font-size:${pxToPt(settings.fontSizePx)} !important; }
@@ -442,8 +187,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         .topRight .greg{ font-size:${pxToPt(settings.gregDayFontPx)} !important; }
         .mid{ font-size:${pxToPt(settings.eventTitleFontPx)} !important; }
         .times{ font-size:${pxToPt(settings.shabbatTimesFontPx)} !important; }
-        .headerBar .main{ font-size:${pxToPt(titlePx)} !important; }
-        .headerBar .sub{ font-size:${pxToPt(subPx)} !important; }
+        /* header bar font rules removed */
         .headerPillCatalogMain{ font-size:${pxToPt(pillMain)} !important; }
         .headerPillCatalogSub{ font-size:${pxToPt(pillSub)} !important; }
         /* Keep text crisp: avoid transform scaling during browser print */
@@ -537,131 +281,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         background-color: transparent;
         background-image: none;
       }
-      .headerBar{
-        position: relative;
-        margin-top:0;
-        margin-bottom: ${settings.headerBarMarginBottomPx}px;
-        min-height:${settings.headerBarHeightPx}px;
-        height:auto;
-        background:${settings.headerBarBg};
-        border:${settings.headerBarBorderWidthPx}px solid ${settings.headerBarBorderColor};
-        border-radius:${settings.headerBarRadiusPx}px;
-        padding: 0 ${Math.max(20, pad)}px;
-        box-sizing:border-box;
-        width: 100%;
-        max-width: ${settings.headerBarMaxWidthPx > 0 ? `${settings.headerBarMaxWidthPx}px` : 'none'};
-        min-width: 0;
-        margin-left: auto;
-        margin-right: auto;
-        transform: translateY(${settings.headerBarOffsetYPx}px);
-        overflow: hidden;
-      }
-      .headerBar:not(.headerWysiwyg){
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-        align-items: center;
-        column-gap: 10px;
-      }
-      .headerBar:not(.headerWysiwyg) .titles{
-        position: static;
-        grid-column: 1 / 4;
-        justify-self: end;
-        align-self: center;
-        transform: translate(${(settings as any).headerBarTitlesOffsetXMm ?? 0}mm, ${(settings as any).headerBarTitlesOffsetYMm ?? 0}mm);
-        text-align:right;
-        min-width: 0;
-        max-width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 4px;
-        overflow: visible;
-      }
-      .headerBar:not(.headerWysiwyg) .main{
-        font-weight:${settings.headerTitleMainFontWeight};
-        font-size:${titlePx}px;
-        color:${settings.headerBarTitleColor};
-        white-space:normal;
-        word-break:break-word;
-        overflow:visible;
-        max-width:100%;
-        line-height:1.3;
-      }
-      .headerBar:not(.headerWysiwyg) .sub{
-        font-size:${subPx}px;
-        font-weight:${settings.headerTitleSubFontWeight};
-        color:${settings.headerBarSubtitleColor};
-        white-space:normal;
-        word-break:break-word;
-        overflow:visible;
-        max-width:100%;
-        line-height:1.35;
-      }
-      .headerBar:not(.headerWysiwyg) .hebPill{
-        font-weight: ${settings.headerHebMonthFontWeight};
-        color: ${settings.headerHebMonthTextColor};
-        border: none;
-        background: transparent;
-        border-radius: 0;
-        padding: 0;
-        white-space:nowrap;
-        font-size: ${settings.headerHebMonthFontPx}px;
-        line-height: 1;
-        position: static;
-        grid-column: 1 / 4;
-        justify-self: center;
-        align-self: center;
-        transform: translate(${(settings as any).headerBarMonthOffsetXMm ?? 0}mm, ${(settings as any).headerBarMonthOffsetYMm ?? 0}mm);
-        box-sizing: border-box;
-        display:inline-flex;
-        align-items:center;
-        max-width:100%;
-        overflow: visible;
-      }
-      .headerBar:not(.headerWysiwyg) .gregLabel{
-        border:none;
-        background: transparent;
-        border-radius:0;
-        padding: 0;
-        white-space:nowrap;
-        font-size: ${settings.headerGregMonthFontPx}px;
-        color: ${settings.headerGregMonthTextColor};
-        position: static;
-        grid-column: 1 / 4;
-        justify-self: start;
-        align-self: center;
-        transform: translate(${(settings as any).headerGregLabelOffsetXMm ?? 0}mm, ${(settings as any).headerGregLabelOffsetYMm ?? 0}mm);
-        box-sizing: border-box;
-        display:inline-flex;
-        align-items:center;
-        max-width:100%;
-        overflow:visible;
-      }
-      .headerBar.headerWysiwyg .main{
-        font-weight:${settings.headerTitleMainFontWeight};
-        font-size:${titlePx}px;
-        color:${settings.headerBarTitleColor};
-        white-space:normal;
-        word-break:break-word;
-        overflow:visible;
-        max-width:100%;
-        line-height:1.3;
-      }
-      .headerBar.headerWysiwyg .sub{
-        font-size:${subPx}px;
-        font-weight:${settings.headerTitleSubFontWeight};
-        color:${settings.headerBarSubtitleColor};
-        white-space:normal;
-        word-break:break-word;
-        overflow:visible;
-        max-width:100%;
-        line-height:1.35;
-      }
-      ${wysiwygClassicCss}
-      .headerBar.headerWysiwyg{
-        /* children are absolute in WYSIWYG → force bar height so it doesn't collapse in PDF */
-        min-height:${settings.headerBarHeightPx}px;
-      }
+      /* header bar CSS removed */
       .grid{
         border:${settings.gridBorderWidthPx}px solid ${settings.gridBorderColor};
         border-radius: ${gridDetachedR}px;
@@ -671,76 +291,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         grid-template-columns: repeat(7, 1fr);
         direction: ltr;
       }
-      ${
-        headerLayout === 'seamless'
-          ? `
-      .chromeJoined{
-        margin-top:0;
-        border:${settings.gridBorderWidthPx}px solid ${settings.gridBorderColor};
-        border-radius:${settings.headerBarRadiusPx}px;
-        overflow-x:visible;
-        overflow-y:visible;
-        width:100%;
-        max-width: ${settings.headerBarMaxWidthPx > 0 ? `${settings.headerBarMaxWidthPx}px` : 'none'};
-        min-width:0;
-        margin-left:auto;
-        margin-right:auto;
-        box-sizing:border-box;
-      }
-      .chromeJoined .headerBar{
-        margin-top:0;
-        margin-bottom:0;
-        border-radius: ${settings.headerBarRadiusPx}px ${settings.headerBarRadiusPx}px 0 0;
-        border-left:none;
-        border-right:none;
-        border-top:none;
-        border-bottom-width: ${settings.gridWeekdayHeaderBorderBottomWidthPx}px;
-        border-bottom-style: solid;
-        border-bottom-color: ${settings.gridWeekdayHeaderBorderBottomColor};
-      }
-      .chromeJoined .grid{
-        border:none;
-        border-radius: 0 0 ${settings.headerBarRadiusPx}px ${settings.headerBarRadiusPx}px;
-      }
-      `
-          : ''
-      }
-      ${
-        headerLayout === 'minimal_text'
-          ? `
-      .headerMinimal{
-        position:relative;
-        margin-top:0;
-        margin-bottom: 0;
-        text-align:center;
-        padding: 8px 20px 4px;
-        width:100%;
-        max-width:100%;
-        min-width:0;
-        box-sizing:border-box;
-        overflow:visible;
-      }
-      .headerMinimal .minimalMain{
-        font-weight:${settings.fontWeight};
-        font-size:${minMain}px;
-        color:${settings.headerBarTitleColor};
-        max-width:100%;
-        word-break:break-word;
-        overflow:visible;
-      }
-      .headerMinimal .minimalSub{
-        font-size:${minSub}px;
-        color:${settings.headerBarSubtitleColor};
-        margin-top:4px;
-        max-width:100%;
-        word-break:break-word;
-        overflow:visible;
-      }
-      .headerMinimal .minimalHeb{ font-weight:${settings.fontWeight}; font-size:${minHeb}px; color:${settings.headerHebMonthTextColor}; margin-top:10px;}
-      .headerMinimal .minimalGreg{ font-size:${minGreg}px; color:${settings.headerGregMonthTextColor}; margin-top:4px;}
-      `
-          : ''
-      }
+      /* header variants removed */
       ${rightBlockRules}
       ${centeredPillRules}
       .dow{
@@ -866,62 +417,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       .nowrap{ white-space:nowrap; }
 
       .pdfMode, .pdfMode * { box-sizing: border-box; }
-      .pdfMode .headerBar:not(.headerWysiwyg){
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
-        align-items: center !important;
-        position: relative !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        overflow: visible !important;
-        /* Keep parity with the live header bar height so offsets match. */
-        min-height: ${settings.headerBarHeightPx}px !important;
-        height: auto !important;
-      }
-      .pdfMode .headerBar.headerWysiwyg{
-        display: block !important;
-        position: relative !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        overflow: visible !important;
-        min-height: ${settings.headerBarHeightPx}px !important;
-        height: auto !important;
-      }
-      .pdfMode .headerBar:not(.headerWysiwyg) .hebPill{
-        line-height: 1 !important;
-      }
-      .pdfMode .headerBar.headerWysiwyg .hebPill{
-        line-height: 1 !important;
-      }
-      .pdfMode .headerMinimal,
-      .pdfMode .headerRightBlockShell,
-      .pdfMode .headerCenteredPillShell{
-        display: block !important;
-      }
-      .pdfMode .headerRightBlockShell{
-        overflow: visible !important;
-      }
-      .pdfMode .headerRightBlockBar{
-        display: flex !important;
-        overflow: visible !important;
-        padding-top: 22px !important;
-        padding-bottom: 22px !important;
-      }
-      .pdfMode .headerRightBlockTitlesCol{
-        overflow: visible !important;
-      }
-      .pdfMode .headerRightMain{
-        padding-top: 3px !important;
-        line-height: 1.38 !important;
-      }
-      .pdfMode .headerRightSub{
-        line-height: 1.35 !important;
-      }
-      .pdfMode .headerPillRow{
-        display: inline-flex !important;
-        flex-wrap: wrap !important;
-        max-width: 100% !important;
-        width: 100% !important;
+      /* pdfMode header CSS removed */
         min-width: 0 !important;
         overflow: visible !important;
       }

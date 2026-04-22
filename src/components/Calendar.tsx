@@ -11,8 +11,6 @@ import { getMonthGridDaysFlat } from '../utils/calendarGrid';
 import {
   abbreviateRoshChodeshHeTitle,
   isTaanitEstherFastNameHe,
-  getHebrewHeaderForGregorianMonth,
-  formatHebrewHeaderText,
   getDayEventsByGregorianDate,
   formatTodayYmdJerusalem,
   getIsoWeekdaySun0Jerusalem,
@@ -27,7 +25,6 @@ import {
   isYomKippurHolidayTitleHe as isYomKippurDay,
 } from '../utils/hebrewDate';
 import { buildCalendarDayMetas } from '../utils/monthViewModel';
-import { formatGregorianMonthYearHebrew } from '../utils/gregorianHebrew';
 import { downloadPdfFromHtml, exportPdfBlobFromHtml } from '../utils/pdf';
 import {
   downloadHtmlFromPrintableHtml,
@@ -77,10 +74,7 @@ import { applyDesignThemeId, applyStylePackId, getThemeEntry } from '../themes/c
 import { ThemePickerModal } from './ThemePickerModal';
 import { StylePackModal } from './StylePackModal';
 import { createPresetId, loadStylePresets, saveStylePresets, type StylePreset } from '../utils/stylePresets';
-import {
-  DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN,
-  DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT,
-} from '../utils/headerWysiwyg';
+// header bar / WYSIWYG header removed
 import { CalendarMonthChrome } from './CalendarMonthChrome';
 import { SettingsCategory } from './SettingsCategory';
 import { SettingsSearchBar } from './SettingsSearchBar';
@@ -561,7 +555,6 @@ export function Calendar() {
     x: number;
     y: number;
   }>({ key: 'none', x: 0, y: 0 });
-  const [headerLayoutEditMode, setHeaderLayoutEditMode] = useState(false);
 
   const viewedGregorianMonthKey = format(viewDate, 'yyyy-MM');
 
@@ -752,15 +745,7 @@ export function Calendar() {
     e.stopPropagation();
   };
 
-  const openHeaderEditor = () => {
-    setSettingsOpen(true);
-    // Scroll to top so the settings panel is visible
-    try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {
-      // ignore
-    }
-  };
+  // header editor removed
 
   const weeks = useMemo(() => getMonthGridWeeks(viewDate), [viewDate]);
   const gridDays = useMemo(() => getMonthGridDaysFlat(viewDate), [viewDate]);
@@ -810,11 +795,7 @@ export function Calendar() {
     settings.fastSunsetOffsetMins,
   ]);
 
-  const headerHd = useMemo(
-    () => getHebrewHeaderForGregorianMonth(viewDate),
-    [viewDate],
-  );
-  const hebrewMonthTitle = useMemo(() => formatHebrewHeaderText(headerHd), [headerHd]);
+  // header bar removed
   const weekdayHeaders = useMemo(
     () => getWeekdayHeaderLabels(settings.weekdayHeaderMode),
     [settings.weekdayHeaderMode],
@@ -925,8 +906,6 @@ export function Calendar() {
     settings.layoutAutoFitToCanvas,
     settings.calendarLayoutScalePercent,
     settings.headerLayoutStyle,
-    settings.headerWysiwygManualActive,
-    settings.headerWysiwygClassicPct,
     settings.tableOffsetYPx,
     settings.gridWeekdayHeaderHeightPx,
     settings.pdfPagePreset,
@@ -1158,23 +1137,8 @@ export function Calendar() {
   > = {
     header: [
       {
-        title: 'ערכות מוכנות',
-        items: [{ label: 'בורר ערכות עיצוב (12)', anchorId: 'settings-anchor-themes' }],
-      },
-      {
-        title: 'עיצוב פס עליון',
-        items: [
-          { label: 'גובה/עיגול/מסגרת פס עליון', anchorId: 'settings-anchor-headerbar-size' },
-          { label: 'צבעים בפס עליון', anchorId: 'settings-anchor-headerbar-colors' },
-          { label: 'חודש עברי/לועזי בפס עליון', anchorId: 'settings-anchor-header-month' },
-          { label: 'מיקום/רוחב פס עליון', anchorId: 'settings-anchor-header-position' },
-        ],
-      },
-      {
         title: 'ייצוא',
-        items: [
-          { label: 'הגדרות PDF/ייצוא', anchorId: 'settings-anchor-export' },
-        ],
+        items: [{ label: 'הגדרות PDF/ייצוא', anchorId: 'settings-anchor-export' }],
       },
     ],
     weekdays: [
@@ -2466,57 +2430,7 @@ export function Calendar() {
               </div>
             </label>
 
-            <label className="flex flex-wrap items-center gap-2 text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
-              <input
-                type="checkbox"
-                checked={settings.headerWysiwygManualActive}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: on,
-                    headerWysiwygClassicPct:
-                      on && !s.headerWysiwygClassicPct
-                        ? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT
-                        : s.headerWysiwygClassicPct,
-                    headerWysiwygClassicAlign:
-                      on && !s.headerWysiwygClassicAlign
-                        ? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN
-                        : s.headerWysiwygClassicAlign,
-                  }));
-                  if (!on) setHeaderLayoutEditMode(false);
-                }}
-              />
-              פריסת פס כותרת קלאסי (צף / ספר) לפי גרירה — מיקומים באחוזים זהים ב־PDF
-            </label>
-            {settings.headerWysiwygManualActive &&
-            (settings.headerLayoutStyle === 'floating' ||
-              settings.headerLayoutStyle === 'seamless') ? (
-              <label className="flex flex-wrap items-center gap-2 text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
-                <input
-                  type="checkbox"
-                  checked={headerLayoutEditMode}
-                  onChange={(e) => setHeaderLayoutEditMode(e.target.checked)}
-                />
-                מצב עריכת פריסה (גרירה, ידיות שינוי גודל; קווי עזר למרכז בזמן גרירה)
-              </label>
-            ) : null}
-            {settings.headerWysiwygManualActive &&
-            (settings.headerLayoutStyle === 'floating' ||
-              settings.headerLayoutStyle === 'seamless') ? (
-              <button
-                type="button"
-                className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 sm:col-span-2"
-                onClick={() =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygClassicPct: DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT,
-                  }))
-                }
-              >
-                איפוס פריסה שמורה לברירת מחדל
-              </button>
-            ) : null}
+            {/* header bar WYSIWYG controls removed */}
 
             </SettingsCategory>
 
@@ -2622,7 +2536,6 @@ export function Calendar() {
             </SettingsCategory>
 
             <SettingsCategory icon="✏️" title="טיפוגרפיה">
-            <div id="settings-anchor-header" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             <div id="settings-anchor-typography-family" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             <FontFamilyPicker
               label="משפחת גופן — ברירת מחדל (Fallback)"
@@ -3671,475 +3584,7 @@ export function Calendar() {
               </div>
             </div>
 
-            <div
-              id="settings-anchor-headerbar-size"
-              className="sm:col-span-2 lg:col-span-3 scroll-mt-24"
-            />
-            <label className="text-sm text-slate-700">
-              גובה פס כותרת ({settings.headerBarHeightPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={48}
-                max={140}
-                value={settings.headerBarHeightPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarHeightPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              עיגול פינות פס ({settings.headerBarRadiusPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={28}
-                value={settings.headerBarRadiusPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarRadiusPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <div
-              id="settings-anchor-headerbar-colors"
-              className="sm:col-span-2 lg:col-span-3 scroll-mt-24"
-            />
-            <ColorInput
-              label="צבע רקע פס"
-              value={
-                (settings.headerBarBg ?? '').startsWith('#')
-                  ? (settings.headerBarBg as string)
-                  : '#FFFFFF'
-              }
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerBarBg: hex,
-                }))
-              }
-            />
-            <div className="mt-1 text-xs text-slate-500 sm:col-span-2 lg:col-span-3">
-              שים לב: בחירת צבע תחליף לרקע אטום (לא שקוף).
-            </div>
-
-            <ColorInput
-              label="צבע מסגרת פס"
-              value={settings.headerBarBorderColor}
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerBarBorderColor: hex,
-                }))
-              }
-            />
-
-            <label className="text-sm text-slate-700">
-              עובי מסגרת פס ({settings.headerBarBorderWidthPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={6}
-                value={settings.headerBarBorderWidthPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarBorderWidthPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <ColorInput
-              label="צבע כותרת ראשית"
-              value={settings.headerBarTitleColor}
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerBarTitleColor: hex,
-                }))
-              }
-            />
-
-            <ColorInput
-              label="צבע כותרת משנה"
-              value={settings.headerBarSubtitleColor}
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerBarSubtitleColor: hex,
-                }))
-              }
-            />
-
-            <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3 font-semibold text-slate-900">
-              תצוגת חודש (מרכז: עברי, שמאל: לועזי)
-            </label>
-            <div
-              id="settings-anchor-header-month"
-              className="sm:col-span-2 lg:col-span-3 scroll-mt-24"
-            />
-
-            <label className="text-sm text-slate-700">
-              גודל טקסט חודש עברי במרכז ({settings.headerHebMonthFontPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={14}
-                max={40}
-                value={settings.headerHebMonthFontPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthFontPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              גודל טקסט חודש/שנה לועזי משמאל ({settings.headerGregMonthFontPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={10}
-                max={42}
-                value={settings.headerGregMonthFontPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerGregMonthFontPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              משקל גופן חודש/שנה לועזי ({settings.headerGregMonthFontWeight})
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={300}
-                max={900}
-                step={50}
-                value={settings.headerGregMonthFontWeight}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerGregMonthFontWeight: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת טקסט חודש/שנה לועזי (ימין/שמאל) ({settings.headerGregLabelOffsetXMm}mm)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-30}
-                max={30}
-                step={0.5}
-                value={settings.headerGregLabelOffsetXMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: false,
-                    headerGregLabelOffsetXMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת טקסט חודש/שנה לועזי (למעלה/למטה) ({settings.headerGregLabelOffsetYMm}mm)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-15}
-                max={15}
-                step={0.5}
-                value={settings.headerGregLabelOffsetYMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: false,
-                    headerGregLabelOffsetYMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <ColorInput
-              label="צבע טקסט לועזי"
-              value={settings.headerGregMonthTextColor}
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerGregMonthTextColor: hex,
-                }))
-              }
-            />
-
-            <ColorInput
-              label="צבע טקסט תג עברי (מרכז)"
-              value={settings.headerHebMonthTextColor}
-              onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
-                  headerHebMonthTextColor: hex,
-                }))
-              }
-            />
-
-            <label className="text-sm text-slate-700">
-              משקל גופן תג עברי (מרכז) ({settings.headerHebMonthFontWeight})
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={400}
-                max={900}
-                step={50}
-                value={settings.headerHebMonthFontWeight}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerHebMonthFontWeight: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3 font-semibold text-slate-900">
-              מיקום ורוחב פס הכותרת
-            </label>
-            <div
-              id="settings-anchor-header-position"
-              className="sm:col-span-2 lg:col-span-3 scroll-mt-24"
-            />
-
-            <label className="text-sm text-slate-700">
-              מרווח מתחת לפס לפני הטבלה ({settings.headerBarMarginBottomPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={48}
-                value={settings.headerBarMarginBottomPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarMarginBottomPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת פס כותרת למטה/למעלה ({settings.headerBarOffsetYPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-40}
-                max={40}
-                value={settings.headerBarOffsetYPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarOffsetYPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              רוחב מקסימלי לפס ({settings.headerBarMaxWidthPx === 0 ? 'ללא' : `${settings.headerBarMaxWidthPx}px`})
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={1400}
-                step={10}
-                value={settings.headerBarMaxWidthPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarMaxWidthPx: Number(e.target.value),
-                  }))
-                }
-              />
-              <div className="mt-1 text-xs text-slate-500">0 = רוחב מלא (לפי הקנבס)</div>
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת טקסטים “לוח שנה/מועדים” (ימין/שמאל) ({settings.headerBarTitlesOffsetXMm}mm)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-30}
-                max={30}
-                step={0.5}
-                value={settings.headerBarTitlesOffsetXMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: false,
-                    headerBarTitlesOffsetXMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת טקסטים “לוח שנה/מועדים” (למעלה/למטה) ({settings.headerBarTitlesOffsetYMm}mm)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-15}
-                max={15}
-                step={0.5}
-                value={settings.headerBarTitlesOffsetYMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: false,
-                    headerBarTitlesOffsetYMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              גודל טקסט “לוח שנה עברי‑לועזי” ({settings.headerTitleMainFontPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={12}
-                max={44}
-                value={settings.headerTitleMainFontPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerTitleMainFontPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              גודל טקסט שורת “מועדים · ראשי חודשים · זמני שבת” ({settings.headerTitleSubFontPx}px)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={10}
-                max={32}
-                value={settings.headerTitleSubFontPx}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerTitleSubFontPx: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              משקל גופן “לוח שנה עברי‑לועזי” ({settings.headerTitleMainFontWeight})
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={300}
-                max={900}
-                step={50}
-                value={settings.headerTitleMainFontWeight}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerTitleMainFontWeight: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              משקל גופן שורת “מועדים · ראשי חודשים · זמני שבת” ({settings.headerTitleSubFontWeight})
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={300}
-                max={900}
-                step={50}
-                value={settings.headerTitleSubFontWeight}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerTitleSubFontWeight: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת תג החודש (ימין/שמאל) ({settings.headerBarMonthOffsetXMm}mm)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-30}
-                max={30}
-                step={0.5}
-                value={settings.headerBarMonthOffsetXMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: false,
-                    headerBarMonthOffsetXMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700">
-              הזזת תג החודש (למעלה/למטה) ({settings.headerBarMonthOffsetYMm}mm)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={-15}
-                max={15}
-                step={0.5}
-                value={settings.headerBarMonthOffsetYMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerWysiwygManualActive: false,
-                    headerBarMonthOffsetYMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-            <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
-              <input
-                type="checkbox"
-                checked={settings.headerBarShowEditButton}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    headerBarShowEditButton: e.target.checked,
-                  }))
-                }
-              />
-              הצג כפתור “ערוך” בפס הכותרת
-            </label>
-
+            {/* header bar sliders removed */}
             </SettingsCategory>
 
             <SettingsCategory icon="🖼️" title="רקע, קנבס ופריסה">
@@ -4472,27 +3917,7 @@ export function Calendar() {
               cls: 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100',
               items: [],
             },
-            {
-              key: 'header',
-              label: 'פס עליון',
-              cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
-              items: [
-                { label: 'גובה/מסגרת', anchorId: 'settings-anchor-headerbar-size' },
-                { label: 'צבעים', anchorId: 'settings-anchor-headerbar-colors' },
-                { label: 'חודש עברי/לועזי', anchorId: 'settings-anchor-header-month' },
-                { label: 'מיקום/רוחב', anchorId: 'settings-anchor-header-position' },
-              ],
-            },
-            {
-              key: 'headerDrag',
-              label: settings.headerWysiwygManualActive
-                ? headerLayoutEditMode
-                  ? 'סגור גרירה בפס'
-                  : 'גרירה בפס (ערוך)'
-                : 'גרירה בפס',
-              cls: 'border-amber-200 bg-white text-amber-950 hover:bg-amber-50',
-              items: [],
-            },
+            // header bar shortcuts removed
             {
               key: 'zmanim',
               label: 'זמנים',
@@ -4608,26 +4033,7 @@ export function Calendar() {
                     setSettingsOpen(false);
                     return;
                   }
-                  if (b.key === 'headerDrag') {
-                    setSettings((s) => {
-                      const on = !s.headerWysiwygManualActive;
-                      return {
-                        ...s,
-                        headerWysiwygManualActive: on,
-                        headerWysiwygClassicPct: on
-                          ? (s.headerWysiwygClassicPct ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT)
-                          : s.headerWysiwygClassicPct,
-                        headerWysiwygClassicAlign: on
-                          ? (s.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN)
-                          : s.headerWysiwygClassicAlign,
-                      };
-                    });
-                    // When turning on, also enter edit mode so drag handles appear.
-                    setHeaderLayoutEditMode(settings.headerWysiwygManualActive ? false : true);
-                    setShortcutOpen(null);
-                    setSettingsOpen(false);
-                    return;
-                  }
+                  // headerDrag removed
                   setShortcutOpen((prev) => (prev === b.key ? null : b.key));
                 }}
               >
@@ -4886,39 +4292,9 @@ export function Calendar() {
                   : { marginTop: settings.tableOffsetYPx }),
               }}
             >
-          <CalendarMonthChrome
+            <CalendarMonthChrome
             settings={settings}
-            hebrewMonthTitle={hebrewMonthTitle}
-            gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
-            onEditHeader={openHeaderEditor}
-            onToggleHeaderDrag={() => {
-              // Enter/exit edit mode without disabling the saved WYSIWYG layout.
-              setSettings((s) => {
-                if (s.headerWysiwygManualActive) return s;
-                return {
-                  ...s,
-                  headerWysiwygManualActive: true,
-                  headerWysiwygClassicPct:
-                    s.headerWysiwygClassicPct ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT,
-                  headerWysiwygClassicAlign:
-                    s.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN,
-                };
-              });
-              setHeaderLayoutEditMode((v) => !v);
-            }}
             gridWeekCount={weeks.length}
-            headerFontFamily={
-              shouldApplyFontTo('calendarHeader')
-                ? resolveFontFamilyFor('calendarHeader')
-                : undefined
-            }
-            headerLayoutEditMode={headerLayoutEditMode}
-            onHeaderWysiwygClassicPctChange={(pct) =>
-              setSettings((s) => ({ ...s, headerWysiwygClassicPct: pct }))
-            }
-            onHeaderWysiwygClassicAlignChange={(align) =>
-              setSettings((s) => ({ ...s, headerWysiwygClassicAlign: align }))
-            }
             gridChildren={
               <>
           {weekdayHeaders.map((d) => (

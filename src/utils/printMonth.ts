@@ -4,7 +4,7 @@ import {
   resolveDayTextOverride,
   type OverridesMap,
 } from './overrides';
-import { sanitizeHeaderLayoutStyle, type CalendarSettings } from './settings';
+import { type CalendarSettings } from './settings';
 import {
   buildPrintMonthChromeHtml,
   buildPrintMonthStylesheetContent,
@@ -62,8 +62,7 @@ export function buildPrintableMonthHtml(
   // Auto-fit PDF: when enabled, compute a cell height that fills the page vertically.
   const weekCount = Math.max(5, Math.min(6, weeks.length || 6));
   const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96);
-  const approxHeaderH =
-    settings.headerLayoutStyle === 'minimal_text' ? 120 : settings.headerBarHeightPx + settings.headerBarMarginBottomPx;
+  const approxHeaderH = 0;
   const approxDowH = settings.gridWeekdayHeaderHeightPx + settings.gridWeekdayHeaderRowOffsetYPx;
   const approxCanvasPad = settings.canvasPaddingTopPx + settings.canvasPaddingPx * 2;
   const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8;
@@ -129,7 +128,7 @@ export function buildPrintableMonthHtml(
   // Note: previously used for @media print fitting. Kept calculation out to avoid stale warnings.
 
   const dowLabels = getWeekdayHeaderLabels(effectiveSettings.weekdayHeaderMode);
-  const headerLayout = sanitizeHeaderLayoutStyle(effectiveSettings.headerLayoutStyle);
+  const headerLayout = effectiveSettings.headerLayoutStyle;
 
   const cells: string[] = [];
   for (const week of weeks) {

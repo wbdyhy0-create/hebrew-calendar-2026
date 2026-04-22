@@ -257,8 +257,7 @@ export function buildPrintableYearHtml(
         align-items: baseline;
         margin-bottom: 6mm;
       }
-      .header h1 { margin: 0; font-size: 18px; color: ${settings.headerBarTitleColor}; }
-      .header .sub { font-size: 12px; color: ${settings.headerBarSubtitleColor}; }
+      /* header bar styles removed */
       .months {
         display: grid;
         grid-template-columns: 1fr 1fr;
