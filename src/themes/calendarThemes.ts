@@ -22,6 +22,26 @@ function patch(p: Partial<CalendarSettings>): Partial<CalendarSettings> {
   return { ...CELL_TYPO_LADDER, ...p };
 }
 
+// Base slider values that should be consistent across ALL style packs.
+// This keeps header controls predictable when switching structural presets.
+const STYLEPACK_BASE: Partial<CalendarSettings> = {
+  headerBarTitlesOffsetXPx: DEFAULT_SETTINGS.headerBarTitlesOffsetXPx,
+  headerBarTitlesOffsetYPx: DEFAULT_SETTINGS.headerBarTitlesOffsetYPx,
+  headerBarMonthPillOffsetXPx: DEFAULT_SETTINGS.headerBarMonthPillOffsetXPx,
+  headerBarMonthPillOffsetYPx: DEFAULT_SETTINGS.headerBarMonthPillOffsetYPx,
+  headerGregLabelOffsetXPx: DEFAULT_SETTINGS.headerGregLabelOffsetXPx,
+  headerGregLabelOffsetYPx: DEFAULT_SETTINGS.headerGregLabelOffsetYPx,
+  headerTitleMainFontPx: DEFAULT_SETTINGS.headerTitleMainFontPx,
+  headerTitleSubFontPx: DEFAULT_SETTINGS.headerTitleSubFontPx,
+  headerTitleMainFontWeight: DEFAULT_SETTINGS.headerTitleMainFontWeight,
+  headerTitleSubFontWeight: DEFAULT_SETTINGS.headerTitleSubFontWeight,
+  headerGregMonthFontWeight: DEFAULT_SETTINGS.headerGregMonthFontWeight,
+};
+
+function stylePatch(p: Partial<CalendarSettings>): Partial<CalendarSettings> {
+  return patch({ ...STYLEPACK_BASE, ...p });
+}
+
 /** Visual themes: merged as `{ ...DEFAULT_SETTINGS, ...entry.patch, ...preserved }`. */
 export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
   {
@@ -64,7 +84,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'מסגרת מעוטרת לכותרת, קווים קלאסיים (מדומה), סריף',
     previewCss: 'linear-gradient(160deg,#f7efe1 0%,#eadcc6 45%,#c8b08a 100%)',
     cellBorder: 'double',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: SERIF_STACK,
       fontWeight: 400,
@@ -97,7 +117,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'ללא גבולות תאים, ימי שבוע מודגשים, “רשת דמיונית”',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'minimal_text',
       fontFamily: SANS_STACK,
       fontWeight: 400,
@@ -126,7 +146,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'פורמט צר/ארוך, טקסט קטן, מתאים ליומן קטן',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#eef2ff 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       pdfPagePreset: 'A5',
       pdfOrientation: 'portrait',
       headerLayoutStyle: 'seamless',
@@ -158,7 +178,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'החודשים מוצגים זה לצד זה בפס הכותרת (מראה מודרני)',
     previewCss: 'linear-gradient(90deg,#ffffff 0%,#f1f5f9 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'floating',
       fontFamily: SANS_STACK,
       fontWeight: 400,
@@ -179,7 +199,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'כותרת חודש + פס ימי שבוע צמוד ומודגש',
     previewCss: 'linear-gradient(180deg,#f8fafc 0%,#ffffff 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       headerBarHeightPx: 70,
       headerBarMarginBottomPx: 0,
@@ -197,7 +217,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'מראה אפליקטיבי: פינות מעוגלות, קווים עדינים',
     previewCss: 'linear-gradient(160deg,#ecfeff 0%,#e0f2fe 45%,#eff6ff 100%)',
     cellBorder: 'rounded',
-    patch: patch({
+    patch: stylePatch({
       fontFamily: SANS_STACK,
       fontWeight: 400,
       cellCornerRadiusPx: 14,
@@ -219,7 +239,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'פס הכותרת חצי שקוף, יושב “מעל” הרשת',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#f1f5f9 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'floating',
       headerBarBg: 'rgba(255,255,255,0.55)',
       headerBarBorderWidthPx: 0,
@@ -234,7 +254,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'פונט כתב יד + קווים רכים (מדומה)',
     previewCss: 'linear-gradient(140deg,#fff7ed 0%,#ffedd5 45%,#fde68a 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       fontFamily: HAND_STACK,
       fontWeight: 400,
       cellBorderWidthPx: 2,
@@ -254,7 +274,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'מקסימום שטח לטקסט בתא + פס כותרת דק',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: SERIF_STACK,
       fontWeight: 400,
@@ -277,7 +297,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'מסגרת כפולה ללוח + דגש טיפוגרפי ליום העברי',
     previewCss: 'linear-gradient(145deg,#f7f3ea 0%,#e9e1d4 45%,#cdbfa9 100%)',
     cellBorder: 'double',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: CLASSIC_STACK,
       fontWeight: 700,
@@ -308,7 +328,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'כותרת שקופה + סאנס נקי + מספרים גדולים ודקים',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'minimal_text',
       fontFamily: SANS_STACK,
       fontWeight: 400,
@@ -338,7 +358,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'כותרת בסגנון וינייטה + רקע אפור בהיר + דגש פרשה/חג',
     previewCss: 'linear-gradient(160deg,#f3f4f6 0%,#e5e7eb 55%,#d1d5db 100%)',
     cellBorder: 'double',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: SERIF_STACK,
       fontWeight: 400,
@@ -365,7 +385,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'כהה, פינות מעוגלות, קונטרסט גבוה',
     previewCss: 'linear-gradient(160deg,#0b1220 0%,#111827 45%,#0f172a 100%)',
     cellBorder: 'rounded',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: SANS_STACK,
       fontWeight: 600,
@@ -394,7 +414,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'רשת עבה ובולטת + פס כותרת בצבע אחיד חזק',
     previewCss: 'linear-gradient(180deg,#f8fafc 0%,#e2e8f0 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: CLASSIC_STACK,
       fontWeight: 700,
@@ -423,7 +443,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'קווים כמעט שקופים + הרבה חלל לבן',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#fafafa 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'minimal_text',
       fontFamily: SANS_STACK,
       fontWeight: 400,
@@ -452,7 +472,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'קווים חום־כהה/זהב, מראה יוקרתי וקריא',
     previewCss: 'linear-gradient(145deg,#fff7ed 0%,#fed7aa 45%,#a16207 120%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'seamless',
       fontFamily: SERIF_STACK,
       fontWeight: 400,
@@ -476,7 +496,7 @@ export const CALENDAR_THEME_CATALOG: CalendarThemeCatalogEntry[] = [
     blurbHe: 'מותאם להדפסה נקייה בלי מילויים, היררכיה טיפוגרפית',
     previewCss: 'linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)',
     cellBorder: 'thin',
-    patch: patch({
+    patch: stylePatch({
       headerLayoutStyle: 'minimal_text',
       fontFamily: '"Noto Serif Hebrew", "David Libre", serif',
       fontWeight: 400,
