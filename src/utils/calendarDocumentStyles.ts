@@ -413,7 +413,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         font-size:${settings.fontSizePx}px;
         background:#fff;
         color:#0f172a;
-        direction: rtl;
+        direction: ltr;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -492,7 +492,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       .printRoot {
         width: 100%;
         box-sizing: border-box;
-        direction: rtl;
+        direction: ltr;
         font-family: ${settings.fontFamily};
         font-size: ${settings.fontSizePx}px;
         color: #0f172a;
@@ -669,7 +669,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         background: ${settings.gridShellBg};
         display:grid;
         grid-template-columns: repeat(7, 1fr);
-        direction: rtl;
+        direction: ltr;
       }
       ${
         headerLayout === 'seamless'
@@ -931,7 +931,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         width: 100% !important;
         margin-left: auto !important;
         margin-right: auto !important;
-        direction: rtl !important;
+        direction: ltr !important;
       }
       /* Avoid visual gaps between weekday header and cells in PDF:
          CSS transforms move paint but not layout height, so they can create a “floating” row. */

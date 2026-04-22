@@ -49,16 +49,14 @@ export function getMonthGridWeeks(monthDate: Date): CalendarWeek[] {
 
 /**
  * Flat list of all grid days (previous/current/next month padding included),
- * returned in the same rendering order used by the UI (Sat->Sun per week)
- * so it can be directly mapped in a CSS grid with `dir="rtl"`.
+ * returned in LTR rendering order (Sun->Sat per week) so it can be directly mapped
+ * in a CSS grid with `dir="ltr"`.
  */
 export function getMonthGridDaysFlat(monthDate: Date): Date[] {
   const weeks = getMonthGridWeeks(monthDate);
   const days: Date[] = [];
   for (const week of weeks) {
-    // With `dir="rtl"`, the first rendered item appears in the rightmost column.
-    // To keep Sat on the right, we render each week in reverse: Sat -> Sun.
-    for (const g of [...week].reverse()) days.push(g);
+    for (const g of week) days.push(g);
   }
   return days;
 }
