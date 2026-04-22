@@ -7,12 +7,7 @@ import type {
   HeaderWysiwygClassicPct,
   HeaderWysiwygTextAlign,
 } from '../utils/headerWysiwyg';
-import {
-  alignRectToParentX,
-  pctToPxRect,
-  rectsToPct,
-  snapHeaderManualRectPct,
-} from '../utils/headerWysiwyg';
+import { pctToPxRect, rectsToPct, snapHeaderManualRectPct } from '../utils/headerWysiwyg';
 
 export type HeaderWysiwygZoneId = keyof HeaderWysiwygClassicPct;
 
@@ -83,19 +78,18 @@ export function HeaderWysiwygClassicStage({
   };
 
   const setAlignForZone = (id: HeaderWysiwygZoneId, a: HeaderWysiwygTextAlign) => {
-    if (id === 'hebrew') return;
     const nextAlign: HeaderWysiwygClassicAlign =
       id === 'titles'
         ? { ...align, titles: a }
-        : { ...align, gregorian: a };
+        : id === 'hebrew'
+          ? { ...align, hebrew: a }
+          : { ...align, gregorian: a };
     onAlignChange(nextAlign);
-    // Also snap the zone box to the chosen alignment (visual expectation).
-    onPctChange({ ...pct, [id]: alignRectToParentX(pct[id], a) });
   };
 
   const activeZone = selected ?? dragging;
   const toolbar =
-    layoutEditMode && activeZone && activeZone !== 'hebrew' ? (
+    layoutEditMode && activeZone ? (
       <div className="absolute right-2 top-2 z-50 flex items-center gap-1 rounded-md border border-amber-200 bg-white/95 px-1.5 py-1 text-xs shadow-sm">
         <span className="px-1 text-slate-500">יישור:</span>
         <button
@@ -133,6 +127,13 @@ export function HeaderWysiwygClassicStage({
     align.gregorian === 'center'
       ? 'justify-center'
       : align.gregorian === 'right'
+        ? 'justify-end'
+        : 'justify-start';
+
+  const hebAlign =
+    align.hebrew === 'center'
+      ? 'justify-center'
+      : align.hebrew === 'right'
         ? 'justify-end'
         : 'justify-start';
 
@@ -259,10 +260,17 @@ export function HeaderWysiwygClassicStage({
           )}
 
       {layoutEditMode && box
-        ? renderEdit('hebrew', <div className="flex h-full w-full items-center justify-center">{hebrewContent}</div>)
+        ? renderEdit(
+            'hebrew',
+            <div className={['flex h-full w-full items-center overflow-visible', hebAlign].join(' ')}>
+              {hebrewContent}
+            </div>,
+          )
         : renderStatic(
             'hebrew',
-            <div className="flex h-full w-full items-center justify-center">{hebrewContent}</div>,
+            <div className={['flex h-full w-full items-center overflow-visible', hebAlign].join(' ')}>
+              {hebrewContent}
+            </div>,
           )}
 
       {layoutEditMode && box

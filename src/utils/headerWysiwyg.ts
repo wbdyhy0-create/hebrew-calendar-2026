@@ -20,7 +20,7 @@ export type HeaderWysiwygTextAlign = 'right' | 'center' | 'left';
 
 export type HeaderWysiwygClassicAlign = {
   titles: HeaderWysiwygTextAlign;
-  hebrew: 'center';
+  hebrew: HeaderWysiwygTextAlign;
   gregorian: HeaderWysiwygTextAlign;
 };
 
@@ -81,9 +81,10 @@ export function coerceHeaderWysiwygClassicAlign(v: unknown): HeaderWysiwygClassi
     return s === 'right' || s === 'center' || s === 'left' ? s : null;
   };
   const titles = pick('titles');
+  const hebrew = pick('hebrew');
   const gregorian = pick('gregorian');
-  if (!titles || !gregorian) return null;
-  return { titles, hebrew: 'center', gregorian };
+  if (!titles || !hebrew || !gregorian) return null;
+  return { titles, hebrew, gregorian };
 }
 
 export function alignRectToParentX(r: HeaderManualRectPct, align: HeaderWysiwygTextAlign): HeaderManualRectPct {
@@ -167,6 +168,12 @@ export function buildHeaderWysiwygClassicPrintCss(
       : a.gregorian === 'right'
         ? 'justify-content:flex-end!important;'
         : 'justify-content:flex-start!important;';
+  const hebJustify =
+    a.hebrew === 'center'
+      ? 'justify-content:center!important;'
+      : a.hebrew === 'right'
+        ? 'justify-content:flex-end!important;'
+        : 'justify-content:flex-start!important;';
   return `
       .headerBar.headerWysiwyg{
         display:block!important;
@@ -187,7 +194,7 @@ export function buildHeaderWysiwygClassicPrintCss(
       .headerBar.headerWysiwyg .hebPill{
         display:flex!important;
         align-items:center!important;
-        justify-content:center!important;
+        ${hebJustify}
         margin:0!important;
         transform:none!important;
       }
