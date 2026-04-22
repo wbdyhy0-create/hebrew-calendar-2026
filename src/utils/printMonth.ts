@@ -71,7 +71,7 @@ export function buildPrintableMonthHtml(
   // Chrome print-to-PDF can paginate inside CSS grids. In 6-week months, this may push the last row
   // to the next page (leaving a blank gap). Ensure the printable HTML uses a cell height that fits
   // a full month into a single page.
-  const fittedCellH = Math.min(170, Math.max(90, autoCellH));
+  const fittedCellH = Math.min(140, Math.max(90, autoCellH));
   const effectiveSettings =
     weekCount >= 6 || settings.layoutAutoFitToCanvas
       ? { ...settings, pdfExportCellHeightPx: fittedCellH }
