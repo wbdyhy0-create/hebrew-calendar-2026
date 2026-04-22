@@ -45,7 +45,7 @@ export async function exportPngBlobFromPrintableHtml(
   container.style.pointerEvents = 'none';
   container.style.zIndex = '-1';
   container.style.overflow = 'visible';
-  container.setAttribute('dir', parsed.documentElement.getAttribute('dir') ?? 'rtl');
+  container.setAttribute('dir', parsed.documentElement.getAttribute('dir') ?? 'ltr');
   container.innerHTML = parsed.body.innerHTML;
   document.body.appendChild(container);
 
@@ -113,7 +113,7 @@ export async function exportPngBlobFromPrintableHtml(
     calendarElement.style.height = 'auto';
     calendarElement.style.minHeight = `${heightMm}mm`;
     calendarElement.style.overflow = 'visible';
-    calendarElement.style.direction = 'rtl';
+    calendarElement.style.direction = 'ltr';
     calendarElement.classList.add('pdfMode');
   }
 
@@ -125,7 +125,7 @@ export async function exportPngBlobFromPrintableHtml(
         grid.style.display = 'grid';
         grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
         grid.style.width = '100%';
-        grid.style.direction = 'rtl';
+        grid.style.direction = 'ltr';
       });
       // Keep wrappers stretched (avoid shrink-to-fit in capture).
       scope.querySelectorAll<HTMLElement>('.calendarLayoutZoom').forEach((el) => {
