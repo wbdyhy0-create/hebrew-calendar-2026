@@ -359,7 +359,7 @@ export function buildPrintableMonthHtml(
   });
 
   return `<!doctype html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="ltr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

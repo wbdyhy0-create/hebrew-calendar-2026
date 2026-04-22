@@ -34,7 +34,7 @@ export async function exportPdfBlobFromHtml(
   container.style.zIndex = '-1';
   /* overflow:hidden חותך transform/אותיות מעל הקנבס ב־html2canvas */
   container.style.overflow = 'visible';
-  container.setAttribute('dir', parsed.documentElement.getAttribute('dir') ?? 'rtl');
+  container.setAttribute('dir', parsed.documentElement.getAttribute('dir') ?? 'ltr');
   container.innerHTML = parsed.body.innerHTML;
   document.body.appendChild(container);
   const calendarElement = container.querySelector('#calendar-container') as HTMLElement | null;
@@ -104,7 +104,7 @@ export async function exportPdfBlobFromHtml(
       calendarElement.style.height = 'auto';
       calendarElement.style.minHeight = `${heightMm}mm`;
     }
-    calendarElement.style.direction = 'rtl';
+    calendarElement.style.direction = 'ltr';
     calendarElement.classList.add('pdfMode');
     const canvases = Array.from(calendarElement.querySelectorAll('.canvas')) as HTMLElement[];
     canvases.forEach((canvas) => {
@@ -122,7 +122,7 @@ export async function exportPdfBlobFromHtml(
       grid.style.display = 'grid';
       grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
       grid.style.width = '100%';
-      grid.style.direction = 'rtl';
+      grid.style.direction = 'ltr';
     });
   }
 
@@ -331,7 +331,7 @@ export async function exportPdfBlobFromHtml(
         grid.style.display = 'grid';
         grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
         grid.style.width = '100%';
-        grid.style.direction = 'rtl';
+        grid.style.direction = 'ltr';
         (grid.style as any).alignContent = 'center';
       });
 

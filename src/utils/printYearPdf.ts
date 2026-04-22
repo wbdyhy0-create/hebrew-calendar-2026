@@ -51,7 +51,7 @@ export function buildPrintableYearPdfHtml(
 
   // Add page breaks between months; html2pdf can respect CSS page breaks.
   const yearCss = `
-    .yearDoc { direction: rtl; }
+    .yearDoc { direction: ltr; }
     .yearPage { display: block; }
     @media print {
       /* Ensure each month starts on a fresh printed page (Chrome print-to-PDF). */
@@ -61,7 +61,7 @@ export function buildPrintableYearPdfHtml(
   `;
 
   return `<!doctype html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="ltr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
