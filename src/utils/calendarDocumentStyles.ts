@@ -96,13 +96,7 @@ export function buildGregChipPrintHtml(
 ): string {
   return `<span class="gregChipPrint" style="font-size:${settings.headerGregMonthFontPx}px;color:${escAttr(
     settings.headerGregMonthTextColor,
-  )};font-weight:${settings.headerGregMonthFontWeight};border-style:solid;border-color:${escAttr(
-    settings.headerGregMonthBorderColor,
-  )};border-width:${
-    settings.headerGregMonthBorderWidthPx
-  }px;background:${escAttr(settings.headerGregMonthBg)};border-radius:${
-    settings.headerGregMonthRadiusPx
-  }px;padding:${settings.headerGregMonthPaddingYPx}px ${settings.headerGregMonthPaddingXPx}px;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;box-sizing:border-box;max-width:100%;">${esc(
+  )};font-weight:${settings.headerGregMonthFontWeight};border:none;background:transparent;border-radius:0;padding:0;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;box-sizing:border-box;max-width:100%;">${esc(
     label,
   )}</span>`;
 }
@@ -625,10 +619,10 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         overflow: visible;
       }
       .headerBar:not(.headerWysiwyg) .gregLabel{
-        border:${settings.headerGregMonthBorderWidthPx}px solid ${settings.headerGregMonthBorderColor};
-        background: ${settings.headerGregMonthBg};
-        border-radius:${settings.headerGregMonthRadiusPx}px;
-        padding: ${settings.headerGregMonthPaddingYPx}px ${settings.headerGregMonthPaddingXPx}px;
+        border:none;
+        background: transparent;
+        border-radius:0;
+        padding: 0;
         white-space:nowrap;
         font-size: ${settings.headerGregMonthFontPx}px;
         color: ${settings.headerGregMonthTextColor};
