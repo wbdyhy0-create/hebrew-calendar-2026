@@ -30,8 +30,7 @@ type Props = {
   gregorianContent: ReactNode;
 };
 
-const rndHandle =
-  'absolute z-30 h-2.5 w-2.5 rounded-sm border border-amber-600 bg-white shadow-sm';
+const rndHandle = 'absolute z-30 h-1.5 w-1.5 rounded-none border border-sky-500/70 bg-white';
 
 export function HeaderWysiwygClassicStage({
   pct,
@@ -200,7 +199,11 @@ export function HeaderWysiwygClassicStage({
         <div
           className={[
             'h-full min-h-0 w-full min-w-0 overflow-visible',
-            layoutEditMode && selected === id ? 'outline outline-2 outline-amber-400/80 outline-offset-2' : '',
+            layoutEditMode
+              ? selected === id
+                ? 'outline outline-[1px] outline-sky-500'
+                : 'outline outline-[1px] outline-sky-300/50'
+              : '',
           ].join(' ')}
         >
           {child}
@@ -214,7 +217,7 @@ export function HeaderWysiwygClassicStage({
       ref={stageRef}
       className={[
         'relative w-full min-w-0 overflow-visible',
-        layoutEditMode ? 'ring-2 ring-dashed ring-amber-500/80 ring-offset-2 ring-offset-transparent' : '',
+        layoutEditMode ? 'ring-1 ring-dashed ring-sky-400/40' : '',
         layoutEditMode ? 'cursor-default' : '',
       ].join(' ')}
       style={{ minHeight: barMinHeightPx }}
@@ -232,11 +235,11 @@ export function HeaderWysiwygClassicStage({
       {layoutEditMode && dragging ? (
         <>
           <div
-            className="pointer-events-none absolute inset-y-0 left-1/2 z-0 w-px -translate-x-1/2 bg-amber-400/70"
+            className="pointer-events-none absolute inset-y-0 left-1/2 z-0 w-px -translate-x-1/2 bg-sky-400/30"
             style={{ height: '100%' }}
           />
           <div
-            className="pointer-events-none absolute left-0 top-1/2 z-0 h-px w-full -translate-y-1/2 bg-amber-400/70"
+            className="pointer-events-none absolute left-0 top-1/2 z-0 h-px w-full -translate-y-1/2 bg-sky-400/30"
           />
         </>
       ) : null}
