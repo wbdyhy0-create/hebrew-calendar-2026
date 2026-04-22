@@ -4428,6 +4428,16 @@ export function Calendar() {
               ],
             },
             {
+              key: 'headerDrag',
+              label: settings.headerWysiwygManualActive
+                ? headerLayoutEditMode
+                  ? 'סגור גרירה בפס'
+                  : 'גרירה בפס (ערוך)'
+                : 'גרירה בפס',
+              cls: 'border-amber-200 bg-white text-amber-950 hover:bg-amber-50',
+              items: [],
+            },
+            {
               key: 'zmanim',
               label: 'זמנים',
               cls: 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100',
@@ -4538,6 +4548,26 @@ export function Calendar() {
                         showEditButtonInCells: on,
                       };
                     });
+                    setShortcutOpen(null);
+                    setSettingsOpen(false);
+                    return;
+                  }
+                  if (b.key === 'headerDrag') {
+                    setSettings((s) => {
+                      const on = !s.headerWysiwygManualActive;
+                      return {
+                        ...s,
+                        headerWysiwygManualActive: on,
+                        headerWysiwygClassicPct: on
+                          ? (s.headerWysiwygClassicPct ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT)
+                          : s.headerWysiwygClassicPct,
+                        headerWysiwygClassicAlign: on
+                          ? (s.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN)
+                          : s.headerWysiwygClassicAlign,
+                      };
+                    });
+                    // When turning on, also enter edit mode so drag handles appear.
+                    setHeaderLayoutEditMode(settings.headerWysiwygManualActive ? false : true);
                     setShortcutOpen(null);
                     setSettingsOpen(false);
                     return;
