@@ -4886,20 +4886,18 @@ export function Calendar() {
             gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
             onEditHeader={openHeaderEditor}
             onToggleHeaderDrag={() => {
+              // Enter/exit edit mode without disabling the saved WYSIWYG layout.
               setSettings((s) => {
-                const on = !s.headerWysiwygManualActive;
+                if (s.headerWysiwygManualActive) return s;
                 return {
                   ...s,
-                  headerWysiwygManualActive: on,
-                  headerWysiwygClassicPct: on
-                    ? (s.headerWysiwygClassicPct ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT)
-                    : s.headerWysiwygClassicPct,
-                  headerWysiwygClassicAlign: on
-                    ? (s.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN)
-                    : s.headerWysiwygClassicAlign,
+                  headerWysiwygManualActive: true,
+                  headerWysiwygClassicPct:
+                    s.headerWysiwygClassicPct ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT,
+                  headerWysiwygClassicAlign:
+                    s.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN,
                 };
               });
-              // Toggle edit mode along with enable/disable.
               setHeaderLayoutEditMode((v) => !v);
             }}
             gridWeekCount={weeks.length}

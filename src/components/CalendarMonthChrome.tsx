@@ -253,12 +253,15 @@ function HeaderBarClassic({
   return (
     <div
       dir="ltr"
-      className={[outerClassName, 'overflow-visible'].join(' ')}
+      className={[outerClassName, layoutEditMode ? 'overflow-visible' : 'overflow-hidden'].join(' ')}
       data-inspect="header"
       style={barStyle}
     >
       <div
-        className="relative grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 overflow-visible px-5 py-1.5 sm:px-6"
+        className={[
+          'relative grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1 px-5 py-1.5 sm:px-6',
+          layoutEditMode ? 'overflow-visible' : 'overflow-hidden',
+        ].join(' ')}
         style={{ minHeight: barMinH }}
       >
         <div

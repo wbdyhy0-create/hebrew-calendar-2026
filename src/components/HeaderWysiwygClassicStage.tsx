@@ -151,7 +151,7 @@ export function HeaderWysiwygClassicStage({
           height: `${z.hPct}%`,
           boxSizing: 'border-box',
           minWidth: 0,
-          overflow: 'visible',
+          overflow: 'hidden',
         }}
       >
         {child}
@@ -199,7 +199,7 @@ export function HeaderWysiwygClassicStage({
       >
         <div
           className={[
-            'h-full min-h-0 w-full min-w-0 overflow-visible',
+            'h-full min-h-0 w-full min-w-0 overflow-hidden',
             layoutEditMode
               ? selected === id
                 ? 'outline outline-[1px] outline-sky-500'
@@ -217,7 +217,7 @@ export function HeaderWysiwygClassicStage({
     <div
       ref={stageRef}
       className={[
-        'relative w-full min-w-0 overflow-visible',
+        'relative w-full min-w-0 overflow-hidden',
         layoutEditMode ? 'ring-1 ring-dashed ring-sky-400/40' : '',
         layoutEditMode ? 'cursor-default' : '',
       ].join(' ')}

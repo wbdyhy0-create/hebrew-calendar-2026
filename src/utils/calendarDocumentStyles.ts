@@ -554,7 +554,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         margin-left: auto;
         margin-right: auto;
         transform: translateY(${settings.headerBarOffsetYPx}px);
-        overflow: visible;
+        overflow: hidden;
       }
       .headerBar:not(.headerWysiwyg){
         display: grid;
