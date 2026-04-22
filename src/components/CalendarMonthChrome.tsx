@@ -366,6 +366,7 @@ export function CalendarMonthChrome({
   const grid = (
     <div
       {...shell}
+      dir="ltr"
       data-inspect="month-grid"
       style={{
         ...(shell.style ?? {}),
