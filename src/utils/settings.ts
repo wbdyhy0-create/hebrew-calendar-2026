@@ -26,6 +26,45 @@ export type CalendarSettings = {
   titleSub: string;
   /** צורת הכותרת והחיבור לרשת (לא רק צבעים). */
   headerLayoutStyle: HeaderLayoutStyle;
+
+  // פס עליון — מסגרת
+  headerBarHeightPx: number;
+  headerBarRadiusPx: number;
+  headerBarBg: string;
+  headerBarBorderColor: string;
+  headerBarBorderWidthPx: number;
+  headerBarMarginBottomPx: number;
+  headerBarOffsetYPx: number;
+  headerBarMaxWidthPx: number; // 0 = full width
+  headerBarShowEditButton: boolean;
+
+  // פס עליון — תיבה 1: כותרת ראשית
+  headerBox1OffsetXPx: number; // 0 = קצה ימין, גדל = זז שמאלה
+  headerBox1OffsetYPx: number; // 0 = קצה עליון, גדל = למטה
+  headerBox1FontPx: number;
+  headerBox1FontWeight: number;
+  headerBox1Color: string;
+
+  // פס עליון — תיבה 2: כותרת משנה
+  headerBox2OffsetXPx: number;
+  headerBox2OffsetYPx: number;
+  headerBox2FontPx: number;
+  headerBox2FontWeight: number;
+  headerBox2Color: string;
+
+  // פס עליון — תיבה 3: חודש עברי
+  headerBox3OffsetXPx: number;
+  headerBox3OffsetYPx: number;
+  headerBox3FontPx: number;
+  headerBox3FontWeight: number;
+  headerBox3Color: string;
+
+  // פס עליון — תיבה 4: חודש לועזי
+  headerBox4OffsetXPx: number;
+  headerBox4OffsetYPx: number;
+  headerBox4FontPx: number;
+  headerBox4FontWeight: number;
+  headerBox4Color: string;
   fontFamily: string;
   /**
    * Optional per-area font override. When omitted, `fontFamily` is used as fallback.
@@ -155,6 +194,43 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   titleMain: 'לוח שנה עברי‑לועזי',
   titleSub: 'מועדים · ראשי חודשים · זמני שבת',
   headerLayoutStyle: 'floating',
+  headerBarHeightPx: 78,
+  headerBarRadiusPx: 16,
+  headerBarBg: 'rgba(255,255,255,0.88)',
+  headerBarBorderColor: '#E2E8F0',
+  headerBarBorderWidthPx: 2,
+  headerBarMarginBottomPx: 12,
+  headerBarOffsetYPx: 0,
+  headerBarMaxWidthPx: 0,
+  headerBarShowEditButton: true,
+
+  // תיבה 1
+  headerBox1OffsetXPx: 0,
+  headerBox1OffsetYPx: 8,
+  headerBox1FontPx: 20,
+  headerBox1FontWeight: 700,
+  headerBox1Color: '#0F172A',
+
+  // תיבה 2
+  headerBox2OffsetXPx: 0,
+  headerBox2OffsetYPx: 36,
+  headerBox2FontPx: 13,
+  headerBox2FontWeight: 400,
+  headerBox2Color: '#64748B',
+
+  // תיבה 3
+  headerBox3OffsetXPx: 0,
+  headerBox3OffsetYPx: 8,
+  headerBox3FontPx: 22,
+  headerBox3FontWeight: 400,
+  headerBox3Color: '#0F172A',
+
+  // תיבה 4
+  headerBox4OffsetXPx: 0,
+  headerBox4OffsetYPx: 36,
+  headerBox4FontPx: 16,
+  headerBox4FontWeight: 400,
+  headerBox4Color: '#334155',
   fontFamily:
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
   fontFamilyByTarget: {},
@@ -223,8 +299,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
 };
 
 // Bump cache version to force a clean reset when data gets inconsistent.
-// v4: font slider defaults changed from 1px to readable sizes (14/12/10/9px).
-const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v4';
+const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v5';
 
 export function loadSettings(): CalendarSettings {
   try {
@@ -248,6 +323,28 @@ export function loadSettings(): CalendarSettings {
       'hebDayFontPx',
       'eventTitleFontPx',
       'shabbatTimesFontPx',
+      'headerBarHeightPx',
+      'headerBarRadiusPx',
+      'headerBarBorderWidthPx',
+      'headerBarMarginBottomPx',
+      'headerBarOffsetYPx',
+      'headerBarMaxWidthPx',
+      'headerBox1OffsetXPx',
+      'headerBox1OffsetYPx',
+      'headerBox1FontPx',
+      'headerBox1FontWeight',
+      'headerBox2OffsetXPx',
+      'headerBox2OffsetYPx',
+      'headerBox2FontPx',
+      'headerBox2FontWeight',
+      'headerBox3OffsetXPx',
+      'headerBox3OffsetYPx',
+      'headerBox3FontPx',
+      'headerBox3FontWeight',
+      'headerBox4OffsetXPx',
+      'headerBox4OffsetYPx',
+      'headerBox4FontPx',
+      'headerBox4FontWeight',
       'canvasPaddingPx',
       'canvasPaddingTopPx',
       'calendarLayoutScalePercent',

@@ -11,6 +11,8 @@ import { getMonthGridDaysFlat } from '../utils/calendarGrid';
 import {
   abbreviateRoshChodeshHeTitle,
   isTaanitEstherFastNameHe,
+  getHebrewHeaderForGregorianMonth,
+  formatHebrewHeaderText,
   getDayEventsByGregorianDate,
   formatTodayYmdJerusalem,
   getIsoWeekdaySun0Jerusalem,
@@ -68,6 +70,7 @@ import {
 } from '../utils/overrides';
 import { mixHexWithWhite } from '../utils/color';
 import { getWeekdayHeaderLabels } from '../utils/weekdayHeaders';
+import { formatGregorianMonthYearHebrew } from '../utils/gregorianHebrew';
 import { getBackgroundImageForMonth } from '../utils/backgroundImage';
 import { cssCellEdgeBorder } from '../utils/cellBorderCss';
 import { applyDesignThemeId, applyStylePackId, getThemeEntry } from '../themes/calendarThemes';
@@ -745,7 +748,15 @@ export function Calendar() {
     e.stopPropagation();
   };
 
-  // header editor removed
+  const openHeaderEditor = () => {
+    setSettingsOpen(true);
+    // Scroll to top so the settings panel is visible
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      // ignore
+    }
+  };
 
   const weeks = useMemo(() => getMonthGridWeeks(viewDate), [viewDate]);
   const gridDays = useMemo(() => getMonthGridDaysFlat(viewDate), [viewDate]);
@@ -795,7 +806,11 @@ export function Calendar() {
     settings.fastSunsetOffsetMins,
   ]);
 
-  // header bar removed
+  const headerHd = useMemo(
+    () => getHebrewHeaderForGregorianMonth(viewDate),
+    [viewDate],
+  );
+  const hebrewMonthTitle = useMemo(() => formatHebrewHeaderText(headerHd), [headerHd]);
   const weekdayHeaders = useMemo(
     () => getWeekdayHeaderLabels(settings.weekdayHeaderMode),
     [settings.weekdayHeaderMode],
@@ -3584,7 +3599,244 @@ export function Calendar() {
               </div>
             </div>
 
-            {/* header bar sliders removed */}
+            <div className="sm:col-span-2 lg:col-span-3 mt-8 rounded-xl border border-slate-200 bg-white/80 p-4">
+              <div className="text-sm font-semibold text-slate-900">פס עליון חדש — 4 תיבות טקסט</div>
+              <div className="mt-1 text-xs text-slate-600">
+                כל תיבה היא <strong>עצמאית לחלוטין</strong>, ממוקמת ב־<code>absolute</code>, מתחילה מימין,
+                והפס חותך כל גלישה (<code>overflow: hidden</code>).
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <label className="text-sm text-slate-700">
+                  גובה פס ({settings.headerBarHeightPx}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={48}
+                    max={140}
+                    value={settings.headerBarHeightPx}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarHeightPx: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  עיגול פינות פס ({settings.headerBarRadiusPx}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={0}
+                    max={28}
+                    value={settings.headerBarRadiusPx}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarRadiusPx: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  עובי מסגרת פס ({settings.headerBarBorderWidthPx}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={0}
+                    max={6}
+                    value={settings.headerBarBorderWidthPx}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarBorderWidthPx: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+
+                <ColorInput
+                  label="צבע רקע פס"
+                  value={(settings.headerBarBg ?? '').startsWith('#') ? settings.headerBarBg : '#FFFFFF'}
+                  onChange={(hex) => setSettings((s) => ({ ...s, headerBarBg: hex }))}
+                />
+                <ColorInput
+                  label="צבע מסגרת פס"
+                  value={settings.headerBarBorderColor}
+                  onChange={(hex) => setSettings((s) => ({ ...s, headerBarBorderColor: hex }))}
+                />
+                <label className="text-sm text-slate-700">
+                  מרווח מתחת לפס ({settings.headerBarMarginBottomPx}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={0}
+                    max={48}
+                    value={settings.headerBarMarginBottomPx}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarMarginBottomPx: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+
+                <label className="text-sm text-slate-700">
+                  הזזת פס למעלה/למטה ({settings.headerBarOffsetYPx}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-40}
+                    max={40}
+                    value={settings.headerBarOffsetYPx}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarOffsetYPx: Number(e.target.value) }))
+                    }
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  רוחב מקסימלי לפס ({settings.headerBarMaxWidthPx === 0 ? 'ללא' : `${settings.headerBarMaxWidthPx}px`})
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={0}
+                    max={1400}
+                    step={10}
+                    value={settings.headerBarMaxWidthPx}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarMaxWidthPx: Number(e.target.value) }))
+                    }
+                  />
+                  <div className="mt-1 text-xs text-slate-500">0 = רוחב מלא</div>
+                </label>
+                <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
+                  <input
+                    type="checkbox"
+                    checked={settings.headerBarShowEditButton}
+                    onChange={(e) =>
+                      setSettings((s) => ({ ...s, headerBarShowEditButton: e.target.checked }))
+                    }
+                  />
+                  הצג כפתור “ערוך” בפס
+                </label>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* ─── תיבה 1 ─── */}
+                <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1">
+                  תיבה 1 — כותרת ראשית
+                </div>
+                <label className="text-sm text-slate-700">
+                  הזזה ימין ← שמאל ({settings.headerBox1OffsetXPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                    value={settings.headerBox1OffsetXPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox1OffsetXPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  הזזה למעלה ← למטה ({settings.headerBox1OffsetYPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                    value={settings.headerBox1OffsetYPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox1OffsetYPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  גודל גופן ({settings.headerBox1FontPx}px)
+                  <input className="mt-2 w-full" type="range" min={10} max={48} step={1}
+                    value={settings.headerBox1FontPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox1FontPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  משקל גופן ({settings.headerBox1FontWeight})
+                  <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
+                    value={settings.headerBox1FontWeight}
+                    onChange={e => setSettings(s => ({ ...s, headerBox1FontWeight: Number(e.target.value) }))} />
+                </label>
+                <ColorInput label="צבע" value={settings.headerBox1Color}
+                  onChange={hex => setSettings(s => ({ ...s, headerBox1Color: hex }))} />
+
+                {/* ─── תיבה 2 ─── */}
+                <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1 mt-2">
+                  תיבה 2 — כותרת משנה
+                </div>
+                <label className="text-sm text-slate-700">
+                  הזזה ימין ← שמאל ({settings.headerBox2OffsetXPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                    value={settings.headerBox2OffsetXPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox2OffsetXPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  הזזה למעלה ← למטה ({settings.headerBox2OffsetYPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                    value={settings.headerBox2OffsetYPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox2OffsetYPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  גודל גופן ({settings.headerBox2FontPx}px)
+                  <input className="mt-2 w-full" type="range" min={10} max={40} step={1}
+                    value={settings.headerBox2FontPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox2FontPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  משקל גופן ({settings.headerBox2FontWeight})
+                  <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
+                    value={settings.headerBox2FontWeight}
+                    onChange={e => setSettings(s => ({ ...s, headerBox2FontWeight: Number(e.target.value) }))} />
+                </label>
+                <ColorInput label="צבע" value={settings.headerBox2Color}
+                  onChange={hex => setSettings(s => ({ ...s, headerBox2Color: hex }))} />
+
+                {/* ─── תיבה 3 ─── */}
+                <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1 mt-2">
+                  תיבה 3 — חודש עברי (אוטומטי)
+                </div>
+                <label className="text-sm text-slate-700">
+                  הזזה ימין ← שמאל ({settings.headerBox3OffsetXPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                    value={settings.headerBox3OffsetXPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox3OffsetXPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  הזזה למעלה ← למטה ({settings.headerBox3OffsetYPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                    value={settings.headerBox3OffsetYPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox3OffsetYPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  גודל גופן ({settings.headerBox3FontPx}px)
+                  <input className="mt-2 w-full" type="range" min={10} max={48} step={1}
+                    value={settings.headerBox3FontPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox3FontPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  משקל גופן ({settings.headerBox3FontWeight})
+                  <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
+                    value={settings.headerBox3FontWeight}
+                    onChange={e => setSettings(s => ({ ...s, headerBox3FontWeight: Number(e.target.value) }))} />
+                </label>
+                <ColorInput label="צבע" value={settings.headerBox3Color}
+                  onChange={hex => setSettings(s => ({ ...s, headerBox3Color: hex }))} />
+
+                {/* ─── תיבה 4 ─── */}
+                <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1 mt-2">
+                  תיבה 4 — חודש לועזי (אוטומטי)
+                </div>
+                <label className="text-sm text-slate-700">
+                  הזזה ימין ← שמאל ({settings.headerBox4OffsetXPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                    value={settings.headerBox4OffsetXPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox4OffsetXPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  הזזה למעלה ← למטה ({settings.headerBox4OffsetYPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                    value={settings.headerBox4OffsetYPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox4OffsetYPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  גודל גופן ({settings.headerBox4FontPx}px)
+                  <input className="mt-2 w-full" type="range" min={10} max={40} step={1}
+                    value={settings.headerBox4FontPx}
+                    onChange={e => setSettings(s => ({ ...s, headerBox4FontPx: Number(e.target.value) }))} />
+                </label>
+                <label className="text-sm text-slate-700">
+                  משקל גופן ({settings.headerBox4FontWeight})
+                  <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
+                    value={settings.headerBox4FontWeight}
+                    onChange={e => setSettings(s => ({ ...s, headerBox4FontWeight: Number(e.target.value) }))} />
+                </label>
+                <ColorInput label="צבע" value={settings.headerBox4Color}
+                  onChange={hex => setSettings(s => ({ ...s, headerBox4Color: hex }))} />
+              </div>
+            </div>
             </SettingsCategory>
 
             <SettingsCategory icon="🖼️" title="רקע, קנבס ופריסה">
@@ -4294,7 +4546,15 @@ export function Calendar() {
             >
             <CalendarMonthChrome
             settings={settings}
+            hebrewMonthTitle={hebrewMonthTitle}
+            gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
+            onEditHeader={openHeaderEditor}
             gridWeekCount={weeks.length}
+            headerFontFamily={
+              shouldApplyFontTo('calendarHeader')
+                ? resolveFontFamilyFor('calendarHeader')
+                : undefined
+            }
             gridChildren={
               <>
           {weekdayHeaders.map((d) => (

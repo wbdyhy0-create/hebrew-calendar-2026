@@ -88,11 +88,32 @@ export function buildPrintMonthChromeHtml(
   esc: (s: string) => string,
   parts: { gregTitle: string; hebTitle: string; gMonthDays: number; gridHtml: string },
 ): string {
-  void settings;
   void headerLayoutRaw;
-  void esc;
-  void parts;
-  return '';
+  const { gregTitle, hebTitle, gMonthDays, gridHtml } = parts;
+  void gMonthDays;
+
+  const headerHtml = `
+    <div style="
+      position: relative;
+      width: 100%;
+      height: ${settings.headerBarHeightPx}px;
+      background: ${settings.headerBarBg};
+      border: ${settings.headerBarBorderWidthPx}px solid ${settings.headerBarBorderColor};
+      border-radius: ${settings.headerBarRadiusPx}px;
+      overflow: hidden;
+      margin-bottom: ${settings.headerBarMarginBottomPx}px;
+      transform: translateY(${settings.headerBarOffsetYPx}px);
+      box-sizing: border-box;
+      ${settings.headerBarMaxWidthPx > 0 ? `max-width: ${settings.headerBarMaxWidthPx}px; margin-left: auto; margin-right: auto;` : ''}
+    ">
+      <div style="position:absolute;right:${settings.headerBox1OffsetXPx}px;top:${settings.headerBox1OffsetYPx}px;font-size:${settings.headerBox1FontPx}px;font-weight:${settings.headerBox1FontWeight};color:${settings.headerBox1Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(settings.titleMain)}</div>
+      <div style="position:absolute;right:${settings.headerBox2OffsetXPx}px;top:${settings.headerBox2OffsetYPx}px;font-size:${settings.headerBox2FontPx}px;font-weight:${settings.headerBox2FontWeight};color:${settings.headerBox2Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(settings.titleSub)}</div>
+      <div style="position:absolute;right:${settings.headerBox3OffsetXPx}px;top:${settings.headerBox3OffsetYPx}px;font-size:${settings.headerBox3FontPx}px;font-weight:${settings.headerBox3FontWeight};color:${settings.headerBox3Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(hebTitle)}</div>
+      <div style="position:absolute;right:${settings.headerBox4OffsetXPx}px;top:${settings.headerBox4OffsetYPx}px;font-size:${settings.headerBox4FontPx}px;font-weight:${settings.headerBox4FontWeight};color:${settings.headerBox4Color};white-space:nowrap;line-height:1.2;direction:ltr;">${esc(gregTitle)}</div>
+    </div>
+  `;
+
+  return `${headerHtml}${gridHtml}`;
 }
 
 export type PrintMonthStyleParams = {
