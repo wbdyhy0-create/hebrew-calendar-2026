@@ -1770,7 +1770,7 @@ export function Calendar() {
               מדריך תפעולי
             </button>
 
-            <div ref={downloadMenuRef} className="relative">
+            <div ref={downloadMenuRef} className="relative inline-flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setDownloadMenuOpen((v) => !v)}
@@ -1795,7 +1795,7 @@ export function Calendar() {
                     console.error(e);
                   }
                 }}
-                className="ml-2 px-3 py-2 text-sm rounded-md border border-amber-200 bg-white text-amber-950 hover:bg-amber-50 active:bg-amber-100/60 transition inline-flex items-center gap-2"
+                className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-white text-amber-950 hover:bg-amber-50 active:bg-amber-100/60 transition inline-flex items-center gap-2"
               >
                 <span aria-hidden="true">🖨️</span>
                 הדפסה
