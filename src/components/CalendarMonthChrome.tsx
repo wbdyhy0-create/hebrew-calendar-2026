@@ -265,6 +265,7 @@ function HeaderBarClassic({
           dir="rtl"
           className="min-w-0 max-w-full justify-self-end overflow-visible text-right"
           style={{
+            gridColumn: 3,
             transform: `translate(${titlesDx}px, ${titlesDy}px)`,
           }}
         >
@@ -295,6 +296,7 @@ function HeaderBarClassic({
         <div
           className="flex shrink-0 justify-center overflow-visible px-1"
           style={{
+            gridColumn: 2,
             transform: `translate(${monthDx}px, ${monthDy}px)`,
           }}
         >
@@ -304,6 +306,7 @@ function HeaderBarClassic({
         <div
           className="min-w-0 justify-self-start overflow-visible"
           style={{
+            gridColumn: 1,
             transform: `translate(${gregDx}px, ${gregDy}px)`,
           }}
         >
