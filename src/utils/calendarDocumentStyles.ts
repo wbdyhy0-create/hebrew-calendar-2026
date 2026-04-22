@@ -135,12 +135,12 @@ export function buildPrintMonthChromeHtml(
   const monthDy = (settings as any).headerBarMonthOffsetYMm ?? 0;
 
   const classicInner = `
-        <div class="titles">
-          <div class="main">${esc(settings.titleMain)}</div>
-          <div class="sub">${esc(settings.titleSub)} • ${gMonthDays} ימים בחודש</div>
+        <div class="titles" dir="rtl">
+          <div class="main" dir="rtl">${esc(settings.titleMain)}</div>
+          <div class="sub" dir="rtl">${esc(settings.titleSub)} • ${gMonthDays} ימים בחודש</div>
         </div>
-        <span class="hebPill">${esc(hebTitle)}</span>
-        <div class="gregLabel" style="color:${esc(settings.headerGregMonthTextColor)}">${esc(
+        <span class="hebPill" dir="rtl">${esc(hebTitle)}</span>
+        <div class="gregLabel" dir="ltr" style="color:${esc(settings.headerGregMonthTextColor)}">${esc(
     gregTitle,
   )}</div>`;
   const useWysiwygPrint =
