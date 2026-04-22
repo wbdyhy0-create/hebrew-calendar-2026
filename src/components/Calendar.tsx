@@ -3853,6 +3853,7 @@ export function Calendar() {
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
+                    headerWysiwygManualActive: false,
                     headerGregLabelOffsetXMm: Number(e.target.value),
                   }))
                 }
@@ -3871,6 +3872,7 @@ export function Calendar() {
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
+                    headerWysiwygManualActive: false,
                     headerGregLabelOffsetYMm: Number(e.target.value),
                   }))
                 }
@@ -3990,6 +3992,7 @@ export function Calendar() {
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
+                    headerWysiwygManualActive: false,
                     headerBarTitlesOffsetXMm: Number(e.target.value),
                   }))
                 }
@@ -4008,6 +4011,7 @@ export function Calendar() {
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
+                    headerWysiwygManualActive: false,
                     headerBarTitlesOffsetYMm: Number(e.target.value),
                   }))
                 }
@@ -4096,6 +4100,7 @@ export function Calendar() {
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
+                    headerWysiwygManualActive: false,
                     headerBarMonthOffsetXMm: Number(e.target.value),
                   }))
                 }
@@ -4114,6 +4119,7 @@ export function Calendar() {
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
+                    headerWysiwygManualActive: false,
                     headerBarMonthOffsetYMm: Number(e.target.value),
                   }))
                 }
