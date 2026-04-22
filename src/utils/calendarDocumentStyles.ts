@@ -564,7 +564,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       }
       .headerBar:not(.headerWysiwyg) .titles{
         position: static;
-        grid-column: 3;
+        grid-column: 1 / 4;
         justify-self: end;
         align-self: center;
         transform: translate(${(settings as any).headerBarTitlesOffsetXMm ?? 0}mm, ${(settings as any).headerBarTitlesOffsetYMm ?? 0}mm);
@@ -608,7 +608,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         font-size: ${settings.headerHebMonthFontPx}px;
         line-height: 1;
         position: static;
-        grid-column: 2;
+        grid-column: 1 / 4;
         justify-self: center;
         align-self: center;
         transform: translate(${(settings as any).headerBarMonthOffsetXMm ?? 0}mm, ${(settings as any).headerBarMonthOffsetYMm ?? 0}mm);
@@ -627,7 +627,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         font-size: ${settings.headerGregMonthFontPx}px;
         color: ${settings.headerGregMonthTextColor};
         position: static;
-        grid-column: 1;
+        grid-column: 1 / 4;
         justify-self: start;
         align-self: center;
         transform: translate(${(settings as any).headerGregLabelOffsetXMm ?? 0}mm, ${(settings as any).headerGregLabelOffsetYMm ?? 0}mm);
