@@ -880,7 +880,8 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         margin-left: auto !important;
         margin-right: auto !important;
         overflow: visible !important;
-        min-height: unset !important;
+        /* Keep parity with the live header bar height so offsets match. */
+        min-height: ${settings.headerBarHeightPx}px !important;
         height: auto !important;
       }
       .pdfMode .headerBar.headerWysiwyg{
