@@ -56,6 +56,22 @@ function HeaderEditButton({
   );
 }
 
+const PX_PER_MM = 96 / 25.4;
+function mmToPx(v: number): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.round(n * PX_PER_MM * 10) / 10 : 0;
+}
+function headerOffsetsPx(settings: CalendarSettings) {
+  return {
+    titlesDx: mmToPx((settings as any).headerBarTitlesOffsetXMm ?? 0),
+    titlesDy: mmToPx((settings as any).headerBarTitlesOffsetYMm ?? 0),
+    monthDx: mmToPx((settings as any).headerBarMonthOffsetXMm ?? 0),
+    monthDy: mmToPx((settings as any).headerBarMonthOffsetYMm ?? 0),
+    gregDx: mmToPx((settings as any).headerGregLabelOffsetXMm ?? 0),
+    gregDy: mmToPx((settings as any).headerGregLabelOffsetYMm ?? 0),
+  };
+}
+
 function GregChip({ settings, children }: { settings: CalendarSettings; children: ReactNode }) {
   return (
     <div
@@ -188,6 +204,8 @@ function HeaderBarClassic({
     );
   }
 
+  const { titlesDx, titlesDy, monthDx, monthDy, gregDx, gregDy } = headerOffsetsPx(settings);
+
   return (
     <div className={[outerClassName, 'overflow-visible'].join(' ')} data-inspect="header" style={barStyle}>
       <div
@@ -197,7 +215,7 @@ function HeaderBarClassic({
         <div
           className="min-w-0 max-w-full justify-self-end overflow-visible text-right"
           style={{
-            transform: `translate(${settings.headerBarTitlesOffsetXPx}px, ${settings.headerBarTitlesOffsetYPx}px)`,
+            transform: `translate(${titlesDx}px, ${titlesDy}px)`,
           }}
         >
           <div className="flex flex-col items-end gap-0.5">
@@ -227,7 +245,7 @@ function HeaderBarClassic({
         <div
           className="flex shrink-0 justify-center overflow-visible px-1"
           style={{
-            transform: `translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px)`,
+            transform: `translate(${monthDx}px, ${monthDy}px)`,
           }}
         >
           <HebMonthTitle settings={settings}>{hebrewMonthTitle}</HebMonthTitle>
@@ -236,7 +254,7 @@ function HeaderBarClassic({
         <div
           className="min-w-0 justify-self-start overflow-visible"
           style={{
-            transform: `translate(${settings.headerGregLabelOffsetXPx}px, ${settings.headerGregLabelOffsetYPx}px)`,
+            transform: `translate(${gregDx}px, ${gregDy}px)`,
           }}
         >
           <GregChip settings={settings}>{gregorianLabel}</GregChip>
@@ -337,6 +355,7 @@ export function CalendarMonthChrome({
     );
 
   if (layout === 'minimal_text') {
+    const { titlesDx, titlesDy, monthDx, monthDy } = headerOffsetsPx(settings);
     return wrapIfFill(
       <div className="relative w-full">
         <div
@@ -356,7 +375,7 @@ export function CalendarMonthChrome({
           ) : null}
           <div
             style={{
-              transform: `translate(${settings.headerBarTitlesOffsetXPx}px, ${settings.headerBarTitlesOffsetYPx}px)`,
+              transform: `translate(${titlesDx}px, ${titlesDy}px)`,
             }}
           >
             <div
@@ -380,7 +399,7 @@ export function CalendarMonthChrome({
           </div>
           <div
             style={{
-              transform: `translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px)`,
+              transform: `translate(${monthDx}px, ${monthDy}px)`,
             }}
           >
             <div
@@ -409,6 +428,7 @@ export function CalendarMonthChrome({
   }
 
   if (layout === 'right_block') {
+    const { titlesDx, titlesDy, monthDx, monthDy } = headerOffsetsPx(settings);
     const r = settings.headerBarRadiusPx;
     return wrapIfFill(
       <div className="relative w-full">
@@ -441,7 +461,7 @@ export function CalendarMonthChrome({
                 borderColor: settings.headerBarBorderColor,
                 background: settings.headerHebMonthBg,
                 minWidth: 'max-content',
-                transform: `translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px)`,
+                transform: `translate(${monthDx}px, ${monthDy}px)`,
               }}
             >
               <HebMonthTitle settings={settings}>{hebrewMonthTitle}</HebMonthTitle>
@@ -450,7 +470,7 @@ export function CalendarMonthChrome({
             <div
               className="flex min-h-0 min-w-0 max-w-full flex-1 flex-col items-end gap-0.5 overflow-visible text-right"
               style={{
-                transform: `translate(${settings.headerBarTitlesOffsetXPx}px, ${settings.headerBarTitlesOffsetYPx}px)`,
+                transform: `translate(${titlesDx}px, ${titlesDy}px)`,
               }}
             >
               <div
@@ -487,6 +507,7 @@ export function CalendarMonthChrome({
   }
 
   if (layout === 'centered_pill') {
+    const { titlesDx, titlesDy, monthDx, monthDy } = headerOffsetsPx(settings);
     return wrapIfFill(
       <div className="relative w-full">
         <div
@@ -515,7 +536,7 @@ export function CalendarMonthChrome({
               borderWidth: settings.headerBarBorderWidthPx,
               borderStyle: 'solid',
               borderRadius: 9999,
-              transform: `translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px)`,
+              transform: `translate(${monthDx}px, ${monthDy}px)`,
               width: 'max-content',
               maxWidth: '100%',
             }}
@@ -526,7 +547,7 @@ export function CalendarMonthChrome({
           <div
             className="mt-3 flex w-full max-w-full min-w-0 flex-col items-center gap-1 overflow-visible px-4 text-center sm:px-5"
             style={{
-              transform: `translate(${settings.headerBarTitlesOffsetXPx}px, ${settings.headerBarTitlesOffsetYPx}px)`,
+              transform: `translate(${titlesDx}px, ${titlesDy}px)`,
             }}
           >
             <div

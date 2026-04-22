@@ -25,12 +25,12 @@ function patch(p: Partial<CalendarSettings>): Partial<CalendarSettings> {
 // Base slider values that should be consistent across ALL style packs.
 // This keeps header controls predictable when switching structural presets.
 const STYLEPACK_BASE: Partial<CalendarSettings> = {
-  headerBarTitlesOffsetXPx: DEFAULT_SETTINGS.headerBarTitlesOffsetXPx,
-  headerBarTitlesOffsetYPx: DEFAULT_SETTINGS.headerBarTitlesOffsetYPx,
-  headerBarMonthPillOffsetXPx: DEFAULT_SETTINGS.headerBarMonthPillOffsetXPx,
-  headerBarMonthPillOffsetYPx: DEFAULT_SETTINGS.headerBarMonthPillOffsetYPx,
-  headerGregLabelOffsetXPx: DEFAULT_SETTINGS.headerGregLabelOffsetXPx,
-  headerGregLabelOffsetYPx: DEFAULT_SETTINGS.headerGregLabelOffsetYPx,
+  headerBarTitlesOffsetXMm: DEFAULT_SETTINGS.headerBarTitlesOffsetXMm,
+  headerBarTitlesOffsetYMm: DEFAULT_SETTINGS.headerBarTitlesOffsetYMm,
+  headerBarMonthOffsetXMm: DEFAULT_SETTINGS.headerBarMonthOffsetXMm,
+  headerBarMonthOffsetYMm: DEFAULT_SETTINGS.headerBarMonthOffsetYMm,
+  headerGregLabelOffsetXMm: DEFAULT_SETTINGS.headerGregLabelOffsetXMm,
+  headerGregLabelOffsetYMm: DEFAULT_SETTINGS.headerGregLabelOffsetYMm,
   headerTitleMainFontPx: DEFAULT_SETTINGS.headerTitleMainFontPx,
   headerTitleSubFontPx: DEFAULT_SETTINGS.headerTitleSubFontPx,
   headerTitleMainFontWeight: DEFAULT_SETTINGS.headerTitleMainFontWeight,

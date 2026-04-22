@@ -3798,34 +3798,36 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת טקסט חודש/שנה לועזי (ימין/שמאל) ({settings.headerGregLabelOffsetXPx}px)
+              הזזת טקסט חודש/שנה לועזי (ימין/שמאל) ({settings.headerGregLabelOffsetXMm}mm)
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-320}
-                max={320}
-                value={settings.headerGregLabelOffsetXPx}
+                min={-30}
+                max={30}
+                step={0.5}
+                value={settings.headerGregLabelOffsetXMm}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    headerGregLabelOffsetXPx: Number(e.target.value),
+                    headerGregLabelOffsetXMm: Number(e.target.value),
                   }))
                 }
               />
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת טקסט חודש/שנה לועזי (למעלה/למטה) ({settings.headerGregLabelOffsetYPx}px)
+              הזזת טקסט חודש/שנה לועזי (למעלה/למטה) ({settings.headerGregLabelOffsetYMm}mm)
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-160}
-                max={160}
-                value={settings.headerGregLabelOffsetYPx}
+                min={-15}
+                max={15}
+                step={0.5}
+                value={settings.headerGregLabelOffsetYMm}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    headerGregLabelOffsetYPx: Number(e.target.value),
+                    headerGregLabelOffsetYMm: Number(e.target.value),
                   }))
                 }
               />
@@ -3933,34 +3935,36 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת טקסטים “לוח שנה/מועדים” (ימין/שמאל) ({settings.headerBarTitlesOffsetXPx}px)
+              הזזת טקסטים “לוח שנה/מועדים” (ימין/שמאל) ({settings.headerBarTitlesOffsetXMm}mm)
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-320}
-                max={320}
-                value={settings.headerBarTitlesOffsetXPx}
+                min={-30}
+                max={30}
+                step={0.5}
+                value={settings.headerBarTitlesOffsetXMm}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    headerBarTitlesOffsetXPx: Number(e.target.value),
+                    headerBarTitlesOffsetXMm: Number(e.target.value),
                   }))
                 }
               />
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת טקסטים “לוח שנה/מועדים” (למעלה/למטה) ({settings.headerBarTitlesOffsetYPx}px)
+              הזזת טקסטים “לוח שנה/מועדים” (למעלה/למטה) ({settings.headerBarTitlesOffsetYMm}mm)
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-160}
-                max={160}
-                value={settings.headerBarTitlesOffsetYPx}
+                min={-15}
+                max={15}
+                step={0.5}
+                value={settings.headerBarTitlesOffsetYMm}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    headerBarTitlesOffsetYPx: Number(e.target.value),
+                    headerBarTitlesOffsetYMm: Number(e.target.value),
                   }))
                 }
               />
@@ -4037,34 +4041,36 @@ export function Calendar() {
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת תג החודש (ימין/שמאל) ({settings.headerBarMonthPillOffsetXPx}px)
+              הזזת תג החודש (ימין/שמאל) ({settings.headerBarMonthOffsetXMm}mm)
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-320}
-                max={320}
-                value={settings.headerBarMonthPillOffsetXPx}
+                min={-30}
+                max={30}
+                step={0.5}
+                value={settings.headerBarMonthOffsetXMm}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    headerBarMonthPillOffsetXPx: Number(e.target.value),
+                    headerBarMonthOffsetXMm: Number(e.target.value),
                   }))
                 }
               />
             </label>
 
             <label className="text-sm text-slate-700">
-              הזזת תג החודש (למעלה/למטה) ({settings.headerBarMonthPillOffsetYPx}px)
+              הזזת תג החודש (למעלה/למטה) ({settings.headerBarMonthOffsetYMm}mm)
               <input
                 className="mt-2 w-full"
                 type="range"
-                min={-160}
-                max={160}
-                value={settings.headerBarMonthPillOffsetYPx}
+                min={-15}
+                max={15}
+                step={0.5}
+                value={settings.headerBarMonthOffsetYMm}
                 onChange={(e) =>
                   setSettings((s) => ({
                     ...s,
-                    headerBarMonthPillOffsetYPx: Number(e.target.value),
+                    headerBarMonthOffsetYMm: Number(e.target.value),
                   }))
                 }
               />

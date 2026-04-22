@@ -45,14 +45,17 @@ export type CalendarSettings = {
    * The bar stays centered when constrained.
    */
   headerBarMaxWidthPx: number;
-  /** Fine position nudges inside the header bar (CSS translate, px). */
-  headerBarTitlesOffsetXPx: number;
-  headerBarTitlesOffsetYPx: number;
-  headerBarMonthPillOffsetXPx: number;
-  headerBarMonthPillOffsetYPx: number;
-  /** Fine nudge for the left Gregorian month/year label (CSS translate, px). */
-  headerGregLabelOffsetXPx: number;
-  headerGregLabelOffsetYPx: number;
+  /**
+   * Fine position nudges inside the header bar.
+   * Stored in millimeters so values stay consistent between live view and PDF/PNG export.
+   */
+  headerBarTitlesOffsetXMm: number;
+  headerBarTitlesOffsetYMm: number;
+  headerBarMonthOffsetXMm: number;
+  headerBarMonthOffsetYMm: number;
+  /** Fine nudge for the left Gregorian month/year label (mm). */
+  headerGregLabelOffsetXMm: number;
+  headerGregLabelOffsetYMm: number;
   /**
    * כשמופעל: פס כותרת קלאסי (צף / חיבור חלק) משתמש ב־`headerWysiwygClassicPct` (אחוזים מתוך הפס)
    * לוויץ׳וויו ול־PDF — ללא חישוב px נפרד.
@@ -225,12 +228,12 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   headerBarMarginBottomPx: 12,
   headerBarOffsetYPx: 0,
   headerBarMaxWidthPx: 0,
-  headerBarTitlesOffsetXPx: 0,
-  headerBarTitlesOffsetYPx: 0,
-  headerBarMonthPillOffsetXPx: 0,
-  headerBarMonthPillOffsetYPx: 0,
-  headerGregLabelOffsetXPx: 0,
-  headerGregLabelOffsetYPx: 0,
+  headerBarTitlesOffsetXMm: 0,
+  headerBarTitlesOffsetYMm: 0,
+  headerBarMonthOffsetXMm: 0,
+  headerBarMonthOffsetYMm: 0,
+  headerGregLabelOffsetXMm: 0,
+  headerGregLabelOffsetYMm: 0,
   headerWysiwygManualActive: false,
   headerWysiwygClassicPct: null,
   headerWysiwygClassicAlign: null,
@@ -355,12 +358,12 @@ export function loadSettings(): CalendarSettings {
       'headerBarMarginBottomPx',
       'headerBarOffsetYPx',
       'headerBarMaxWidthPx',
-      'headerBarTitlesOffsetXPx',
-      'headerBarTitlesOffsetYPx',
-      'headerBarMonthPillOffsetXPx',
-      'headerBarMonthPillOffsetYPx',
-      'headerGregLabelOffsetXPx',
-      'headerGregLabelOffsetYPx',
+      'headerBarTitlesOffsetXMm',
+      'headerBarTitlesOffsetYMm',
+      'headerBarMonthOffsetXMm',
+      'headerBarMonthOffsetYMm',
+      'headerGregLabelOffsetXMm',
+      'headerGregLabelOffsetYMm',
       'headerTitleMainFontPx',
       'headerTitleSubFontPx',
       'headerTitleMainFontWeight',
@@ -408,6 +411,39 @@ export function loadSettings(): CalendarSettings {
       if (!Number.isFinite(n)) continue;
       merged[key] = n;
     }
+
+    // Migration: older versions stored header nudges in px. Convert to mm once.
+    // 96 CSS px per inch → 3.779527559 px per mm.
+    const PX_PER_MM = 96 / 25.4;
+    const pxToMm = (v: any) =>
+      Number.isFinite(Number(v)) ? Math.round((Number(v) / PX_PER_MM) * 10) / 10 : 0;
+    if (merged.headerBarTitlesOffsetXMm === undefined && (merged as any).headerBarTitlesOffsetXPx !== undefined) {
+      merged.headerBarTitlesOffsetXMm = pxToMm((merged as any).headerBarTitlesOffsetXPx);
+    }
+    if (merged.headerBarTitlesOffsetYMm === undefined && (merged as any).headerBarTitlesOffsetYPx !== undefined) {
+      merged.headerBarTitlesOffsetYMm = pxToMm((merged as any).headerBarTitlesOffsetYPx);
+    }
+    if (merged.headerBarMonthOffsetXMm === undefined && (merged as any).headerBarMonthPillOffsetXPx !== undefined) {
+      merged.headerBarMonthOffsetXMm = pxToMm((merged as any).headerBarMonthPillOffsetXPx);
+    }
+    if (merged.headerBarMonthOffsetYMm === undefined && (merged as any).headerBarMonthPillOffsetYPx !== undefined) {
+      merged.headerBarMonthOffsetYMm = pxToMm((merged as any).headerBarMonthPillOffsetYPx);
+    }
+    if (merged.headerGregLabelOffsetXMm === undefined && (merged as any).headerGregLabelOffsetXPx !== undefined) {
+      merged.headerGregLabelOffsetXMm = pxToMm((merged as any).headerGregLabelOffsetXPx);
+    }
+    if (merged.headerGregLabelOffsetYMm === undefined && (merged as any).headerGregLabelOffsetYPx !== undefined) {
+      merged.headerGregLabelOffsetYMm = pxToMm((merged as any).headerGregLabelOffsetYPx);
+    }
+
+    // Clamp mm nudges to a reasonable range to prevent content leaving the header bar.
+    const clamp = (n: any, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number(n) || 0));
+    merged.headerBarTitlesOffsetXMm = clamp(merged.headerBarTitlesOffsetXMm, -30, 30);
+    merged.headerBarTitlesOffsetYMm = clamp(merged.headerBarTitlesOffsetYMm, -15, 15);
+    merged.headerBarMonthOffsetXMm = clamp(merged.headerBarMonthOffsetXMm, -30, 30);
+    merged.headerBarMonthOffsetYMm = clamp(merged.headerBarMonthOffsetYMm, -15, 15);
+    merged.headerGregLabelOffsetXMm = clamp(merged.headerGregLabelOffsetXMm, -30, 30);
+    merged.headerGregLabelOffsetYMm = clamp(merged.headerGregLabelOffsetYMm, -15, 15);
 
     // ברירת מחדל ישנה: 6px לכל סוגי הטקסט בתא — מחליפים בסולם קריא (ללא לדרוס התאמות ידניות אחרות).
     if (

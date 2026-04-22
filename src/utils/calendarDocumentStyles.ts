@@ -129,6 +129,10 @@ export function buildPrintMonthChromeHtml(
 ): string {
   const layout = sanitizeHeaderLayoutStyle(headerLayoutRaw);
   const { gregTitle, hebTitle, gMonthDays, gridHtml } = parts;
+  const titlesDx = (settings as any).headerBarTitlesOffsetXMm ?? 0;
+  const titlesDy = (settings as any).headerBarTitlesOffsetYMm ?? 0;
+  const monthDx = (settings as any).headerBarMonthOffsetXMm ?? 0;
+  const monthDy = (settings as any).headerBarMonthOffsetYMm ?? 0;
 
   const classicInner = `
         <div class="titles">
@@ -151,11 +155,11 @@ export function buildPrintMonthChromeHtml(
     return `<div class="headerMinimal calendarHeader" style="margin-bottom:${resolveMinimalHeaderMarginBottomPx(
       settings,
     )}px;">
-          <div style="transform:translate(${settings.headerBarTitlesOffsetXPx}px,${settings.headerBarTitlesOffsetYPx}px);">
+          <div style="transform:translate(${titlesDx}mm,${titlesDy}mm);">
             <div class="minimalMain">${esc(settings.titleMain)}</div>
             <div class="minimalSub">${esc(settings.titleSub)} • ${gMonthDays} ימים בחודש</div>
           </div>
-          <div style="transform:translate(${settings.headerBarMonthPillOffsetXPx}px,${settings.headerBarMonthPillOffsetYPx}px);">
+          <div style="transform:translate(${monthDx}mm,${monthDy}mm);">
             <div class="minimalHeb">${esc(hebTitle)}</div>
             <div class="minimalGreg">${esc(gregTitle)}</div>
           </div>
@@ -177,14 +181,12 @@ export function buildPrintMonthChromeHtml(
           <div class="headerRightBlockMonthCol" style="border-color:${escAttr(
             settings.headerBarBorderColor,
           )};background:${escAttr(settings.headerHebMonthBg)};transform:translate(${
-            settings.headerBarMonthPillOffsetXPx
-          }px,${settings.headerBarMonthPillOffsetYPx}px);">
+            monthDx
+          }mm,${monthDy}mm);">
             ${buildHebMonthTitlePrintHtml(settings, esc, hebTitle)}
             <div style="margin-top:8px;">${buildGregChipPrintHtml(settings, esc, gregTitle)}</div>
           </div>
-          <div class="headerRightBlockTitlesCol" style="transform:translate(${settings.headerBarTitlesOffsetXPx}px,${
-            settings.headerBarTitlesOffsetYPx
-          }px);">
+          <div class="headerRightBlockTitlesCol" style="transform:translate(${titlesDx}mm,${titlesDy}mm);">
             <div class="headerRightMain">${esc(settings.titleMain)}</div>
             <div class="headerRightSub">${esc(settings.titleSub)}</div>
           </div>
@@ -198,15 +200,13 @@ export function buildPrintMonthChromeHtml(
         <div class="headerPillRow" style="background:${escAttr(settings.headerBarBg)};border-color:${escAttr(
       settings.headerBarBorderColor,
     )};border-width:${settings.headerBarBorderWidthPx}px;border-style:solid;transform:translate(${
-      settings.headerBarMonthPillOffsetXPx
-    }px,${settings.headerBarMonthPillOffsetYPx}px);">
+      monthDx
+    }mm,${monthDy}mm);">
           ${buildGregChipPrintHtml(settings, esc, gregTitle)}
           <span style="display:inline-block;width:12px;"></span>
           ${buildHebMonthTitlePrintHtml(settings, esc, hebTitle)}
         </div>
-        <div class="headerPillCatalogBlock" style="transform:translate(${settings.headerBarTitlesOffsetXPx}px,${
-      settings.headerBarTitlesOffsetYPx
-    }px);">
+        <div class="headerPillCatalogBlock" style="transform:translate(${titlesDx}mm,${titlesDy}mm);">
           <div class="headerPillCatalogMain">${esc(settings.titleMain)}</div>
           <div class="headerPillCatalogSub">${esc(settings.titleSub)}</div>
         </div>
@@ -567,7 +567,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         grid-column: 1;
         justify-self: end;
         align-self: center;
-        transform: translate(${settings.headerBarTitlesOffsetXPx}px, ${settings.headerBarTitlesOffsetYPx}px);
+        transform: translate(${(settings as any).headerBarTitlesOffsetXMm ?? 0}mm, ${(settings as any).headerBarTitlesOffsetYMm ?? 0}mm);
         text-align:right;
         min-width: 0;
         max-width: 100%;
@@ -611,7 +611,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         grid-column: 2;
         justify-self: center;
         align-self: center;
-        transform: translate(${settings.headerBarMonthPillOffsetXPx}px, ${settings.headerBarMonthPillOffsetYPx}px);
+        transform: translate(${(settings as any).headerBarMonthOffsetXMm ?? 0}mm, ${(settings as any).headerBarMonthOffsetYMm ?? 0}mm);
         box-sizing: border-box;
         display:inline-flex;
         align-items:center;
@@ -630,7 +630,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         grid-column: 3;
         justify-self: start;
         align-self: center;
-        transform: translate(${settings.headerGregLabelOffsetXPx}px, ${settings.headerGregLabelOffsetYPx}px);
+        transform: translate(${(settings as any).headerGregLabelOffsetXMm ?? 0}mm, ${(settings as any).headerGregLabelOffsetYMm ?? 0}mm);
         box-sizing: border-box;
         display:inline-flex;
         align-items:center;
