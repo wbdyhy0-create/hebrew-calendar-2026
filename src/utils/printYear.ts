@@ -87,7 +87,7 @@ export function buildPrintableYearHtml(
 
     const cells: string[] = [];
     for (const week of weeks) {
-      for (const g of [...week].reverse()) {
+      for (const g of week) {
         const inMonth = isSameMonth(g, viewDate);
         if (!inMonth) {
           const borderStyle = settings.showCellBorders

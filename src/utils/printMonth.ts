@@ -133,7 +133,7 @@ export function buildPrintableMonthHtml(
 
   const cells: string[] = [];
   for (const week of weeks) {
-    for (const g of [...week].reverse()) {
+    for (const g of week) {
       const key = formatYmdJerusalem(g);
       const dstLabel = getJerusalemDstTransitionLabel(key);
       const evJer = dayEventsJer.get(key);
