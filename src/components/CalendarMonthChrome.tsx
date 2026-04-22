@@ -21,6 +21,7 @@ type Props = {
   hebrewMonthTitle: string;
   gregorianLabel: string;
   onEditHeader: () => void;
+  onToggleHeaderDrag?: () => void;
   gridChildren: ReactNode;
   /** Optional font-family override applied to header area only */
   headerFontFamily?: string;
@@ -52,6 +53,31 @@ function HeaderEditButton({
       onClick={onClick}
     >
       ערוך
+    </button>
+  );
+}
+
+function HeaderDragButton({
+  active,
+  className,
+  onClick,
+}: {
+  active: boolean;
+  className?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={[
+        'rounded-md border border-slate-200 bg-white/90 px-2 py-1 text-xs text-slate-700 hover:bg-white',
+        active ? 'ring-2 ring-amber-300' : '',
+        className ?? '',
+      ].join(' ')}
+      onClick={onClick}
+      title={active ? 'סגור גרירה בפס' : 'גרירה בפס'}
+    >
+      {active ? 'סגור גרירה' : 'גרירה'}
     </button>
   );
 }
@@ -129,6 +155,7 @@ function HeaderBarClassic({
   hebrewMonthTitle,
   gregorianLabel,
   onEditHeader,
+  onToggleHeaderDrag,
   barStyle,
   outerClassName,
   layoutEditMode = false,
@@ -139,6 +166,7 @@ function HeaderBarClassic({
   hebrewMonthTitle: string;
   gregorianLabel: string;
   onEditHeader: () => void;
+  onToggleHeaderDrag?: () => void;
   barStyle: CSSProperties;
   outerClassName: string;
   layoutEditMode?: boolean;
@@ -200,6 +228,13 @@ function HeaderBarClassic({
           className="absolute left-3 top-3 z-40"
           onClick={onEditHeader}
         />
+        {onToggleHeaderDrag ? (
+          <HeaderDragButton
+            active={Boolean(settings.headerWysiwygManualActive) && Boolean(layoutEditMode)}
+            className="absolute left-16 top-3 z-40"
+            onClick={onToggleHeaderDrag}
+          />
+        ) : null}
       </div>
     );
   }
@@ -265,6 +300,13 @@ function HeaderBarClassic({
           className="absolute left-3 top-3 z-20"
           onClick={onEditHeader}
         />
+        {onToggleHeaderDrag ? (
+          <HeaderDragButton
+            active={Boolean(settings.headerWysiwygManualActive) && Boolean(layoutEditMode)}
+            className="absolute left-16 top-3 z-20"
+            onClick={onToggleHeaderDrag}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -301,6 +343,7 @@ export function CalendarMonthChrome({
   hebrewMonthTitle,
   gregorianLabel,
   onEditHeader,
+  onToggleHeaderDrag,
   gridChildren,
   headerFontFamily,
   headerLayoutEditMode = false,
@@ -606,6 +649,7 @@ export function CalendarMonthChrome({
           hebrewMonthTitle={hebrewMonthTitle}
           gregorianLabel={gregorianLabel}
           onEditHeader={onEditHeader}
+          onToggleHeaderDrag={onToggleHeaderDrag}
           barStyle={barStyle}
           outerClassName="relative w-full min-w-0 overflow-visible"
           layoutEditMode={headerLayoutEditMode}
@@ -640,6 +684,7 @@ export function CalendarMonthChrome({
         hebrewMonthTitle={hebrewMonthTitle}
         gregorianLabel={gregorianLabel}
         onEditHeader={onEditHeader}
+        onToggleHeaderDrag={onToggleHeaderDrag}
         barStyle={barStyle}
         outerClassName="relative mx-auto mt-0 w-full min-w-0 max-w-full overflow-visible rounded-xl shadow-md backdrop-blur-[1px]"
         layoutEditMode={headerLayoutEditMode}

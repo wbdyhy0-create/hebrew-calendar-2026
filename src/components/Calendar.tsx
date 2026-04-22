@@ -4841,6 +4841,23 @@ export function Calendar() {
             hebrewMonthTitle={hebrewMonthTitle}
             gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
             onEditHeader={openHeaderEditor}
+            onToggleHeaderDrag={() => {
+              setSettings((s) => {
+                const on = !s.headerWysiwygManualActive;
+                return {
+                  ...s,
+                  headerWysiwygManualActive: on,
+                  headerWysiwygClassicPct: on
+                    ? (s.headerWysiwygClassicPct ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_PCT)
+                    : s.headerWysiwygClassicPct,
+                  headerWysiwygClassicAlign: on
+                    ? (s.headerWysiwygClassicAlign ?? DEFAULT_HEADER_WYSIWYG_CLASSIC_ALIGN)
+                    : s.headerWysiwygClassicAlign,
+                };
+              });
+              // Toggle edit mode along with enable/disable.
+              setHeaderLayoutEditMode((v) => !v);
+            }}
             gridWeekCount={weeks.length}
             headerFontFamily={
               shouldApplyFontTo('calendarHeader')
