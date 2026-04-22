@@ -3599,7 +3599,10 @@ export function Calendar() {
               </div>
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-3 mt-8 rounded-xl border border-slate-200 bg-white/80 p-4">
+            <div
+              id="settings-anchor-header-new"
+              className="sm:col-span-2 lg:col-span-3 mt-8 rounded-xl border border-slate-200 bg-white/80 p-4 scroll-mt-24"
+            >
               <div className="text-sm font-semibold text-slate-900">פס עליון חדש — 4 תיבות טקסט</div>
               <div className="mt-1 text-xs text-slate-600">
                 כל תיבה היא <strong>עצמאית לחלוטין</strong>, ממוקמת ב־<code>absolute</code>, מתחילה מימין,
@@ -4168,6 +4171,12 @@ export function Calendar() {
               label: 'סגנונות',
               cls: 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100',
               items: [],
+            },
+            {
+              key: 'headerEdit',
+              label: 'עריכת פס',
+              cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
+              items: [{ label: 'פס עליון (חדש)', anchorId: 'settings-anchor-header-new' }],
             },
             // header bar shortcuts removed
             {
