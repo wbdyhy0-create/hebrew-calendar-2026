@@ -885,7 +885,9 @@ export function Calendar() {
     return px / s;
   };
   const cellFontScale = 1;
-  const cellScaledPx = (px: number) => scaledPx(px);
+  const globalFontScale = Number(settings.fontSizePx) / 14;
+  const globalFontScale = Number(settings.fontSizePx) / 14;
+  const cellScaledPx = (px: number) => scaledPx(px * globalFontScale);
 
   useEffect(() => {
     if (!settings.layoutAutoFitToCanvas) {
