@@ -4991,7 +4991,8 @@ export function Calendar() {
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
-                    fontSize: `${settings.shabbatTimesFontPx / 10}em`,                    fontFamily: shouldApplyFontTo('cellTimes')
+                    fontSize: `${settings.shabbatTimesFontPx / 10}em`,                    
+                    fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
                   }}
