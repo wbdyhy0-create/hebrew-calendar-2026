@@ -561,6 +561,22 @@ export function Calendar() {
 
   const viewedGregorianMonthKey = format(viewDate, 'yyyy-MM');
 
+  // If the settings panel opens, always close the quick-inspect popup so it can't get "stuck".
+  useEffect(() => {
+    if (!settingsOpen) return;
+    setInspect((s) => (s.key === 'none' ? s : { ...s, key: 'none' }));
+  }, [settingsOpen]);
+
+  // Escape should close the quick-inspect popup (even when settings are open).
+  useEffect(() => {
+    if (inspect.key === 'none') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setInspect((s) => ({ ...s, key: 'none' }));
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [inspect.key]);
+
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
@@ -1119,12 +1135,14 @@ export function Calendar() {
   );
 
   const openAndJumpToSetting = (anchorId: string) => {
+    setInspect((s) => ({ ...s, key: 'none' }));
     setSettingsOpen(true);
     // Wait a tick for the settings panel to mount before searching for anchors.
     window.setTimeout(() => jumpToSetting(anchorId), 0);
   };
 
   const jumpToSetting = (anchorId: string) => {
+    setInspect((s) => ({ ...s, key: 'none' }));
     setSettingsOpen(true);
     window.setTimeout(() => {
       const el = document.getElementById(anchorId);
