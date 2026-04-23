@@ -885,7 +885,7 @@ export function Calendar() {
     return px / s;
   };
   const cellFontScale = 1;
-  const cellScaledPx = (px: number) => scaledPx(px);
+  const cellScaledPx = (px: number) => px;
   useEffect(() => {
     if (!settings.layoutAutoFitToCanvas) {
       // When auto-fit is disabled, keep scale strictly at 1 (plus user zoom).
@@ -2397,26 +2397,6 @@ export function Calendar() {
                 </span>
               </div>
             </div>
-
-            <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
-              כותרת ראשית
-              <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                value={settings.titleMain}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, titleMain: e.target.value }))
-                }
-              />
-              <div className="mt-2" />
-              כותרת משנה
-              <input
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                value={settings.titleSub}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, titleSub: e.target.value }))
-                }
-              />
-            </label>
 
             <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
               מבנה כותרת (צורה מול הרשת)
