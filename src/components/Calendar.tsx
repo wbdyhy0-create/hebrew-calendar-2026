@@ -2967,7 +2967,7 @@ export function Calendar() {
                   {/* Bottom zmanim block (same idea/placement as the real cell) */}
                   <div
                     className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
-                    style={{ fontSize: cellScaledPx(settings.shabbatTimesFontPx) }}
+                    settings.shabbatTimesFontPx
                   >
                     <div className="font-normal text-slate-900 whitespace-nowrap">
                       כניסת השבת:
@@ -4992,8 +4992,8 @@ export function Calendar() {
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
-                    fontSize: cellScaledPx(settings.shabbatTimesFontPx),
-                    fontFamily: shouldApplyFontTo('cellTimes')
+                    settings.shabbatTimesFontPx
+                                        fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
                   }}
@@ -5016,7 +5016,7 @@ export function Calendar() {
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right"
                   style={{
-                    fontSize: cellScaledPx(settings.shabbatTimesFontPx),
+                    settings.shabbatTimesFontPx
                     fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
@@ -5047,7 +5047,7 @@ export function Calendar() {
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
-                    fontSize: cellScaledPx(settings.shabbatTimesFontPx),
+                    settings.shabbatTimesFontPx
                     fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
@@ -5088,8 +5088,7 @@ export function Calendar() {
                       <div
                         className="absolute inset-x-2 bottom-2 z-[6] min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                         style={{
-                          fontSize: cellScaledPx(settings.shabbatTimesFontPx),
-                          fontFamily: shouldApplyFontTo('cellTimes')
+                          settings.shabbatTimesFontPx                          fontFamily: shouldApplyFontTo('cellTimes')
                             ? resolveFontFamilyFor('cellTimes')
                             : undefined,
                         }}
