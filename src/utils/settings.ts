@@ -378,32 +378,6 @@ export function loadSettings(): CalendarSettings {
     }
 
     // header bar migrations removed
-
-    // ברירת מחדל ישנה: 6px לכל סוגי הטקסט בתא — מחליפים בסולם קריא (ללא לדרוס התאמות ידניות אחרות).
-    if (
-      merged.gregDayFontPx === 6 &&
-      merged.hebDayFontPx === 6 &&
-      merged.eventTitleFontPx === 6 &&
-      merged.shabbatTimesFontPx === 6
-    ) {
-      merged.gregDayFontPx = DEFAULT_SETTINGS.gregDayFontPx;
-      merged.hebDayFontPx = DEFAULT_SETTINGS.hebDayFontPx;
-      merged.eventTitleFontPx = DEFAULT_SETTINGS.eventTitleFontPx;
-      merged.shabbatTimesFontPx = DEFAULT_SETTINGS.shabbatTimesFontPx;
-    }
-    // ברירת מחדל ישנה: 1px — מחליפים בסולם קריא.
-    if (
-      merged.gregDayFontPx === 1 &&
-      merged.hebDayFontPx === 1 &&
-      merged.eventTitleFontPx === 1 &&
-      merged.shabbatTimesFontPx === 1
-    ) {
-      merged.gregDayFontPx = DEFAULT_SETTINGS.gregDayFontPx;
-      merged.hebDayFontPx = DEFAULT_SETTINGS.hebDayFontPx;
-      merged.eventTitleFontPx = DEFAULT_SETTINGS.eventTitleFontPx;
-      merged.shabbatTimesFontPx = DEFAULT_SETTINGS.shabbatTimesFontPx;
-    }
-
     if (merged.weekdayHeaderMode !== 'shortLetter' && merged.weekdayHeaderMode !== 'fullName') {
       merged.weekdayHeaderMode = DEFAULT_SETTINGS.weekdayHeaderMode;
     }
