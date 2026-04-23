@@ -886,9 +886,7 @@ export function Calendar() {
   };
   const cellFontScale = 1;
   const globalFontScale = Number(settings.fontSizePx) / 14;
-  const globalFontScale = Number(settings.fontSizePx) / 14;
   const cellScaledPx = (px: number) => scaledPx(px * globalFontScale);
-
   useEffect(() => {
     if (!settings.layoutAutoFitToCanvas) {
       // When auto-fit is disabled, keep scale strictly at 1 (plus user zoom).
