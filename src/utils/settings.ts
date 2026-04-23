@@ -235,7 +235,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
     '"Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif',
   fontFamilyByTarget: {},
   fontApplyTargets: ['all'],
-  fontSizePx: 9,
+  fontSizePx: 14,
   fontWeight: 400,
   gregDayFontPx: 8,
   hebDayFontPx: 7,
