@@ -1710,9 +1710,9 @@ export function Calendar() {
       >
         <div dir="ltr" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div dir="rtl" className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
-            <button
-              type="button"
-              onClick={() => setThemePickerOpen(true)}
+          <button
+            type="button"
+            onClick={() => setThemePickerOpen(true)}
               className="px-3 py-2 text-sm rounded-md border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 active:bg-violet-100/80 transition flex items-center gap-2"
             >
               <span aria-hidden="true">🎨</span>
@@ -1725,16 +1725,16 @@ export function Calendar() {
             >
               <span aria-hidden="true">🧩</span>
               ערכת סגנונות
-            </button>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setSettingsOpen((v) => !v)}
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((v) => !v)}
               className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
-            >
+          >
               <span aria-hidden="true">⚙️</span>
-              הגדרות עיצוב
-            </button>
+            הגדרות עיצוב
+          </button>
 
             <button
               type="button"
@@ -1756,9 +1756,9 @@ export function Calendar() {
                 <span aria-hidden="true">⬇️</span>
                 הורדה
               </button>
-              <button
-                type="button"
-                onClick={async () => {
+          <button
+            type="button"
+            onClick={async () => {
                   if (!ensureDownloadsWork()) return;
                   try {
                     await printMonth();
@@ -1822,11 +1822,11 @@ export function Calendar() {
                     onClick={async () => {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
-                      try {
-                        setSaveFlash('מכין PDF…');
-                        const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
-                          location: 'Jerusalem',
-                        });
+              try {
+                setSaveFlash('מכין PDF…');
+                const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
+                  location: 'Jerusalem',
+                });
                         const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
                         const handle = await requestSaveHandle(suggested, {
                           mime: 'application/pdf',
@@ -1841,21 +1841,21 @@ export function Calendar() {
                           await downloadPdfFromHtml(suggested, html, settings);
                           setSaveFlash('ה‑PDF נשלח להורדה');
                         }
-                        window.setTimeout(() => setSaveFlash(null), 1400);
-                      } catch (e) {
-                        const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
-                        setSaveFlash(`שגיאה בהורדת PDF: ${msg}`);
-                        window.setTimeout(() => setSaveFlash(null), 3500);
-                        // eslint-disable-next-line no-console
-                        console.error(e);
-                      }
-                    }}
+                window.setTimeout(() => setSaveFlash(null), 1400);
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                setSaveFlash(`שגיאה בהורדת PDF: ${msg}`);
+                window.setTimeout(() => setSaveFlash(null), 3500);
+                // eslint-disable-next-line no-console
+                console.error(e);
+              }
+            }}
                     className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                  >
-                    הורד חודש PDF
-                  </button>
-                  <button
-                    type="button"
+          >
+            הורד חודש PDF
+          </button>
+          <button
+            type="button"
                     role="menuitem"
                     onClick={async () => {
                       setDownloadMenuOpen(false);
@@ -1929,13 +1929,13 @@ export function Calendar() {
                   <button
                     type="button"
                     role="menuitem"
-                    onClick={() => {
+            onClick={() => {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
                       try {
-                        const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
-                          location: 'Jerusalem',
-                        });
+              const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
+                location: 'Jerusalem',
+              });
                         setPreviewOpen(true);
                         setPreviewTitle('תצוגה מקדימה — חודש HTML');
                         setPreviewKind('html');
@@ -2037,17 +2037,17 @@ export function Calendar() {
                     className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100"
                   >
                     תצוגה מקדימה — PDF
-                  </button>
-                  <button
-                    type="button"
+          </button>
+          <button
+            type="button"
                     role="menuitem"
-                    onClick={async () => {
+            onClick={async () => {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
-                      try {
-                        setSaveFlash('מכין PDF של שנה…');
-                        const year = viewDate.getFullYear();
-                        const html = buildPrintableYearPdfHtml(year, settings, overrides);
+              try {
+                setSaveFlash('מכין PDF של שנה…');
+                const year = viewDate.getFullYear();
+                const html = buildPrintableYearPdfHtml(year, settings, overrides);
                         const suggested = `calendar-${year}.pdf`;
                         const handle = await requestSaveHandle(suggested, {
                           mime: 'application/pdf',
@@ -2069,19 +2069,19 @@ export function Calendar() {
                             setSaveFlash('ה‑PDF נשלח להורדה');
                           }
                         }
-                        window.setTimeout(() => setSaveFlash(null), 1600);
-                      } catch (e) {
-                        const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
-                        setSaveFlash(`שגיאה בהורדת PDF: ${msg}`);
-                        window.setTimeout(() => setSaveFlash(null), 3500);
-                        // eslint-disable-next-line no-console
-                        console.error(e);
-                      }
-                    }}
+                window.setTimeout(() => setSaveFlash(null), 1600);
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                setSaveFlash(`שגיאה בהורדת PDF: ${msg}`);
+                window.setTimeout(() => setSaveFlash(null), 3500);
+                // eslint-disable-next-line no-console
+                console.error(e);
+              }
+            }}
                     className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                  >
-                    הורד שנה PDF
-                  </button>
+          >
+            הורד שנה PDF
+          </button>
                   <button
                     type="button"
                     role="menuitem"
@@ -2221,8 +2221,8 @@ export function Calendar() {
             <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50">
               <div className="text-sm font-normal text-slate-900">{previewTitle}</div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+          <button
+            type="button"
                   className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                   onClick={async () => {
                     try {
@@ -2277,9 +2277,9 @@ export function Calendar() {
                   }}
                 >
                   ייצא קובץ
-                </button>
-                <button
-                  type="button"
+          </button>
+          <button
+            type="button"
                   className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                   onClick={() => {
                     setPreviewOpen(false);
@@ -2293,8 +2293,8 @@ export function Calendar() {
                   }}
                 >
                   סגור
-                </button>
-              </div>
+          </button>
+        </div>
             </div>
             <div className="flex-1 bg-white">
               {previewKind === 'html' ? (
@@ -2337,8 +2337,8 @@ export function Calendar() {
                     const okSettings = saveSettings(settings);
                     const okOverrides = saveOverrides(overrides);
                     if (okSettings && okOverrides) {
-                      setSaveFlash('נשמר');
-                      window.setTimeout(() => setSaveFlash(null), 1200);
+                    setSaveFlash('נשמר');
+                    window.setTimeout(() => setSaveFlash(null), 1200);
                       return;
                     }
                     if (okSettings && !okOverrides) {
@@ -2530,7 +2530,7 @@ export function Calendar() {
             <div id="settings-anchor-typography-family" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
             <FontFamilyPicker
               label="משפחת גופן — ברירת מחדל (Fallback)"
-              value={settings.fontFamily}
+                value={settings.fontFamily}
               onPick={(v) => setSettings((s) => ({ ...s, fontFamily: v }))}
               uploadedFonts={uploadedFonts}
               fontBusy={fontBusy}
@@ -3012,14 +3012,14 @@ export function Calendar() {
                 <div id="settings-anchor-padding-color" className="scroll-mt-24" />
                 <ColorInput
                   label="צבע בסיס (אפור)"
-                  value={settings.paddingCellColor}
+                    value={settings.paddingCellColor}
                   onChange={(hex) =>
-                    setSettings((s) => ({
-                      ...s,
+                      setSettings((s) => ({
+                        ...s,
                       paddingCellColor: hex,
-                    }))
-                  }
-                />
+                      }))
+                    }
+                  />
 
                 <label className="text-sm text-slate-700">
                   <div id="settings-anchor-padding-strength" className="scroll-mt-24" />
@@ -3070,14 +3070,14 @@ export function Calendar() {
 
             <ColorInput
               label="צבע מסגרת חיצונית"
-              value={settings.gridBorderColor}
+                value={settings.gridBorderColor}
               onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
+                  setSettings((s) => ({
+                    ...s,
                   gridBorderColor: hex,
-                }))
-              }
-            />
+                  }))
+                }
+              />
             <div id="settings-anchor-grid-border-color" className="scroll-mt-24" />
 
             <label className="text-sm text-slate-700">
@@ -3102,14 +3102,14 @@ export function Calendar() {
             <div id="settings-anchor-weekdays-bg" className="scroll-mt-24" />
             <ColorInput
               label="צבע רקע פס ימי השבוע"
-              value={settings.gridWeekdayHeaderBg}
+                value={settings.gridWeekdayHeaderBg}
               onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
+                  setSettings((s) => ({
+                    ...s,
                   gridWeekdayHeaderBg: hex,
-                }))
-              }
-            />
+                  }))
+                }
+              />
 
             <label className="text-sm text-slate-700">
               <div id="settings-anchor-weekdays-height" className="scroll-mt-24" />
@@ -3149,14 +3149,14 @@ export function Calendar() {
 
             <ColorInput
               label="צבע טקסט כותרות ימי השבוע"
-              value={settings.gridWeekdayHeaderTextColor}
+                value={settings.gridWeekdayHeaderTextColor}
               onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
+                  setSettings((s) => ({
+                    ...s,
                   gridWeekdayHeaderTextColor: hex,
-                }))
-              }
-            />
+                  }))
+                }
+              />
 
             <div id="settings-anchor-weekdays-text-color" className="scroll-mt-24" />
 
@@ -3216,14 +3216,14 @@ export function Calendar() {
 
             <ColorInput
               label="צבע קו תחתון לפס ימי השבוע"
-              value={settings.gridWeekdayHeaderBorderBottomColor}
+                value={settings.gridWeekdayHeaderBorderBottomColor}
               onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
+                  setSettings((s) => ({
+                    ...s,
                   gridWeekdayHeaderBorderBottomColor: hex,
-                }))
-              }
-            />
+                  }))
+                }
+              />
 
             <label className="text-sm text-slate-700">
               <div id="settings-anchor-weekdays-row-offset" className="scroll-mt-24" />
@@ -3263,14 +3263,14 @@ export function Calendar() {
 
             <ColorInput
               label="צבע קווי תאים"
-              value={settings.cellBorderColor}
+                value={settings.cellBorderColor}
               onChange={(hex) =>
-                setSettings((s) => ({
-                  ...s,
+                  setSettings((s) => ({
+                    ...s,
                   cellBorderColor: hex,
-                }))
-              }
-            />
+                  }))
+                }
+              />
 
             <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
               <div id="settings-anchor-borders-toggle" className="scroll-mt-24" />
@@ -3287,26 +3287,26 @@ export function Calendar() {
               להציג קווי תאים
             </label>
 
-            <div id="settings-anchor-colors" className="scroll-mt-24" />
+              <div id="settings-anchor-colors" className="scroll-mt-24" />
             <ColorInput
               label="צבע אירועים (חגים/ר״ח/יום העצמאות וכו׳)"
-              value={settings.eventBg}
+                value={settings.eventBg}
               onChange={(hex) => setSettings((s) => ({ ...s, eventBg: hex }))}
             />
             <div id="settings-anchor-colors-event" className="scroll-mt-24" />
 
             <ColorInput
               label="צבע שבת"
-              value={settings.shabbatBg}
+                value={settings.shabbatBg}
               onChange={(hex) => setSettings((s) => ({ ...s, shabbatBg: hex }))}
             />
             <div id="settings-anchor-colors-shabbat" className="scroll-mt-24" />
 
             <ColorInput
               label="צבע “היום”"
-              value={settings.todayBg}
+                value={settings.todayBg}
               onChange={(hex) => setSettings((s) => ({ ...s, todayBg: hex }))}
-            />
+              />
             <div id="settings-anchor-colors-today" className="scroll-mt-24" />
 
             </SettingsCategory>
@@ -3585,45 +3585,45 @@ export function Calendar() {
               </div>
 
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <label className="text-sm text-slate-700">
+            <label className="text-sm text-slate-700">
                   גובה פס ({settings.headerBarHeightPx}px)
-                  <input
-                    className="mt-2 w-full"
-                    type="range"
-                    min={48}
-                    max={140}
-                    value={settings.headerBarHeightPx}
-                    onChange={(e) =>
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={48}
+                max={140}
+                value={settings.headerBarHeightPx}
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarHeightPx: Number(e.target.value) }))
-                    }
-                  />
-                </label>
-                <label className="text-sm text-slate-700">
-                  עיגול פינות פס ({settings.headerBarRadiusPx}px)
-                  <input
-                    className="mt-2 w-full"
-                    type="range"
-                    min={0}
-                    max={28}
-                    value={settings.headerBarRadiusPx}
-                    onChange={(e) =>
+                }
+              />
+            </label>
+            <label className="text-sm text-slate-700">
+              עיגול פינות פס ({settings.headerBarRadiusPx}px)
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={0}
+                max={28}
+                value={settings.headerBarRadiusPx}
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarRadiusPx: Number(e.target.value) }))
-                    }
-                  />
-                </label>
-                <label className="text-sm text-slate-700">
-                  עובי מסגרת פס ({settings.headerBarBorderWidthPx}px)
-                  <input
-                    className="mt-2 w-full"
-                    type="range"
-                    min={0}
-                    max={6}
-                    value={settings.headerBarBorderWidthPx}
-                    onChange={(e) =>
+                }
+              />
+            </label>
+            <label className="text-sm text-slate-700">
+              עובי מסגרת פס ({settings.headerBarBorderWidthPx}px)
+              <input
+                className="mt-2 w-full"
+                type="range"
+                min={0}
+                max={6}
+                value={settings.headerBarBorderWidthPx}
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarBorderWidthPx: Number(e.target.value) }))
-                    }
-                  />
-                </label>
+                }
+              />
+            </label>
 
                 <ColorInput
                   label="צבע רקע פס"
@@ -3635,58 +3635,58 @@ export function Calendar() {
                   value={settings.headerBarBorderColor}
                   onChange={(hex) => setSettings((s) => ({ ...s, headerBarBorderColor: hex }))}
                 />
-                <label className="text-sm text-slate-700">
+            <label className="text-sm text-slate-700">
                   מרווח מתחת לפס ({settings.headerBarMarginBottomPx}px)
-                  <input
+              <input
                     className="mt-2 w-full"
                     type="range"
                     min={0}
                     max={48}
                     value={settings.headerBarMarginBottomPx}
-                    onChange={(e) =>
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarMarginBottomPx: Number(e.target.value) }))
-                    }
-                  />
-                </label>
+                }
+              />
+            </label>
 
-                <label className="text-sm text-slate-700">
+            <label className="text-sm text-slate-700">
                   הזזת פס למעלה/למטה ({settings.headerBarOffsetYPx}px)
-                  <input
-                    className="mt-2 w-full"
-                    type="range"
+              <input
+                className="mt-2 w-full"
+                type="range"
                     min={-40}
-                    max={40}
+                max={40}
                     value={settings.headerBarOffsetYPx}
-                    onChange={(e) =>
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarOffsetYPx: Number(e.target.value) }))
-                    }
-                  />
-                </label>
-                <label className="text-sm text-slate-700">
+                }
+              />
+            </label>
+            <label className="text-sm text-slate-700">
                   רוחב מקסימלי לפס ({settings.headerBarMaxWidthPx === 0 ? 'ללא' : `${settings.headerBarMaxWidthPx}px`})
-                  <input
-                    className="mt-2 w-full"
-                    type="range"
+              <input
+                className="mt-2 w-full"
+                type="range"
                     min={0}
                     max={1400}
                     step={10}
                     value={settings.headerBarMaxWidthPx}
-                    onChange={(e) =>
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarMaxWidthPx: Number(e.target.value) }))
-                    }
-                  />
+                }
+              />
                   <div className="mt-1 text-xs text-slate-500">0 = רוחב מלא</div>
-                </label>
+            </label>
                 <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
-                  <input
+              <input
                     type="checkbox"
                     checked={settings.headerBarShowEditButton}
-                    onChange={(e) =>
+                onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarShowEditButton: e.target.checked }))
-                    }
-                  />
+                }
+              />
                   הצג כפתור “ערוך” בפס
-                </label>
+            </label>
               </div>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -3694,30 +3694,30 @@ export function Calendar() {
                 <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1">
                   תיבה 1 — כותרת ראשית
                 </div>
-                <label className="text-sm text-slate-700">
+            <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox1OffsetXPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
                     value={settings.headerBox1OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox1OffsetXPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox1OffsetYPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
                     value={settings.headerBox1OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox1OffsetYPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   גודל גופן ({settings.headerBox1FontPx}px)
                   <input className="mt-2 w-full" type="range" min={10} max={48} step={1}
                     value={settings.headerBox1FontPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox1FontPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   משקל גופן ({settings.headerBox1FontWeight})
                   <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
                     value={settings.headerBox1FontWeight}
                     onChange={e => setSettings(s => ({ ...s, headerBox1FontWeight: Number(e.target.value) }))} />
-                </label>
+            </label>
                 <ColorInput label="צבע" value={settings.headerBox1Color}
                   onChange={hex => setSettings(s => ({ ...s, headerBox1Color: hex }))} />
 
@@ -3725,30 +3725,30 @@ export function Calendar() {
                 <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1 mt-2">
                   תיבה 2 — כותרת משנה
                 </div>
-                <label className="text-sm text-slate-700">
+            <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox2OffsetXPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
                     value={settings.headerBox2OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox2OffsetXPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox2OffsetYPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
                     value={settings.headerBox2OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox2OffsetYPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   גודל גופן ({settings.headerBox2FontPx}px)
                   <input className="mt-2 w-full" type="range" min={10} max={40} step={1}
                     value={settings.headerBox2FontPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox2FontPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   משקל גופן ({settings.headerBox2FontWeight})
                   <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
                     value={settings.headerBox2FontWeight}
                     onChange={e => setSettings(s => ({ ...s, headerBox2FontWeight: Number(e.target.value) }))} />
-                </label>
+            </label>
                 <ColorInput label="צבע" value={settings.headerBox2Color}
                   onChange={hex => setSettings(s => ({ ...s, headerBox2Color: hex }))} />
 
@@ -3761,25 +3761,25 @@ export function Calendar() {
                   <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
                     value={settings.headerBox3OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox3OffsetXPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox3OffsetYPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
                     value={settings.headerBox3OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox3OffsetYPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   גודל גופן ({settings.headerBox3FontPx}px)
                   <input className="mt-2 w-full" type="range" min={10} max={48} step={1}
                     value={settings.headerBox3FontPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox3FontPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   משקל גופן ({settings.headerBox3FontWeight})
                   <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
                     value={settings.headerBox3FontWeight}
                     onChange={e => setSettings(s => ({ ...s, headerBox3FontWeight: Number(e.target.value) }))} />
-                </label>
+            </label>
                 <ColorInput label="צבע" value={settings.headerBox3Color}
                   onChange={hex => setSettings(s => ({ ...s, headerBox3Color: hex }))} />
 
@@ -3787,30 +3787,30 @@ export function Calendar() {
                 <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1 mt-2">
                   תיבה 4 — חודש לועזי (אוטומטי)
                 </div>
-                <label className="text-sm text-slate-700">
+            <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox4OffsetXPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
                     value={settings.headerBox4OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox4OffsetXPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox4OffsetYPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
                     value={settings.headerBox4OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox4OffsetYPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   גודל גופן ({settings.headerBox4FontPx}px)
                   <input className="mt-2 w-full" type="range" min={10} max={40} step={1}
                     value={settings.headerBox4FontPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox4FontPx: Number(e.target.value) }))} />
-                </label>
-                <label className="text-sm text-slate-700">
+            </label>
+            <label className="text-sm text-slate-700">
                   משקל גופן ({settings.headerBox4FontWeight})
                   <input className="mt-2 w-full" type="range" min={300} max={900} step={50}
                     value={settings.headerBox4FontWeight}
                     onChange={e => setSettings(s => ({ ...s, headerBox4FontWeight: Number(e.target.value) }))} />
-                </label>
+            </label>
                 <ColorInput label="צבע" value={settings.headerBox4Color}
                   onChange={hex => setSettings(s => ({ ...s, headerBox4Color: hex }))} />
               </div>
@@ -4455,27 +4455,27 @@ export function Calendar() {
           </button>
         </div>
 
-        {/* Ornamental canvas around the table — גודל כמו עמוד PDF (ברירת מחדל A4 לרוחב) */}
-        <div
-          className={[
+      {/* Ornamental canvas around the table — גודל כמו עמוד PDF (ברירת מחדל A4 לרוחב) */}
+      <div
+        className={[
             'order-1',
             'relative shadow-sm',
             // Always allow scrolling if content overflows the frame (when zoom/manual settings exceed the canvas).
             'overflow-auto',
-          ].join(' ')}
-          data-inspect="background"
-          style={{
-            border: `${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor}`,
-            borderRadius: resolveCanvasOuterRadiusPx(settings),
-            padding: settings.canvasPaddingPx,
-            paddingTop: settings.canvasPaddingTopPx,
-            backgroundColor: settings.calendarCanvasFill,
-            ...canvasBgStyle,
-            width: `min(100%, ${canvasSurfacePx.widthPx}px)`,
-            height: canvasSurfacePx.heightPx,
-            boxSizing: 'border-box',
-          }}
-        >
+        ].join(' ')}
+        data-inspect="background"
+        style={{
+          border: `${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor}`,
+          borderRadius: resolveCanvasOuterRadiusPx(settings),
+          padding: settings.canvasPaddingPx,
+          paddingTop: settings.canvasPaddingTopPx,
+          backgroundColor: settings.calendarCanvasFill,
+          ...canvasBgStyle,
+          width: `min(100%, ${canvasSurfacePx.widthPx}px)`,
+          height: canvasSurfacePx.heightPx,
+          boxSizing: 'border-box',
+        }}
+      >
         {/* background is baked into the canvas layer for better PDF parity */}
 
         <div
@@ -4508,10 +4508,10 @@ export function Calendar() {
                     } as const;
                   })()
                 : {
-                    transform: `scale(${
+              transform: `scale(${
                       (settings.layoutAutoFitToCanvas ? autoFitScale : 1) *
-                      (resolveCalendarLayoutZoomPercent(settings) / 100)
-                    })`,
+                (resolveCalendarLayoutZoomPercent(settings) / 100)
+              })`,
                   }),
               transformOrigin: 'center center',
             }}
@@ -4528,7 +4528,7 @@ export function Calendar() {
                   : { marginTop: settings.tableOffsetYPx }),
               }}
             >
-            <CalendarMonthChrome
+          <CalendarMonthChrome
             settings={settings}
             hebrewMonthTitle={hebrewMonthTitle}
             gregorianLabel={formatGregorianMonthYearHebrew(viewDate)}
@@ -5046,7 +5046,9 @@ export function Calendar() {
                 <div
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
-                    fontSize: `${settings.shabbatTimesFontPx / 10}em`,  
+                    fontSize: `${settings.shabbatTimesFontPx / 10}em`,
+                    fontFamily: shouldApplyFontTo('cellTimes')
+                      ? resolveFontFamilyFor('cellTimes')
                       : undefined,
                   }}
                 >
@@ -5142,8 +5144,8 @@ export function Calendar() {
             }
           />
             </div>
+            </div>
           </div>
-        </div>
         </div>
       </div>
 
