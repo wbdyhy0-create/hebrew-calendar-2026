@@ -886,7 +886,8 @@ export function Calendar() {
   };
   const cellFontScale = 1;
   const globalFontScale = Number(settings.fontSizePx) / 14;
-  const cellScaledPx = (px: number) => scaledPx(px * globalFontScale);
+  eventTitleFontPx: 6,
+  shabbatTimesFontPx: 5,
   useEffect(() => {
     if (!settings.layoutAutoFitToCanvas) {
       // When auto-fit is disabled, keep scale strictly at 1 (plus user zoom).
