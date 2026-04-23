@@ -884,10 +884,7 @@ export function Calendar() {
         : 1;
     return px / s;
   };
-  const cellFontScale =
-    Number(settings.fontSizePx) > 0
-      ? Number(settings.fontSizePx) / Number(DEFAULT_SETTINGS.fontSizePx || 14)
-      : 1;
+  const cellFontScale = 1;
   const cellScaledPx = (px: number) => scaledPx(px * cellFontScale);
 
   useEffect(() => {
