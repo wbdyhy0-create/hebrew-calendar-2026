@@ -295,24 +295,32 @@ export async function exportPdfBlobFromHtml(
       if (root && settings.layoutAutoFitToCanvas) {
         root.classList.add('pdfAutoFit');
         const canvasEl = root.querySelector('.canvas') as HTMLElement | null;
-        const gridEl = root.querySelector('.grid') as HTMLElement | null;
-        const dowEl = root.querySelector('.dow') as HTMLElement | null;
-        if (canvasEl && gridEl && dowEl) {
+        if (canvasEl) {
           const canvasRect = canvasEl.getBoundingClientRect();
-          const gridRect = gridEl.getBoundingClientRect();
           const padB = Number.parseFloat(getComputedStyle(canvasEl).paddingBottom || '0') || 0;
-          const dowRectH = dowEl.getBoundingClientRect().height || 0;
-          const dowCssH = Number.parseFloat(getComputedStyle(dowEl).height || '0') || 0;
-          const dowFallbackH = Math.max(18, Number(settings.gridWeekdayHeaderHeightPx) || 0, dowCssH);
-          const dowH = dowRectH > 2 ? dowRectH : dowFallbackH;
-          const children = Array.from(gridEl.children);
-          const total = children.length;
-          const weeks = Math.max(5, Math.min(6, Math.round((total - 7) / 7) || 6));
-          const avail = Math.max(120, canvasRect.height - (gridRect.top - canvasRect.top) - padB);
-          const cellH = Math.max(60, Math.ceil((avail - dowH) / weeks));
-          root.style.setProperty('--pdfAutoCellHeightPx', `${cellH}px`);
-          gridEl.style.gridAutoRows = 'unset';
-          gridEl.style.gridTemplateRows = `${Math.round(dowH)}px repeat(${weeks}, ${cellH}px)`;
+          const grids = Array.from(root.querySelectorAll('.grid')) as HTMLElement[];
+          grids.forEach((gridEl) => {
+            const dowEl = gridEl.querySelector('.dow') as HTMLElement | null;
+            if (!dowEl) return;
+            const gridRect = gridEl.getBoundingClientRect();
+            const dowRectH = dowEl.getBoundingClientRect().height || 0;
+            const dowCssH = Number.parseFloat(getComputedStyle(dowEl).height || '0') || 0;
+            const dowFallbackH = Math.max(
+              18,
+              Number(settings.gridWeekdayHeaderHeightPx) || 0,
+              dowCssH,
+            );
+            const dowH = dowRectH > 2 ? dowRectH : dowFallbackH;
+
+            const cellEls = Array.from(gridEl.querySelectorAll('.cell'));
+            const weeks = Math.max(5, Math.min(6, Math.round((cellEls.length / 7) || 6)));
+            const avail = Math.max(120, canvasRect.height - (gridRect.top - canvasRect.top) - padB);
+            const cellH = Math.max(60, Math.ceil((avail - dowH) / weeks));
+
+            root.style.setProperty('--pdfAutoCellHeightPx', `${cellH}px`);
+            gridEl.style.gridAutoRows = 'unset';
+            gridEl.style.gridTemplateRows = `${Math.round(dowH)}px repeat(${weeks}, ${cellH}px)`;
+          });
         }
       }
 
