@@ -301,7 +301,10 @@ export async function exportPdfBlobFromHtml(
           const canvasRect = canvasEl.getBoundingClientRect();
           const gridRect = gridEl.getBoundingClientRect();
           const padB = Number.parseFloat(getComputedStyle(canvasEl).paddingBottom || '0') || 0;
-          const dowH = dowEl.getBoundingClientRect().height || 0;
+          const dowRectH = dowEl.getBoundingClientRect().height || 0;
+          const dowCssH = Number.parseFloat(getComputedStyle(dowEl).height || '0') || 0;
+          const dowFallbackH = Math.max(18, Number(settings.gridWeekdayHeaderHeightPx) || 0, dowCssH);
+          const dowH = dowRectH > 2 ? dowRectH : dowFallbackH;
           const children = Array.from(gridEl.children);
           const total = children.length;
           const weeks = Math.max(5, Math.min(6, Math.round((total - 7) / 7) || 6));
