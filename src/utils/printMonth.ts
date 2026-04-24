@@ -185,7 +185,7 @@ export function buildPrintableMonthHtml(
 
       const hebDay = getHebrewDayGematriya(g);
       const hebMonth = getHebrewDayAndMonth(g).month;
-      const { day: gDay, month: gMonth } = getGregorianDayMonthJerusalem(g);
+      const { day: gDay } = getGregorianDayMonthJerusalem(g);
 
       const manualLines = manual?.centerLines;
       const manualHasVisibleCenter =
@@ -298,7 +298,7 @@ export function buildPrintableMonthHtml(
             !inMonth
               ? ''
               : `<div class="topRight">
-            <span class="greg">${gDay}${gDay === 1 ? `<span class="mini">/${gMonth}</span>` : ''}</span>
+            <span class="greg">${gDay}</span>
             <span class="heb">${esc(hebDay)}${
               hebDay === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
             }</span>

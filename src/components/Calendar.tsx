@@ -4830,9 +4830,6 @@ export function Calendar() {
                   }}
                 >
                   {m.gDay}
-                  {m.gDay === 1 ? (
-                    <span className="text-[0.75em] text-slate-500">/{m.gMonth}</span>
-                  ) : null}
                 </span>
                 <span
                   className="font-medium text-slate-700"

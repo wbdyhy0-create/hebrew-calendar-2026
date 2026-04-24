@@ -12,10 +12,12 @@ const CELL_TYPO_LADDER: Pick<
   CalendarSettings,
   'gregDayFontPx' | 'hebDayFontPx' | 'eventTitleFontPx' | 'shabbatTimesFontPx'
 > = {
-  gregDayFontPx: 1,
-  hebDayFontPx: 1,
-  eventTitleFontPx: 1,
-  shabbatTimesFontPx: 1,
+  // These are the baseline defaults applied when selecting ANY style pack.
+  // (Users can still override via sliders; specific packs may override too.)
+  gregDayFontPx: 12,
+  hebDayFontPx: 15,
+  eventTitleFontPx: 6,
+  shabbatTimesFontPx: 10,
 };
 
 function patch(p: any): Partial<CalendarSettings> {
