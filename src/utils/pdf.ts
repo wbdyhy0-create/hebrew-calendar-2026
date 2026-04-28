@@ -234,7 +234,8 @@ export async function exportPdfBlobFromHtml(
       });
     });
 
-    const nodes: HTMLElement[] = opts?.multiPage
+    const isMultiPage = Boolean(opts?.multiPage);
+    const nodes: HTMLElement[] = isMultiPage
       ? Array.from((calendarElement ?? container).querySelectorAll('.canvas')) as HTMLElement[]
       : [target as HTMLElement];
 
@@ -397,18 +398,59 @@ export async function exportPdfBlobFromHtml(
       const onclone = buildOnClone();
       const backgroundColor = '#ffffff';
 
+      // In multi-page mode (year export), canvases can be far below the fixed render container.
+      // Some html2canvas builds return a blank canvas when the target element is off-screen.
+      // Render each page inside a temporary top-left stage to guarantee it's in view.
+      const withStage = async <T>(fn: (renderTarget: HTMLElement) => Promise<T>) => {
+        if (!isMultiPage) return await fn(el);
+        const stage = document.createElement('div');
+        stage.style.position = 'fixed';
+        stage.style.left = '0';
+        stage.style.top = '0';
+        stage.style.width = `${widthMm}mm`;
+        stage.style.height = `${heightMm}mm`;
+        stage.style.minHeight = `${heightMm}mm`;
+        stage.style.background = '#ffffff';
+        stage.style.pointerEvents = 'none';
+        stage.style.zIndex = '-1';
+        stage.style.overflow = 'visible';
+
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.style.position = 'static';
+        clone.style.left = 'auto';
+        clone.style.top = 'auto';
+        clone.style.transform = 'none';
+        clone.style.margin = '0';
+        clone.style.width = '100%';
+        clone.style.boxSizing = 'border-box';
+
+        stage.appendChild(clone);
+        document.body.appendChild(stage);
+        try {
+          return await fn(stage);
+        } finally {
+          try {
+            stage.remove();
+          } catch {
+            // ignore
+          }
+        }
+      };
+
       // Strategy A: default renderer (best fidelity).
       try {
         const canvas = await wrapPdfStageAsync(`${stageBase} [default]`, async () => {
-          return await html2canvas(el, {
-            scale,
-            useCORS: true,
-            backgroundColor,
-            windowWidth: windowWidthPx,
-            windowHeight: windowHeightPx,
-            scrollX: 0,
-            scrollY: 0,
-            onclone,
+          return await withStage(async (renderTarget) => {
+            return await html2canvas(renderTarget, {
+              scale,
+              useCORS: true,
+              backgroundColor,
+              windowWidth: windowWidthPx,
+              windowHeight: windowHeightPx,
+              scrollX: 0,
+              scrollY: 0,
+              onclone,
+            });
           });
         });
         assertCanvasNotBlank(canvas, `${stageBase} [default]`);
@@ -416,17 +458,19 @@ export async function exportPdfBlobFromHtml(
       } catch {
         // Strategy B: foreignObject renderer is less strict with CSS parsing in some environments.
         const canvas = await wrapPdfStageAsync(`${stageBase} [foreignObjectRendering]`, async () => {
-          return await html2canvas(el, {
-            scale: 1, // foreignObject is already expensive; keep it stable
-            useCORS: true,
-            foreignObjectRendering: true,
-            backgroundColor,
-            windowWidth: windowWidthPx,
-            windowHeight: windowHeightPx,
-            scrollX: 0,
-            scrollY: 0,
-            onclone,
-          } as any);
+          return await withStage(async (renderTarget) => {
+            return await html2canvas(renderTarget, {
+              scale: 1, // foreignObject is already expensive; keep it stable
+              useCORS: true,
+              foreignObjectRendering: true,
+              backgroundColor,
+              windowWidth: windowWidthPx,
+              windowHeight: windowHeightPx,
+              scrollX: 0,
+              scrollY: 0,
+              onclone,
+            } as any);
+          });
         });
         assertCanvasNotBlank(canvas, `${stageBase} [foreignObjectRendering]`);
         return canvas;
