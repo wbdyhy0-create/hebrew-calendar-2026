@@ -439,14 +439,14 @@ export function getHebrewHeaderForGregorianMonth(monthDate: Date): HebrewHeader 
   // Different Hebrew months (most common when Gregorian month spans Adar/Nisan etc.)
   if (s.year === e.year) {
     return {
-      hebrewMonth: `${s.month} / ${e.month}`,
+      hebrewMonth: `${s.month} - ${e.month}`,
       hebrewYearGematriya: s.year || e.year,
     };
   }
 
   // Rare: Gregorian month spans a Hebrew year boundary; include year on both sides.
   return {
-    hebrewMonth: `${s.month} ${s.year} / ${e.month} ${e.year}`.trim(),
+    hebrewMonth: `${s.month} ${s.year} - ${e.month} ${e.year}`.trim(),
     hebrewYearGematriya: '',
   };
 }
