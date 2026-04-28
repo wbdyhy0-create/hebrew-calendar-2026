@@ -444,11 +444,9 @@ export function getHebrewHeaderForGregorianMonth(monthDate: Date): HebrewHeader 
     };
   }
 
-  // Rare: Gregorian month spans a Hebrew year boundary; include year on both sides.
-  return {
-    hebrewMonth: `${s.month} ${s.year} - ${e.month} ${e.year}`.trim(),
-    hebrewYearGematriya: '',
-  };
+  // Rare: Gregorian month spans a Hebrew year boundary.
+  // UX: show only the "new" Hebrew month + its year (avoid "אלול תשפ״ו - תשרי תשפ״ז").
+  return { hebrewMonth: e.month, hebrewYearGematriya: e.year };
 }
 
 export function formatHebrewHeaderText(h: HebrewHeader): string {
