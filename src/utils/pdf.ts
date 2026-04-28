@@ -402,7 +402,6 @@ export async function exportPdfBlobFromHtml(
       // Some html2canvas builds return a blank canvas when the target element is off-screen.
       // Render each page inside a temporary top-left stage to guarantee it's in view.
       const withStage = async <T>(fn: (renderTarget: HTMLElement) => Promise<T>) => {
-        if (!isMultiPage) return await fn(el);
         const stage = document.createElement('div');
         stage.style.position = 'fixed';
         stage.style.left = '0';
@@ -440,7 +439,7 @@ export async function exportPdfBlobFromHtml(
       // Strategy A: default renderer (best fidelity).
       try {
         const canvas = await wrapPdfStageAsync(`${stageBase} [default]`, async () => {
-          return await withStage(async (renderTarget) => {
+          const render = async (renderTarget: HTMLElement) => {
             return await html2canvas(renderTarget, {
               scale,
               useCORS: true,
@@ -451,14 +450,23 @@ export async function exportPdfBlobFromHtml(
               scrollY: 0,
               onclone,
             });
-          });
+          };
+          // First try direct capture (fast path). If blank, retry via stage.
+          try {
+            const direct = await render(el);
+            assertCanvasNotBlank(direct, `${stageBase} [default][direct]`);
+            return direct;
+          } catch {
+            const staged = await withStage(render);
+            assertCanvasNotBlank(staged, `${stageBase} [default][staged]`);
+            return staged;
+          }
         });
-        assertCanvasNotBlank(canvas, `${stageBase} [default]`);
         return canvas;
       } catch {
         // Strategy B: foreignObject renderer is less strict with CSS parsing in some environments.
         const canvas = await wrapPdfStageAsync(`${stageBase} [foreignObjectRendering]`, async () => {
-          return await withStage(async (renderTarget) => {
+          const render = async (renderTarget: HTMLElement) => {
             return await html2canvas(renderTarget, {
               scale: 1, // foreignObject is already expensive; keep it stable
               useCORS: true,
@@ -470,9 +478,17 @@ export async function exportPdfBlobFromHtml(
               scrollY: 0,
               onclone,
             } as any);
-          });
+          };
+          try {
+            const direct = await render(el);
+            assertCanvasNotBlank(direct, `${stageBase} [foreignObjectRendering][direct]`);
+            return direct;
+          } catch {
+            const staged = await withStage(render);
+            assertCanvasNotBlank(staged, `${stageBase} [foreignObjectRendering][staged]`);
+            return staged;
+          }
         });
-        assertCanvasNotBlank(canvas, `${stageBase} [foreignObjectRendering]`);
         return canvas;
       }
     }
