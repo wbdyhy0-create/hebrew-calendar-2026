@@ -128,7 +128,12 @@ export async function exportPdfBlobFromHtml(
 
   const target = calendarElement ?? container;
 
-  const jsPdfFormat = [widthMm, heightMm] as [number, number];
+  const jsPdfFormat: 'a4' | 'a5' | [number, number] =
+    settings.pdfPagePreset === 'A4'
+      ? 'a4'
+      : settings.pdfPagePreset === 'A5'
+        ? 'a5'
+        : ([widthMm, heightMm] as [number, number]);
   const jsPdfOrientation: 'landscape' | 'portrait' = widthMm >= heightMm ? 'landscape' : 'portrait';
 
   const marginMmRaw = Number(settings.pdfMarginMm);
