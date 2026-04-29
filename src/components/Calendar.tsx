@@ -316,6 +316,17 @@ export function Calendar() {
   const [settings, setSettings] = useState<CalendarSettings>(() =>
     typeof window === 'undefined' ? DEFAULT_SETTINGS : loadSettings(),
   );
+  // Export PDFs should always be exact A4 (landscape), regardless of any saved "custom" preset.
+  const settingsForA4PdfExport = useMemo<CalendarSettings>(
+    () => ({
+      ...settings,
+      pdfPagePreset: 'A4',
+      pdfCustomWidthMm: 297,
+      pdfCustomHeightMm: 210,
+      pdfOrientation: 'landscape',
+    }),
+    [settings],
+  );
   const [stylePresets, setStylePresets] = useState<StylePreset[]>(() =>
     typeof window === 'undefined' ? [] : loadStylePresets(),
   );
@@ -1818,7 +1829,7 @@ export function Calendar() {
                           const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
                           setPreviewSuggested(suggested);
                           setPreviewSrcDoc(html);
-                          const blob = await exportPdfBlobFromHtml(html, settings);
+                          const blob = await exportPdfBlobFromHtml(html, settingsForA4PdfExport);
                           setPreviewBlob(blob);
                           if (previewUrl) URL.revokeObjectURL(previewUrl);
                           setPreviewUrl(URL.createObjectURL(blob));
@@ -1852,11 +1863,11 @@ export function Calendar() {
                           extensions: ['.pdf'],
                         });
                         if (handle) {
-                          const blob = await exportPdfBlobFromHtml(html, settings);
+                          const blob = await exportPdfBlobFromHtml(html, settingsForA4PdfExport);
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PDF נשמר');
                         } else {
-                          await downloadPdfFromHtml(suggested, html, settings);
+                          await downloadPdfFromHtml(suggested, html, settingsForA4PdfExport);
                           setSaveFlash('ה‑PDF נשלח להורדה');
                         }
                 window.setTimeout(() => setSaveFlash(null), 1400);
@@ -2040,7 +2051,7 @@ export function Calendar() {
                         const suggested = `calendar-${year}.pdf`;
                         setPreviewSuggested(suggested);
                         setPreviewSrcDoc(html);
-                        const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
+                        const blob = await exportPdfBlobFromHtml(html, settingsForA4PdfExport, { multiPage: true });
                         setPreviewBlob(blob);
                         if (previewUrl) URL.revokeObjectURL(previewUrl);
                         setPreviewUrl(URL.createObjectURL(blob));
@@ -2073,17 +2084,17 @@ export function Calendar() {
                           extensions: ['.pdf'],
                         });
                         if (handle) {
-                          const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
+                          const blob = await exportPdfBlobFromHtml(html, settingsForA4PdfExport, { multiPage: true });
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PDF נשמר');
                         } else {
                           const popup = openDownloadPopup();
-                          const blob = await exportPdfBlobFromHtml(html, settings, { multiPage: true });
+                          const blob = await exportPdfBlobFromHtml(html, settingsForA4PdfExport, { multiPage: true });
                           if (popup) {
                             downloadBlobViaPopup(popup, suggested, blob);
                             setSaveFlash('ה‑PDF נשלח להורדה');
                           } else {
-                            await downloadPdfFromHtml(suggested, html, settings, { multiPage: true });
+                            await downloadPdfFromHtml(suggested, html, settingsForA4PdfExport, { multiPage: true });
                             setSaveFlash('ה‑PDF נשלח להורדה');
                           }
                         }
