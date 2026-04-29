@@ -22,8 +22,8 @@ export function HebcalZmanimLine({
 }) {
   const j = (jer ?? '').trim() || '—';
   const t = (ta ?? '').trim() || '—';
-  const cityPrefixJer = variant === 'labels' ? ': י-ם ' : ': י-ם ';
-  const cityPrefixTa = variant === 'labels' ? ': ת״א ' : ': ת״א ';
+  const cityPrefixJer = variant === 'labels' ? 'י-ם:' : 'י-ם:';
+  const cityPrefixTa = variant === 'labels' ? 'ת״א:' : 'ת״א:';
   /* Two stacked lines: first י-ם then ת״א. */
   return (
     <div
@@ -36,11 +36,11 @@ export function HebcalZmanimLine({
       }}
     >
       <span className="whitespace-nowrap tabular-nums text-right" dir="rtl">
-        {cityPrefixJer}
+        <span style={{ direction: 'rtl', unicodeBidi: 'isolate' }}>{cityPrefixJer}</span>&nbsp;
         <ClockSpan v={j} />
       </span>
       <span className="whitespace-nowrap tabular-nums text-right" dir="rtl">
-        {cityPrefixTa}
+        <span style={{ direction: 'rtl', unicodeBidi: 'isolate' }}>{cityPrefixTa}</span>&nbsp;
         <ClockSpan v={t} />
       </span>
     </div>
