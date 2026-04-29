@@ -22,19 +22,25 @@ export function HebcalZmanimLine({
 }) {
   const j = (jer ?? '').trim() || '—';
   const t = (ta ?? '').trim() || '—';
-  const sep = variant === 'labels' ? ': ' : ' ';
-  /* One LTR row + justify-end = flush right; י-ם then ת״א leftward (RTL spans keep clocks correct). */
+  const cityPrefixJer = variant === 'labels' ? ': י-ם ' : ': י-ם ';
+  const cityPrefixTa = variant === 'labels' ? ': ת״א ' : ': ת״א ';
+  /* Two stacked lines: first י-ם then ת״א. */
   return (
     <div
-      className="flex w-full min-w-0 max-w-full flex-row flex-nowrap items-baseline justify-end gap-x-2 leading-tight"
-      dir="ltr"
+      className="w-full min-w-0 max-w-full leading-tight"
+      dir="rtl"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        rowGap: 2,
+      }}
     >
-      <span className="whitespace-nowrap tabular-nums" dir="rtl">
-        י-ם{sep}
+      <span className="whitespace-nowrap tabular-nums text-right" dir="rtl">
+        {cityPrefixJer}
         <ClockSpan v={j} />
       </span>
-      <span className="whitespace-nowrap tabular-nums" dir="rtl">
-        ת״א{sep}
+      <span className="whitespace-nowrap tabular-nums text-right" dir="rtl">
+        {cityPrefixTa}
         <ClockSpan v={t} />
       </span>
     </div>
