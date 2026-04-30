@@ -13,6 +13,10 @@ dist-ssr
 release
 *.local
 
+# Local-only / nested repos
+_vendor/
+hebrew-calendar-suite/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

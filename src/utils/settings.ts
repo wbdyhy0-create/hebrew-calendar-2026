@@ -192,7 +192,7 @@ export type CalendarSettings = {
 
 export const DEFAULT_SETTINGS: CalendarSettings = {
   titleMain: 'לוח שנה עברי‑לועזי',
-  titleSub: 'מועדים · ראשי חודשים · זמני שבת',
+  titleSub: '',
   headerLayoutStyle: 'floating',
   headerBarHeightPx: 78,
   headerBarRadiusPx: 16,
