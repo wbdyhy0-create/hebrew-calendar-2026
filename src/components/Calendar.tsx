@@ -27,13 +27,16 @@ import {
   isYomKippurHolidayTitleHe as isYomKippurDay,
 } from '../utils/hebrewDate';
 import { buildCalendarDayMetas } from '../utils/monthViewModel';
-import { downloadPdfFromHtml, exportPdfBlobFromHtml } from '../utils/pdf';
+import { downloadPdfFromHtml, exportPdfBlobFromElement, exportPdfBlobFromHtml } from '../utils/pdf';
 import {
   downloadHtmlFromPrintableHtml,
   exportPngBlobFromPrintableHtml,
+  exportPngBlobFromElement,
   downloadPngFromPrintableHtml,
+  downloadPngFromElement,
 } from '../utils/exportDownloads';
 import {
+  downloadBlobFile,
   downloadBlobViaPopup,
   isEmbeddedFrame,
   openDownloadPopup,
@@ -899,6 +902,7 @@ export function Calendar() {
   );
 
   const canvasInnerRef = useRef<HTMLDivElement | null>(null);
+  const canvasOuterRef = useRef<HTMLDivElement | null>(null);
   const calendarContentRef = useRef<HTMLDivElement | null>(null);
   const [autoFitScale, setAutoFitScale] = useState(1);
   const effectiveVisualScale =
@@ -1853,9 +1857,6 @@ export function Calendar() {
                       if (!ensureDownloadsWork()) return;
               try {
                 setSaveFlash('מכין PDF…');
-                const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
-                  location: 'Jerusalem',
-                });
                         const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
                         const handle = await requestSaveHandle(suggested, {
                           mime: 'application/pdf',
@@ -1863,11 +1864,20 @@ export function Calendar() {
                           extensions: ['.pdf'],
                         });
                         if (handle) {
-                          const blob = await exportPdfBlobFromHtml(html, settingsForA4PdfExport);
+                          const target = canvasOuterRef.current;
+                          if (!target) throw new Error('לא נמצא קנבס לייצוא.');
+                          const blob = await exportPdfBlobFromElement(target, settingsForA4PdfExport, {
+                            scale: settingsForA4PdfExport.pdfHtml2CanvasScale,
+                          });
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PDF נשמר');
                         } else {
-                          await downloadPdfFromHtml(suggested, html, settingsForA4PdfExport);
+                          const target = canvasOuterRef.current;
+                          if (!target) throw new Error('לא נמצא קנבס לייצוא.');
+                          const blob = await exportPdfBlobFromElement(target, settingsForA4PdfExport, {
+                            scale: settingsForA4PdfExport.pdfHtml2CanvasScale,
+                          });
+                          downloadBlobFile(suggested, blob);
                           setSaveFlash('ה‑PDF נשלח להורדה');
                         }
                 window.setTimeout(() => setSaveFlash(null), 1400);
@@ -1923,9 +1933,6 @@ export function Calendar() {
                       if (!ensureDownloadsWork()) return;
                       try {
                         setSaveFlash('מכין PNG…');
-                        const html = buildPrintableMonthHtml(viewDate, settings, overrides, {
-                          location: 'Jerusalem',
-                        });
                         const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.png`;
                         // Chrome sometimes blocks async downloads after the first one.
                         // If supported, ask "Save as" immediately (user gesture) and write later.
@@ -1935,11 +1942,19 @@ export function Calendar() {
                           extensions: ['.png'],
                         });
                         if (handle) {
-                          const blob = await exportPngBlobFromPrintableHtml(html, settings);
+                          const target = canvasOuterRef.current;
+                          if (!target) throw new Error('לא נמצא קנבס לייצוא.');
+                          const blob = await exportPngBlobFromElement(target, {
+                            scale: settings.pdfHtml2CanvasScale,
+                          });
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PNG נשמר');
                         } else {
-                          await downloadPngFromPrintableHtml(suggested, html, settings);
+                          const target = canvasOuterRef.current;
+                          if (!target) throw new Error('לא נמצא קנבס לייצוא.');
+                          await downloadPngFromElement(suggested, target, {
+                            scale: settings.pdfHtml2CanvasScale,
+                          });
                           setSaveFlash('ה‑PNG נשלח להורדה');
                         }
                         window.setTimeout(() => setSaveFlash(null), 1400);
@@ -4492,6 +4507,7 @@ export function Calendar() {
             // Always allow scrolling if content overflows the frame (when zoom/manual settings exceed the canvas).
             'overflow-auto',
         ].join(' ')}
+        ref={canvasOuterRef}
         data-inspect="background"
         style={{
           border: `${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor}`,

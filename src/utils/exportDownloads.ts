@@ -4,6 +4,24 @@ import type { CalendarSettings } from './settings';
 import { downloadBlobFile, downloadTextFile } from './download';
 import { resolvePdfPageDimensionsMm } from './pdfPage';
 
+async function waitForImagesInScope(scope: Element, timeoutMs = 8000) {
+  const images = Array.from(scope.querySelectorAll('img'));
+  if (!images.length) return;
+  await Promise.race([
+    Promise.all(
+      images.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete) return resolve();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          }),
+      ),
+    ),
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
+}
+
 function extractFirstStyleTagContent(html: string): string | null {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   const style = parsed.head.querySelector('style');
@@ -95,17 +113,7 @@ export async function exportPngBlobFromPrintableHtml(
     // ignore font wait failures
   }
 
-  const images = Array.from(container.querySelectorAll('img'));
-  await Promise.all(
-    images.map(
-      (img) =>
-        new Promise<void>((resolve) => {
-          if (img.complete) return resolve();
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-        }),
-    ),
-  );
+  await waitForImagesInScope(container);
 
   if (calendarElement) {
     calendarElement.style.display = 'block';
@@ -216,6 +224,44 @@ export async function downloadPngFromPrintableHtml(
   opts?: { scale?: number },
 ) {
   const blob = await exportPngBlobFromPrintableHtml(html, settings, opts);
+  downloadBlobFile(filename, blob);
+}
+
+export async function exportPngBlobFromElement(
+  element: HTMLElement,
+  opts?: { scale?: number; backgroundColor?: string },
+) {
+  const scale = Math.max(1, Math.min(4, Number(opts?.scale) || 2));
+  try {
+    await document.fonts.ready;
+  } catch {
+    // ignore
+  }
+  await waitForImagesInScope(element);
+
+  const canvas = await html2canvas(element, {
+    backgroundColor: opts?.backgroundColor ?? '#ffffff',
+    scale,
+    useCORS: true,
+    allowTaint: false,
+  });
+
+  const blob: Blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('יצוא PNG נכשל: canvas.toBlob החזיר null'))),
+      'image/png',
+      1.0,
+    );
+  });
+  return blob;
+}
+
+export async function downloadPngFromElement(
+  filename: string,
+  element: HTMLElement,
+  opts?: { scale?: number; backgroundColor?: string },
+) {
+  const blob = await exportPngBlobFromElement(element, opts);
   downloadBlobFile(filename, blob);
 }
 

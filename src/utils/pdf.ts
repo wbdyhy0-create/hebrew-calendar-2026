@@ -544,6 +544,72 @@ export async function exportPdfBlobFromHtml(
   }
 }
 
+export async function exportPdfBlobFromElement(
+  element: HTMLElement,
+  settings: CalendarSettings,
+  opts?: { scale?: number },
+) {
+  const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settings);
+  const jsPdfFormat: 'a4' | 'a5' | [number, number] =
+    settings.pdfPagePreset === 'A4'
+      ? 'a4'
+      : settings.pdfPagePreset === 'A5'
+        ? 'a5'
+        : ([widthMm, heightMm] as [number, number]);
+  const jsPdfOrientation: 'landscape' | 'portrait' = widthMm >= heightMm ? 'landscape' : 'portrait';
+
+  const scale = Math.max(1, Math.min(4, Number(opts?.scale) || 2));
+  try {
+    await document.fonts.ready;
+  } catch {
+    // ignore
+  }
+
+  const images = Array.from(element.querySelectorAll('img'));
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete) return resolve();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          setTimeout(resolve, 8000);
+        }),
+    ),
+  );
+
+  const canvas = await html2canvas(element, {
+    backgroundColor: '#ffffff',
+    scale,
+    useCORS: true,
+    allowTaint: false,
+  });
+
+  const doc = new jsPDF({
+    orientation: jsPdfOrientation,
+    unit: 'mm',
+    format: jsPdfFormat,
+    compress: true,
+  });
+
+  // jsPDF needs an actual pixel source; canvas is best.
+  // Fill the full page (no margins) to match the on-screen "canvas page".
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (doc as any).addImage({
+    imageData: canvas,
+    format: 'PNG',
+    x: 0,
+    y: 0,
+    w: widthMm,
+    h: heightMm,
+    alias: 'page-0',
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out = (doc as any).output('blob') as Blob;
+  return out;
+}
+
 export async function downloadPdfFromHtml(
   filename: string,
   html: string,
