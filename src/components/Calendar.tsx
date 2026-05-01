@@ -991,6 +991,63 @@ export function Calendar() {
     typeof (window as any).EyeDropper !== 'undefined' &&
     typeof (window as any).EyeDropper === 'function';
 
+  const IMAGE_SAMPLER_KEY = 'studioImageSamplerDataUrl';
+  const IMAGE_SAMPLER_POS_KEY = 'studioImageSamplerPosV1';
+  const [imageSamplerOpen, setImageSamplerOpen] = useState(false);
+  const [imageSamplerPos, setImageSamplerPos] = useState<{ x: number; y: number }>(() => {
+    try {
+      const raw = window.localStorage.getItem(IMAGE_SAMPLER_POS_KEY);
+      if (!raw) return { x: 18, y: 120 };
+      const parsed = JSON.parse(raw) as any;
+      const x = Number(parsed?.x);
+      const y = Number(parsed?.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return { x: 18, y: 120 };
+      return { x, y };
+    } catch {
+      return { x: 18, y: 120 };
+    }
+  });
+  const [imageSamplerImage, setImageSamplerImage] = useState<string | null>(() => {
+    try {
+      const raw = window.localStorage.getItem(IMAGE_SAMPLER_KEY);
+      return raw && raw.startsWith('data:image/') ? raw : null;
+    } catch {
+      return null;
+    }
+  });
+  const imageSamplerPickerRef = useRef<HTMLInputElement | null>(null);
+  const imageSamplerImgRef = useRef<HTMLImageElement | null>(null);
+  const imageSamplerCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imageSamplerDragRef = useRef<null | {
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPosX: number;
+    startPosY: number;
+  }>(null);
+  const [imageSamplerArmed, setImageSamplerArmed] = useState<null | { label: string; apply: (hex: string) => void }>(
+    null,
+  );
+  const [imageSamplerLastHex, setImageSamplerLastHex] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(IMAGE_SAMPLER_POS_KEY, JSON.stringify(imageSamplerPos));
+    } catch {
+      // ignore
+    }
+  }, [imageSamplerPos]);
+
+  const setImageSamplerImageSafe = (dataUrl: string | null) => {
+    setImageSamplerImage(dataUrl);
+    try {
+      if (dataUrl) window.localStorage.setItem(IMAGE_SAMPLER_KEY, dataUrl);
+      else window.localStorage.removeItem(IMAGE_SAMPLER_KEY);
+    } catch {
+      // ignore
+    }
+  };
+
   const [livePicker, setLivePicker] = useState<null | {
     label: string;
     original: string;
@@ -1016,6 +1073,11 @@ export function Calendar() {
     const g = Math.max(0, Math.min(255, Number(m[2])));
     const b = Math.max(0, Math.min(255, Number(m[3])));
     const to2 = (n: number) => n.toString(16).padStart(2, '0');
+    return `#${to2(r)}${to2(g)}${to2(b)}`.toUpperCase();
+  };
+
+  const rgbaToHex = (r: number, g: number, b: number): string => {
+    const to2 = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
     return `#${to2(r)}${to2(g)}${to2(b)}`.toUpperCase();
   };
 
@@ -1082,6 +1144,34 @@ export function Calendar() {
     }
   };
 
+  const sampleHexFromImageAtClientPoint = (clientX: number, clientY: number): string | null => {
+    try {
+      const img = imageSamplerImgRef.current;
+      const canvas = imageSamplerCanvasRef.current;
+      if (!img || !canvas) return null;
+      if (!img.complete || img.naturalWidth <= 0 || img.naturalHeight <= 0) return null;
+
+      const rect = img.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      if (x < 0 || y < 0 || x > rect.width || y > rect.height) return null;
+
+      const sx = Math.max(0, Math.min(img.naturalWidth - 1, Math.round((x / rect.width) * img.naturalWidth)));
+      const sy = Math.max(0, Math.min(img.naturalHeight - 1, Math.round((y / rect.height) * img.naturalHeight)));
+
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return null;
+      const data = ctx.getImageData(sx, sy, 1, 1)?.data;
+      if (!data || data.length < 3) return null;
+      const [r, g, b, a] = [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0, data[3] ?? 255];
+      // Ignore fully transparent pixels (treat as no-sample)
+      if (a === 0) return null;
+      return rgbaToHex(r, g, b);
+    } catch {
+      return null;
+    }
+  };
+
   const ColorInput = ({
     value,
     onChange,
@@ -1132,6 +1222,29 @@ export function Calendar() {
           }}
         >
           {livePicker?.label === label ? '✕' : '🎯'}
+        </button>
+        <button
+          type="button"
+          className={[
+            'h-10 w-10 shrink-0 rounded-md border bg-white hover:bg-slate-50',
+            imageSamplerArmed?.label === label ? 'border-fuchsia-400 ring-2 ring-fuchsia-200 bg-fuchsia-50' : 'border-slate-200',
+          ].join(' ')}
+          title="דגימה מתמונה (חלון צף)"
+          aria-label="דגימה מתמונה (חלון צף)"
+          aria-pressed={imageSamplerArmed?.label === label}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            setImageSamplerArmed((prev) => {
+              if (prev?.label === label) return null;
+              return { label, apply: (hex) => onChange(hex) };
+            });
+            setImageSamplerOpen(true);
+            setSaveFlash('דגימה מתמונה פעילה: העלה תמונה ואז קליק על התמונה יחיל את הצבע');
+            window.setTimeout(() => setSaveFlash(null), 2200);
+          }}
+        >
+          🖼️
         </button>
         {supportsEyeDropper ? (
           <button
@@ -1383,6 +1496,191 @@ export function Calendar() {
         fontWeight: settings.fontWeight,
       }}
     >
+      {imageSamplerOpen ? (
+        <div
+          className="fixed z-[118] w-[420px] rounded-xl border border-slate-200 bg-white shadow-xl"
+          style={{
+            left: Math.max(8, Math.round(imageSamplerPos.x)),
+            top: Math.max(8, Math.round(imageSamplerPos.y)),
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div
+            className="flex items-center justify-between gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-3 py-2 cursor-move select-none"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+              imageSamplerDragRef.current = {
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                startPosX: imageSamplerPos.x,
+                startPosY: imageSamplerPos.y,
+              };
+            }}
+            onPointerMove={(e) => {
+              const st = imageSamplerDragRef.current;
+              if (!st || st.pointerId !== e.pointerId) return;
+              const dx = e.clientX - st.startX;
+              const dy = e.clientY - st.startY;
+              setImageSamplerPos({ x: st.startPosX + dx, y: st.startPosY + dy });
+            }}
+            onPointerUp={(e) => {
+              const st = imageSamplerDragRef.current;
+              if (!st || st.pointerId !== e.pointerId) return;
+              imageSamplerDragRef.current = null;
+              try {
+                (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+              } catch {
+                // ignore
+              }
+            }}
+            onPointerCancel={(e) => {
+              const st = imageSamplerDragRef.current;
+              if (!st || st.pointerId !== e.pointerId) return;
+              imageSamplerDragRef.current = null;
+            }}
+          >
+            <div className="text-sm font-semibold text-slate-900">
+              תמונה לדגימת צבעים{imageSamplerArmed ? ` — יעד: ${imageSamplerArmed.label}` : ''}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="h-8 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-sm"
+                onClick={() => imageSamplerPickerRef.current?.click()}
+              >
+                {imageSamplerImage ? 'החלף' : 'בחר'}
+              </button>
+              <button
+                type="button"
+                className="h-8 w-8 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                aria-label="סגור חלון תמונה"
+                onClick={() => {
+                  setImageSamplerOpen(false);
+                  setImageSamplerArmed(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div className="px-3 py-2 text-[11px] text-slate-600 border-b border-slate-100">
+            קליק על התמונה ידגום צבע. אם בחרת יעד (🖼️ ליד צבע), הצבע יחול מיד.
+          </div>
+
+          <input
+            ref={imageSamplerPickerRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              (async () => {
+                const compressed = await compressImageToDataUrl(file);
+                if (compressed && compressed.startsWith('data:image/')) {
+                  setImageSamplerImageSafe(compressed);
+                  return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const v = typeof reader.result === 'string' ? reader.result : null;
+                  if (v && v.startsWith('data:image/')) setImageSamplerImageSafe(v);
+                };
+                reader.readAsDataURL(file);
+              })();
+            }}
+          />
+
+          <div className="p-3">
+            <div className="relative w-full rounded-lg border border-slate-200 bg-slate-50 overflow-hidden">
+              {imageSamplerImage ? (
+                <>
+                  <img
+                    ref={imageSamplerImgRef}
+                    src={imageSamplerImage}
+                    alt="תמונה לדגימת צבעים"
+                    className="block w-full h-[240px] object-contain bg-white"
+                    onLoad={() => {
+                      try {
+                        const img = imageSamplerImgRef.current;
+                        const canvas = imageSamplerCanvasRef.current;
+                        if (!img || !canvas) return;
+                        canvas.width = img.naturalWidth || 1;
+                        canvas.height = img.naturalHeight || 1;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        if (!ctx) return;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const hex = sampleHexFromImageAtClientPoint(e.clientX, e.clientY);
+                      if (!hex) return;
+                      setImageSamplerLastHex(hex);
+                      if (imageSamplerArmed) imageSamplerArmed.apply(hex);
+                      try {
+                        void navigator.clipboard?.writeText(hex);
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  />
+                  <canvas ref={imageSamplerCanvasRef} className="hidden" />
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="w-full h-[240px] flex items-center justify-center text-sm text-slate-500 hover:bg-slate-100"
+                  onClick={() => imageSamplerPickerRef.current?.click()}
+                >
+                  אין תמונה — לחץ כדי לבחור תמונה
+                </button>
+              )}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">דגימה אחרונה:</span>
+                {imageSamplerLastHex ? (
+                  <>
+                    <span className="inline-block h-4 w-6 rounded border border-slate-300" style={{ background: imageSamplerLastHex }} />
+                    <span className="font-mono text-slate-900">{imageSamplerLastHex}</span>
+                  </>
+                ) : (
+                  <span className="text-slate-400">—</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="h-8 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-xs"
+                  disabled={!imageSamplerImage}
+                  onClick={() => setImageSamplerImageSafe(null)}
+                >
+                  מחק תמונה
+                </button>
+                <button
+                  type="button"
+                  className="h-8 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-xs"
+                  onClick={() => setImageSamplerArmed(null)}
+                  disabled={!imageSamplerArmed}
+                  title="בטל יעד דגימה"
+                >
+                  בטל יעד
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {livePicker ? (
         <div
           data-live-eyedropper="1"
