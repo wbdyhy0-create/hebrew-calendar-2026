@@ -89,6 +89,8 @@ export type CalendarSettings = {
   fontWeight: 400 | 600 | 700;
   gregDayFontPx: number;
   hebDayFontPx: number;
+  /** Order of the two date strings in the cell corner. */
+  cellDatesOrder?: 'greg_then_heb' | 'heb_then_greg';
   eventTitleFontPx: number;
   shabbatTimesFontPx: number;
   showParsha: boolean;
@@ -239,6 +241,7 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   fontWeight: 400,
   gregDayFontPx: 8,
   hebDayFontPx: 7,
+  cellDatesOrder: 'greg_then_heb',
   eventTitleFontPx: 6,
   shabbatTimesFontPx: 5,
   showParsha: true,

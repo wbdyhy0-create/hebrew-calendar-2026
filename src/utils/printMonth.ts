@@ -297,12 +297,16 @@ export function buildPrintableMonthHtml(
           ${
             !inMonth
               ? ''
-              : `<div class="topRight">
-            <span class="greg">${gDay}</span>
-            <span class="heb">${esc(hebDay)}${
-              hebDay === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
-            }</span>
-          </div>${dstLabel ? `<div class="dstBanner">${esc(dstLabel)}</div>` : ''}`
+              : (() => {
+                  const order = settings.cellDatesOrder === 'heb_then_greg' ? 'heb_then_greg' : 'greg_then_heb';
+                  const greg = `<span class="greg">${gDay}</span>`;
+                  const heb = `<span class="heb">${esc(hebDay)}${
+                    hebDay === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
+                  }</span>`;
+                  return `<div class="topRight">${
+                    order === 'heb_then_greg' ? `${heb}${greg}` : `${greg}${heb}`
+                  }</div>${dstLabel ? `<div class="dstBanner">${esc(dstLabel)}</div>` : ''}`;
+                })()`
           }
           ${
             !inMonth ? '' : midHtml

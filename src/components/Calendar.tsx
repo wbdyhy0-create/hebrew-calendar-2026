@@ -3282,18 +3282,36 @@ export function Calendar() {
                 >
                   {/* Top-right date band (same placement style as the real cell) */}
                   <div className="absolute right-2 top-2 z-10 flex items-center gap-1 text-right text-slate-900">
-                    <span
-                      className="font-semibold text-slate-600"
-                      style={{ fontSize: cellScaledPx(settings.gregDayFontPx), lineHeight: 1 }}
-                    >
-                      14
-                    </span>
-                    <span
-                      className="font-semibold"
-                      style={{ fontSize: cellScaledPx(settings.hebDayFontPx), lineHeight: 1 }}
-                    >
-                      י״ד
-                    </span>
+                    {(() => {
+                      const order = settings.cellDatesOrder ?? 'greg_then_heb';
+                      const greg = (
+                        <span
+                          className="font-semibold text-slate-600"
+                          style={{ fontSize: cellScaledPx(settings.gregDayFontPx), lineHeight: 1 }}
+                        >
+                          14
+                        </span>
+                      );
+                      const heb = (
+                        <span
+                          className="font-semibold"
+                          style={{ fontSize: cellScaledPx(settings.hebDayFontPx), lineHeight: 1 }}
+                        >
+                          י״ד
+                        </span>
+                      );
+                      return order === 'heb_then_greg' ? (
+                        <>
+                          {heb}
+                          {greg}
+                        </>
+                      ) : (
+                        <>
+                          {greg}
+                          {heb}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Center event text */}
@@ -3799,6 +3817,24 @@ export function Calendar() {
                 }
               />
               הצג כפתור “ערוך” בתוך התאים
+            </label>
+
+            <label className="text-sm text-slate-700 mt-6 sm:col-span-2 lg:col-span-3">
+              סדר תאריכים עברי/לועזי בפינה
+              <select
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
+                value={settings.cellDatesOrder ?? 'greg_then_heb'}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    cellDatesOrder:
+                      e.target.value === 'heb_then_greg' ? 'heb_then_greg' : 'greg_then_heb',
+                  }))
+                }
+              >
+                <option value="greg_then_heb">לועזי ואז עברי</option>
+                <option value="heb_then_greg">עברי ואז לועזי</option>
+              </select>
             </label>
 
             <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2 lg:col-span-3">
@@ -5144,35 +5180,53 @@ export function Calendar() {
                   dim,
                 ].join(' ')}
               >
-                <span
-                  className="font-semibold text-slate-600"
-                  style={{
-                    fontSize: cellScaledPx(settings.gregDayFontPx),
-                    lineHeight: 1,
-                    fontFamily: shouldApplyFontTo('cellDates')
-                      ? resolveFontFamilyFor('cellDates')
-                      : undefined,
-                  }}
-                >
-                  {m.gDay}
-                </span>
-                <span
-                  className="font-medium text-slate-700"
-                  style={{
-                    fontSize: cellScaledPx(settings.hebDayFontPx),
-                    lineHeight: 1,
-                    fontFamily: shouldApplyFontTo('cellDates')
-                      ? resolveFontFamilyFor('cellDates')
-                      : undefined,
-                  }}
-                >
-                  {m.hebDay}
-                  {m.hebDay === 'א׳' && m.hebMonth ? (
-                    <span className="mr-1 text-[0.75em] text-slate-500">
-                      {m.hebMonth}
+                {(() => {
+                  const order = settings.cellDatesOrder ?? 'greg_then_heb';
+                  const greg = (
+                    <span
+                      className="font-semibold text-slate-600"
+                      style={{
+                        fontSize: cellScaledPx(settings.gregDayFontPx),
+                        lineHeight: 1,
+                        fontFamily: shouldApplyFontTo('cellDates')
+                          ? resolveFontFamilyFor('cellDates')
+                          : undefined,
+                      }}
+                    >
+                      {m.gDay}
                     </span>
-                  ) : null}
-                </span>
+                  );
+                  const heb = (
+                    <span
+                      className="font-medium text-slate-700"
+                      style={{
+                        fontSize: cellScaledPx(settings.hebDayFontPx),
+                        lineHeight: 1,
+                        fontFamily: shouldApplyFontTo('cellDates')
+                          ? resolveFontFamilyFor('cellDates')
+                          : undefined,
+                      }}
+                    >
+                      {m.hebDay}
+                      {m.hebDay === 'א׳' && m.hebMonth ? (
+                        <span className="mr-1 text-[0.75em] text-slate-500">
+                          {m.hebMonth}
+                        </span>
+                      ) : null}
+                    </span>
+                  );
+                  return order === 'heb_then_greg' ? (
+                    <>
+                      {heb}
+                      {greg}
+                    </>
+                  ) : (
+                    <>
+                      {greg}
+                      {heb}
+                    </>
+                  );
+                })()}
               </div>
 
               {m.dstTransitionLabel ? (
