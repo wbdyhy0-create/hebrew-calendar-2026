@@ -306,7 +306,7 @@ export function buildPrintableMonthHtml(
                   return `<div class="topRight">${
                     order === 'heb_then_greg' ? `${heb}${greg}` : `${greg}${heb}`
                   }</div>${dstLabel ? `<div class="dstBanner">${esc(dstLabel)}</div>` : ''}`;
-                })()`
+                })()
           }
           ${
             !inMonth ? '' : midHtml
