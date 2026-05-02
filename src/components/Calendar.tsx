@@ -358,6 +358,11 @@ export function Calendar() {
     moved: boolean;
   } | null>(null);
   const [saveFlash, setSaveFlash] = useState<string | null>(null);
+  const [exportStyleOpen, setExportStyleOpen] = useState(false);
+  const [exportStyleJson, setExportStyleJson] = useState('');
+  const [exportStyleCopied, setExportStyleCopied] = useState<string | null>(null);
+  const [importStyleOpen, setImportStyleOpen] = useState(false);
+  const [importStyleJson, setImportStyleJson] = useState('');
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
   const printInProgressRef = useRef(false);
@@ -366,6 +371,93 @@ export function Calendar() {
   const [fontBusy, setFontBusy] = useState<string | null>(null);
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const [fontDragActive, setFontDragActive] = useState(false);
+
+  type TransferFont = Omit<StoredFont, 'data'> & { dataBase64: string };
+
+  const arrayBufferToBase64 = (buf: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(bin);
+  };
+
+  const base64ToArrayBuffer = (b64: string): ArrayBuffer => {
+    const bin = atob(String(b64 || ''));
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  };
+
+  const exportTransferFonts = async (): Promise<TransferFont[]> => {
+    try {
+      const list = await listStoredFonts();
+      const out: TransferFont[] = [];
+      for (const meta of list) {
+        const full = await getStoredFont(meta.id);
+        if (!full?.data) continue;
+        out.push({
+          id: full.id,
+          family: full.family,
+          fileName: full.fileName,
+          weight: full.weight,
+          style: full.style,
+          mime: full.mime,
+          dataBase64: arrayBufferToBase64(full.data),
+          createdAt: full.createdAt,
+        });
+      }
+      return out;
+    } catch {
+      return [];
+    }
+  };
+
+  const importTransferFonts = async (fonts: unknown) => {
+    if (!Array.isArray(fonts)) return;
+    for (const f of fonts as any[]) {
+      try {
+        const id = typeof f?.id === 'string' && f.id.trim() ? String(f.id) : null;
+        const family = typeof f?.family === 'string' && f.family.trim() ? String(f.family) : null;
+        const fileName = typeof f?.fileName === 'string' ? String(f.fileName) : 'imported-font';
+        const mime = typeof f?.mime === 'string' && f.mime.trim() ? String(f.mime) : 'font/ttf';
+        const dataBase64 = typeof f?.dataBase64 === 'string' ? String(f.dataBase64) : '';
+        if (!id || !family || !dataBase64) continue;
+        const rec: StoredFont = {
+          id,
+          family,
+          fileName,
+          weight: typeof f?.weight === 'string' ? String(f.weight) : '400',
+          style: typeof f?.style === 'string' ? String(f.style) : 'normal',
+          mime,
+          data: base64ToArrayBuffer(dataBase64),
+          createdAt: typeof f?.createdAt === 'number' ? f.createdAt : Date.now(),
+        };
+        await putStoredFont(rec);
+        await registerStoredFont(rec);
+        setUploadedFonts((prev) => {
+          if (prev.some((x) => x.id === rec.id)) return prev;
+          return [
+            ...prev,
+            {
+              id: rec.id,
+              family: rec.family,
+              fileName: rec.fileName,
+              weight: rec.weight,
+              style: rec.style,
+              mime: rec.mime,
+              createdAt: rec.createdAt,
+            },
+          ];
+        });
+      } catch {
+        // ignore bad font entries
+      }
+    }
+  };
 
   const fontTargets = settings.fontApplyTargets ?? ['all'];
   const hasFontTarget = (t: (typeof fontTargets)[number]) =>
@@ -1505,49 +1597,50 @@ export function Calendar() {
           }}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <div
-            className="flex items-center justify-between gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-3 py-2 cursor-move select-none"
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-              imageSamplerDragRef.current = {
-                pointerId: e.pointerId,
-                startX: e.clientX,
-                startY: e.clientY,
-                startPosX: imageSamplerPos.x,
-                startPosY: imageSamplerPos.y,
-              };
-            }}
-            onPointerMove={(e) => {
-              const st = imageSamplerDragRef.current;
-              if (!st || st.pointerId !== e.pointerId) return;
-              const dx = e.clientX - st.startX;
-              const dy = e.clientY - st.startY;
-              setImageSamplerPos({ x: st.startPosX + dx, y: st.startPosY + dy });
-            }}
-            onPointerUp={(e) => {
-              const st = imageSamplerDragRef.current;
-              if (!st || st.pointerId !== e.pointerId) return;
-              imageSamplerDragRef.current = null;
-              try {
-                (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-              } catch {
-                // ignore
-              }
-            }}
-            onPointerCancel={(e) => {
-              const st = imageSamplerDragRef.current;
-              if (!st || st.pointerId !== e.pointerId) return;
-              imageSamplerDragRef.current = null;
-            }}
-          >
-            <div className="text-sm font-semibold text-slate-900">
-              תמונה לדגימת צבעים{imageSamplerArmed ? ` — יעד: ${imageSamplerArmed.label}` : ''}
+          <div className="flex items-center justify-between gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-3 py-2 select-none">
+            <div
+              className="min-w-0 flex-1 cursor-move"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                imageSamplerDragRef.current = {
+                  pointerId: e.pointerId,
+                  startX: e.clientX,
+                  startY: e.clientY,
+                  startPosX: imageSamplerPos.x,
+                  startPosY: imageSamplerPos.y,
+                };
+              }}
+              onPointerMove={(e) => {
+                const st = imageSamplerDragRef.current;
+                if (!st || st.pointerId !== e.pointerId) return;
+                const dx = e.clientX - st.startX;
+                const dy = e.clientY - st.startY;
+                setImageSamplerPos({ x: st.startPosX + dx, y: st.startPosY + dy });
+              }}
+              onPointerUp={(e) => {
+                const st = imageSamplerDragRef.current;
+                if (!st || st.pointerId !== e.pointerId) return;
+                imageSamplerDragRef.current = null;
+                try {
+                  (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+                } catch {
+                  // ignore
+                }
+              }}
+              onPointerCancel={() => {
+                imageSamplerDragRef.current = null;
+              }}
+            >
+              <div className="text-sm font-semibold text-slate-900">
+                תמונה לדגימת צבעים{imageSamplerArmed ? ` — יעד: ${imageSamplerArmed.label}` : ''}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 className="h-8 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-sm"
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => imageSamplerPickerRef.current?.click()}
               >
                 {imageSamplerImage ? 'החלף' : 'בחר'}
@@ -1556,6 +1649,7 @@ export function Calendar() {
                 type="button"
                 className="h-8 w-8 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                 aria-label="סגור חלון תמונה"
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => {
                   setImageSamplerOpen(false);
                   setImageSamplerArmed(null);
@@ -4833,6 +4927,42 @@ export function Calendar() {
               <span className="truncate">דגימה מתמונה</span>
             </button>
           </div>
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={async () => {
+                const fonts = await exportTransferFonts();
+                const json = JSON.stringify({ settings, overrides, fonts }, null, 2);
+                setExportStyleJson(json);
+                setExportStyleCopied(null);
+                setExportStyleOpen(true);
+                try {
+                  await navigator.clipboard.writeText(json);
+                  setExportStyleCopied('הועתק ללוח');
+                  window.setTimeout(() => setExportStyleCopied(null), 1400);
+                } catch {
+                  // ignore
+                }
+              }}
+              title="העתקת סגנון כ‑JSON"
+            >
+              <span className="truncate">ייצוא סגנון (JSON)</span>
+            </button>
+          </div>
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={() => {
+                setImportStyleJson('');
+                setImportStyleOpen(true);
+              }}
+              title="ייבוא settings/overrides מג׳סון"
+            >
+              <span className="truncate">ייבוא סגנון (JSON)</span>
+            </button>
+          </div>
           <button
             type="button"
             className="mt-2 w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 transition"
@@ -5833,6 +5963,155 @@ export function Calendar() {
         onClose={() => setStylePackOpen(false)}
         onSelectTheme={(id) => setSettings((s) => applyStylePackId(s, id))}
       />
+
+      {exportStyleOpen ? (
+        <div
+          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={() => setExportStyleOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-xl border border-slate-200 bg-white shadow-xl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="font-normal text-slate-900">ייצוא סגנון (JSON)</div>
+              <div className="flex items-center gap-2">
+                {exportStyleCopied ? (
+                  <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">
+                    {exportStyleCopied}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  onClick={() => setExportStyleOpen(false)}
+                >
+                  סגור
+                </button>
+              </div>
+            </div>
+
+            <div className="px-4 py-3">
+              <p className="text-xs text-slate-600 mb-2">העתק את ה‑JSON הזה ושמור אותו לגיבוי/שיתוף.</p>
+              <textarea
+                className="w-full min-h-[280px] rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-900"
+                value={exportStyleJson}
+                readOnly
+                spellCheck={false}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(exportStyleJson);
+                      setExportStyleCopied('הועתק ללוח');
+                      window.setTimeout(() => setExportStyleCopied(null), 1400);
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                >
+                  העתק ללוח
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {importStyleOpen ? (
+        <div
+          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={() => setImportStyleOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-xl border border-slate-200 bg-white shadow-lg"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="font-semibold text-slate-900">ייבוא סגנון (JSON)</div>
+              <button
+                type="button"
+                className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                onClick={() => setImportStyleOpen(false)}
+              >
+                סגור
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="text-sm text-slate-700">
+                הדבק כאן JSON של <span className="font-mono">{'{ settings, overrides, fonts }'}</span>.
+              </div>
+              <textarea
+                className="w-full min-h-[260px] rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-900"
+                value={importStyleJson}
+                onChange={(e) => setImportStyleJson(e.target.value)}
+                spellCheck={false}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+                  onClick={async () => {
+                    try {
+                      const parsed = JSON.parse(importStyleJson || '{}') as any;
+                      const nextSettings = parsed?.settings;
+                      const nextOverrides = parsed?.overrides;
+                      const nextFonts = parsed?.fonts;
+                      if (!nextSettings || typeof nextSettings !== 'object') {
+                        window.alert('JSON לא כולל settings תקין.');
+                        return;
+                      }
+                      await importTransferFonts(nextFonts);
+                      setSettings((_) => ({ ...DEFAULT_SETTINGS, ...(nextSettings as any) } as any));
+                      setOverrides((_) =>
+                        nextOverrides && typeof nextOverrides === 'object' ? (nextOverrides as any) : ({} as any),
+                      );
+                      try {
+                        saveSettings({ ...DEFAULT_SETTINGS, ...(nextSettings as any) } as any);
+                        saveOverrides(
+                          nextOverrides && typeof nextOverrides === 'object' ? (nextOverrides as any) : ({} as any),
+                        );
+                      } catch {
+                        // ignore
+                      }
+                      setImportStyleOpen(false);
+                      setSaveFlash('הסגנון יובא');
+                      window.setTimeout(() => setSaveFlash(null), 1400);
+                    } catch (e: any) {
+                      window.alert(`ייבוא נכשל: ${String(e?.message ?? e)}`);
+                    }
+                  }}
+                >
+                  החל סגנון
+                </button>
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  onClick={async () => {
+                    try {
+                      const t = await navigator.clipboard.readText();
+                      setImportStyleJson(t || '');
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  title="הדבק מהלוח"
+                >
+                  הדבק מהלוח
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
