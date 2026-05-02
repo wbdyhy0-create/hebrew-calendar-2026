@@ -631,3 +631,17 @@ export async function downloadPdfFromHtml(
     setTimeout(() => URL.revokeObjectURL(url), 250);
   }
 }
+
+if (typeof window !== 'undefined') {
+  ;(window as Window & { __HEBREW_CALENDAR_ROOT_APP__?: Record<string, string> }).__HEBREW_CALENDAR_ROOT_APP__ =
+    {
+      bundle: 'hebrew-gregorian-app repo root · Vite · port 5173',
+      gitShort: typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : 'unknown',
+      yearPdf: 'utils/printYearPdf + exportPdfBlobFromHtml — no exportYearPdfBlobFromCalendarCapture',
+    };
+  // eslint-disable-next-line no-console
+  console.info(
+    '[hebrew-calendar-app:root] pdf.ts loaded — for live month capture Studio use hebrew-calendar-suite/apps/studio · git',
+    typeof __APP_BUILD__ === 'string' ? __APP_BUILD__ : 'unknown',
+  );
+}
