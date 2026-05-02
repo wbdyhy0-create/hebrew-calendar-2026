@@ -1244,7 +1244,7 @@ export function Calendar() {
             window.setTimeout(() => setSaveFlash(null), 2200);
           }}
         >
-          🖼️
+          <span className="text-[11px] font-bold text-slate-700">IMG</span>
         </button>
         {supportsEyeDropper ? (
           <button
@@ -4818,6 +4818,19 @@ export function Calendar() {
               onClick={() => setColorPaletteOpen((v) => !v)}
             >
               <span className="truncate">פלטת צבעים</span>
+            </button>
+          </div>
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={() => {
+                setImageSamplerOpen(true);
+                setSaveFlash('פתחתי חלון “דגימה מתמונה”. לחץ “בחר” כדי להעלות תמונה.');
+                window.setTimeout(() => setSaveFlash(null), 2200);
+              }}
+            >
+              <span className="truncate">דגימה מתמונה</span>
             </button>
           </div>
           <button
