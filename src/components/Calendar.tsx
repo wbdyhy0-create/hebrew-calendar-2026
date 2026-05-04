@@ -2162,6 +2162,19 @@ export function Calendar() {
             הגדרות עיצוב
           </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              setSettingsTab('export');
+              setSettingsOpen(true);
+            }}
+            className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white text-slate-900 hover:bg-slate-50 active:bg-slate-100 transition flex items-center gap-2"
+            title="הגדרות ייצוא PDF"
+          >
+            <span aria-hidden="true">📄</span>
+            ייצוא
+          </button>
+
             <button
               type="button"
               onClick={() => setHelpOpen(true)}
