@@ -27,3 +27,5 @@ hebrew-calendar-suite/
 *.njsproj
 *.sln
 *.sw?
+
+.vercel

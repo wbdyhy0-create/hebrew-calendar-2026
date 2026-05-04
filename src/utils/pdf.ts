@@ -128,12 +128,10 @@ export async function exportPdfBlobFromHtml(
 
   const target = calendarElement ?? container;
 
-  const jsPdfFormat: 'a4' | 'a5' | [number, number] =
-    settings.pdfPagePreset === 'A4'
-      ? 'a4'
-      : settings.pdfPagePreset === 'A5'
-        ? 'a5'
-        : ([widthMm, heightMm] as [number, number]);
+  // IMPORTANT:
+  // Use explicit numeric format in mm to avoid viewer/engine inconsistencies when using preset strings
+  // (some environments end up treating preset sizes as 96dpi pixels instead of PDF points).
+  const jsPdfFormat = [widthMm, heightMm] as [number, number];
   const jsPdfOrientation: 'landscape' | 'portrait' = widthMm >= heightMm ? 'landscape' : 'portrait';
 
   const marginMmRaw = Number(settings.pdfMarginMm);
@@ -550,12 +548,8 @@ export async function exportPdfBlobFromElement(
   opts?: { scale?: number },
 ) {
   const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settings);
-  const jsPdfFormat: 'a4' | 'a5' | [number, number] =
-    settings.pdfPagePreset === 'A4'
-      ? 'a4'
-      : settings.pdfPagePreset === 'A5'
-        ? 'a5'
-        : ([widthMm, heightMm] as [number, number]);
+  // IMPORTANT: see comment above (force mm sizes explicitly).
+  const jsPdfFormat = [widthMm, heightMm] as [number, number];
   const jsPdfOrientation: 'landscape' | 'portrait' = widthMm >= heightMm ? 'landscape' : 'portrait';
 
   const scale = Math.max(1, Math.min(4, Number(opts?.scale) || 2));

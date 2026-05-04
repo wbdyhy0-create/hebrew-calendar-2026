@@ -170,7 +170,9 @@ export function CalendarMonthChrome({
   const weekdayRowOffsetY = Number(settings.gridWeekdayHeaderRowOffsetYPx) || 0;
   const weekdayTrackH =
     settings.gridWeekdayHeaderHeightPx + Math.max(0, Math.round(weekdayRowOffsetY));
-  const minWeekRowH = Math.max(72, Math.round((Number(settings.pdfExportCellHeightPx) || 92) * 0.82));
+  // Screen-only: make cells clearly wider-than-tall (landscape feel).
+  // PDF export sets explicit row heights on the cloned DOM, so this does not affect PDF.
+  const screenWeekRowH = Math.max(54, Math.round((Number(settings.pdfExportCellHeightPx) || 92) * 0.6));
 
   const shell = gridShellProps(layout, settings);
   const headerFontStyle = headerFontFamily ? ({ fontFamily: headerFontFamily } as const) : null;
@@ -181,15 +183,16 @@ export function CalendarMonthChrome({
       data-inspect="month-grid"
       style={{
         ...(shell.style ?? {}),
+        // Screen preview: fixed row heights so cells are wide (not square / not tall).
+        // PDF export overrides row sizing on the cloned DOM (pdf.ts / .pdfMode rules).
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+        gridTemplateRows: `${weekdayTrackH}px repeat(${weekRows}, ${screenWeekRowH}px)`,
+        alignContent: 'start',
         ...(settings.layoutFillHeight
           ? {
               height: '100%',
               flex: 1,
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-              gridTemplateRows: `${weekdayTrackH}px repeat(${weekRows}, minmax(${minWeekRowH}px, 1fr))`,
-              gridAutoRows: '1fr',
-              alignContent: 'stretch',
             }
           : null),
       }}
