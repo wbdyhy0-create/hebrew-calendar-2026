@@ -1,10 +1,10 @@
 ---
-description: Always commit + push changes after successful work
+description: No automatic git commit/push; batch when user requests
 alwaysApply: true
 ---
 
-# Always commit + push after changes
+# Git: no automatic commit or push
 
-- After implementing a requested change and verifying it works (build/tests where applicable), **stage, commit, and push** without asking for confirmation.
-- Use a clear commit message describing intent.
-- If a commit fails (hooks/quoting/etc), fix the issue and retry, then push.
+- **Do not** stage, commit, or push after changes unless the user explicitly asks for a commit/push or says they are done with the batch of fixes and want one organized upload.
+- Still verify work locally (build/tests) when appropriate.
+- When the user requests the final upload: use clear commit message(s), then push.
