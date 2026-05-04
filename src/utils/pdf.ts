@@ -128,14 +128,21 @@ export async function exportPdfBlobFromHtml(
 
   const target = calendarElement ?? container;
 
-  // IMPORTANT:
-  // Use explicit numeric format in mm to avoid viewer/engine inconsistencies when using preset strings
-  // (some environments end up treating preset sizes as 96dpi pixels instead of PDF points).
-  const jsPdfFormat = [widthMm, heightMm] as [number, number];
-  const jsPdfOrientation: 'landscape' | 'portrait' = widthMm >= heightMm ? 'landscape' : 'portrait';
-
   const marginMmRaw = Number(settings.pdfMarginMm);
   const marginMm = Number.isFinite(marginMmRaw) ? Math.max(0, marginMmRaw) : 0;
+  const mmToPt = (mm: number) => (mm / 25.4) * 72;
+
+  // IMPORTANT:
+  // We generate the PDF in points and convert mm -> pt ourselves.
+  // This avoids a long-standing DPI mismatch where some PDF viewers report page sizes as if 96dpi was used
+  // (e.g. A4 landscape shows as ~396×280mm instead of 297×210mm).
+  const pageWPt = mmToPt(widthMm);
+  const pageHPt = mmToPt(heightMm);
+  const marginPt = mmToPt(marginMm);
+  const contentWPt = Math.max(1, pageWPt - marginPt * 2);
+  const contentHPt = Math.max(1, pageHPt - marginPt * 2);
+  const jsPdfFormat = [pageWPt, pageHPt] as [number, number];
+  const jsPdfOrientation: 'landscape' | 'portrait' = pageWPt >= pageHPt ? 'landscape' : 'portrait';
 
   function wrapPdfStage<T>(stage: string, fn: () => T): T {
     try {
@@ -223,14 +230,9 @@ export async function exportPdfBlobFromHtml(
   }
 
   async function renderWithHtml2CanvasThenPdf() {
-    const pageW = widthMm;
-    const pageH = heightMm;
-    const contentW = Math.max(1, pageW - marginMm * 2);
-    const contentH = Math.max(1, pageH - marginMm * 2);
-
     const doc = wrapPdfStage('jsPDF ctor', () => {
       return new jsPDF({
-        unit: 'mm',
+        unit: 'pt',
         format: jsPdfFormat,
         orientation: jsPdfOrientation,
         compress: true,
@@ -514,7 +516,7 @@ export async function exportPdfBlobFromHtml(
       if (i > 0) doc.addPage();
       wrapPdfStage(`jsPDF addImage (page ${i + 1}/${nodes.length})`, () => {
         // Stretch capture to the PDF page content box.
-        addImageToPdfSafe(doc, canvas, marginMm, marginMm, contentW, contentH, i);
+        addImageToPdfSafe(doc, canvas, marginPt, marginPt, contentWPt, contentHPt, i);
       });
     }
 
@@ -548,9 +550,11 @@ export async function exportPdfBlobFromElement(
   opts?: { scale?: number },
 ) {
   const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settings);
-  // IMPORTANT: see comment above (force mm sizes explicitly).
-  const jsPdfFormat = [widthMm, heightMm] as [number, number];
-  const jsPdfOrientation: 'landscape' | 'portrait' = widthMm >= heightMm ? 'landscape' : 'portrait';
+  const mmToPt = (mm: number) => (mm / 25.4) * 72;
+  const pageWPt = mmToPt(widthMm);
+  const pageHPt = mmToPt(heightMm);
+  const jsPdfFormat = [pageWPt, pageHPt] as [number, number];
+  const jsPdfOrientation: 'landscape' | 'portrait' = pageWPt >= pageHPt ? 'landscape' : 'portrait';
 
   const scale = Math.max(1, Math.min(4, Number(opts?.scale) || 2));
   try {
@@ -581,7 +585,7 @@ export async function exportPdfBlobFromElement(
 
   const doc = new jsPDF({
     orientation: jsPdfOrientation,
-    unit: 'mm',
+    unit: 'pt',
     format: jsPdfFormat,
     compress: true,
   });
@@ -594,8 +598,8 @@ export async function exportPdfBlobFromElement(
     format: 'PNG',
     x: 0,
     y: 0,
-    w: widthMm,
-    h: heightMm,
+    w: pageWPt,
+    h: pageHPt,
     alias: 'page-0',
   });
 
