@@ -316,6 +316,7 @@ function FontFamilyPicker({
 export function Calendar() {
   const [viewDate, setViewDate] = useState<Date>(() => new Date());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'design' | 'export'>('design');
   const [settings, setSettings] = useState<CalendarSettings>(() =>
     typeof window === 'undefined' ? DEFAULT_SETTINGS : loadSettings(),
   );
@@ -2759,7 +2760,32 @@ export function Calendar() {
         >
           <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
-              <div className="font-normal text-slate-900">עיצוב</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className={[
+                    'px-3 py-1.5 text-sm rounded-md border transition',
+                    settingsTab === 'design'
+                      ? 'border-slate-900 bg-slate-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+                  ].join(' ')}
+                  onClick={() => setSettingsTab('design')}
+                >
+                  עיצוב
+                </button>
+                <button
+                  type="button"
+                  className={[
+                    'px-3 py-1.5 text-sm rounded-md border transition',
+                    settingsTab === 'export'
+                      ? 'border-slate-900 bg-slate-900 text-white'
+                      : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-50',
+                  ].join(' ')}
+                  onClick={() => setSettingsTab('export')}
+                >
+                  ייצוא
+                </button>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {saveFlash ? (
                   <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md">
@@ -2806,6 +2832,118 @@ export function Calendar() {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-y-contain px-2 py-2 sm:px-3 sm:py-3">
+            {settingsTab === 'export' ? (
+              <>
+                <SettingsCategory icon="📄" title="ייצוא PDF (חודש)">
+                <div id="settings-anchor-export" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
+                <div className="sm:col-span-2 lg:col-span-3 rounded-md border border-slate-200 bg-white/80 px-2 py-2 text-xs text-slate-600">
+                  גודל עמוד לפי ההגדרות:{' '}
+                  <span className="font-semibold text-slate-800">
+                    {pdfPageMm.widthMm}×{pdfPageMm.heightMm} מ״מ
+                  </span>
+                  , שוליים {settings.pdfMarginMm} מ״מ.
+                </div>
+
+                <label className="text-sm text-slate-700">
+                  <div id="settings-anchor-export-page" className="scroll-mt-24" />
+                  גודל עמוד (תבנית)
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
+                    value={settings.pdfPagePreset}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        pdfPagePreset: e.target.value as CalendarSettings['pdfPagePreset'],
+                      }))
+                    }
+                  >
+                    <option value="A4">A4</option>
+                    <option value="A5">A5</option>
+                    <option value="custom">מותאם (מ״מ)</option>
+                  </select>
+                </label>
+
+                <label className="text-sm text-slate-700">
+                  <div id="settings-anchor-export-orientation" className="scroll-mt-24" />
+                  כיוון עמוד
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
+                    value={settings.pdfOrientation}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        pdfOrientation: e.target.value as CalendarSettings['pdfOrientation'],
+                      }))
+                    }
+                  >
+                    <option value="landscape">לרוחב</option>
+                    <option value="portrait">לאורך</option>
+                  </select>
+                </label>
+
+                {settings.pdfPagePreset === 'custom' ? (
+                  <>
+                    <label className="text-sm text-slate-700">
+                      רוחב מותאם (מ״מ)
+                      <input
+                        className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
+                        type="number"
+                        min={80}
+                        max={420}
+                        value={settings.pdfCustomWidthMm}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...s,
+                            pdfCustomWidthMm: Number(e.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="text-sm text-slate-700">
+                      גובה מותאם (מ״מ)
+                      <input
+                        className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
+                        type="number"
+                        min={80}
+                        max={420}
+                        value={settings.pdfCustomHeightMm}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...s,
+                            pdfCustomHeightMm: Number(e.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+                  </>
+                ) : null}
+
+                <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
+                  <div id="settings-anchor-export-margin" className="scroll-mt-24" />
+                  שוליים סביב העמוד ({settings.pdfMarginMm} מ״מ)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={0}
+                    max={24}
+                    step={1}
+                    value={settings.pdfMarginMm}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        pdfMarginMm: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </label>
+
+
+
+                </SettingsCategory>
+              </>
+            ) : null}
+            {settingsTab !== 'export' ? (
+              <>
             <SettingsCategory icon="📁" title="ערכות צבע ומבנה כותרת">
             <div
               id="settings-anchor-themes"
@@ -3765,113 +3903,6 @@ export function Calendar() {
 
             </SettingsCategory>
 
-            <SettingsCategory icon="📄" title="ייצוא PDF (חודש)">
-            <div id="settings-anchor-export" className="sm:col-span-2 lg:col-span-3 scroll-mt-24" />
-            <div className="sm:col-span-2 lg:col-span-3 rounded-md border border-slate-200 bg-white/80 px-2 py-2 text-xs text-slate-600">
-              גודל עמוד לפי ההגדרות:{' '}
-              <span className="font-semibold text-slate-800">
-                {pdfPageMm.widthMm}×{pdfPageMm.heightMm} מ״מ
-              </span>
-              , שוליים {settings.pdfMarginMm} מ״מ.
-            </div>
-
-            <label className="text-sm text-slate-700">
-              <div id="settings-anchor-export-page" className="scroll-mt-24" />
-              גודל עמוד (תבנית)
-              <select
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                value={settings.pdfPagePreset}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    pdfPagePreset: e.target.value as CalendarSettings['pdfPagePreset'],
-                  }))
-                }
-              >
-                <option value="A4">A4</option>
-                <option value="A5">A5</option>
-                <option value="custom">מותאם (מ״מ)</option>
-              </select>
-            </label>
-
-            <label className="text-sm text-slate-700">
-              <div id="settings-anchor-export-orientation" className="scroll-mt-24" />
-              כיוון עמוד
-              <select
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                value={settings.pdfOrientation}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    pdfOrientation: e.target.value as CalendarSettings['pdfOrientation'],
-                  }))
-                }
-              >
-                <option value="landscape">לרוחב</option>
-                <option value="portrait">לאורך</option>
-              </select>
-            </label>
-
-            {settings.pdfPagePreset === 'custom' ? (
-              <>
-                <label className="text-sm text-slate-700">
-                  רוחב מותאם (מ״מ)
-                  <input
-                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                    type="number"
-                    min={80}
-                    max={420}
-                    value={settings.pdfCustomWidthMm}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        pdfCustomWidthMm: Number(e.target.value),
-                      }))
-                    }
-                  />
-                </label>
-                <label className="text-sm text-slate-700">
-                  גובה מותאם (מ״מ)
-                  <input
-                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
-                    type="number"
-                    min={80}
-                    max={420}
-                    value={settings.pdfCustomHeightMm}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        pdfCustomHeightMm: Number(e.target.value),
-                      }))
-                    }
-                  />
-                </label>
-              </>
-            ) : null}
-
-            <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
-              <div id="settings-anchor-export-margin" className="scroll-mt-24" />
-              שוליים סביב העמוד ({settings.pdfMarginMm} מ״מ)
-              <input
-                className="mt-2 w-full"
-                type="range"
-                min={0}
-                max={24}
-                step={1}
-                value={settings.pdfMarginMm}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    pdfMarginMm: Number(e.target.value),
-                  }))
-                }
-              />
-            </label>
-
-
-
-            </SettingsCategory>
-
             <SettingsCategory icon="📌" title="כותרת, מבנה וכללי">
             <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
               <input
@@ -4595,6 +4626,8 @@ export function Calendar() {
               }
             />
             </SettingsCategory>
+              </>
+            ) : null}
           </div>
         </div>
       )}
