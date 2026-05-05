@@ -135,7 +135,7 @@ export async function exportPdfBlobFromHtml(
   // IMPORTANT:
   // We generate the PDF in points and convert mm -> pt ourselves.
   // This avoids a long-standing DPI mismatch where some PDF viewers report page sizes as if 96dpi was used
-  // (e.g. A4 landscape shows as ~396×280mm instead of 297×210mm).
+// (e.g. A4 landscape can show as an incorrect scaled size instead of 297×210mm).
   const pageWPt = mmToPt(widthMm);
   const pageHPt = mmToPt(heightMm);
   const marginPt = mmToPt(marginMm);
