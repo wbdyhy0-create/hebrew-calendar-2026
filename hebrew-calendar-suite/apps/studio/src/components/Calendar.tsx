@@ -997,6 +997,8 @@ export function Calendar() {
   const [stylePackOpen, setStylePackOpen] = useState(false);
   const [shortcutOpen, setShortcutOpen] = useState<string | null>(null);
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement | null>(null);
   const [colorPalettePos, setColorPalettePos] = useState<{ x: number; y: number }>(() => ({
     x: 24,
     y: 160,
@@ -1015,6 +1017,26 @@ export function Calendar() {
   }>({ key: 'none', x: 0, y: 0 });
 
   const viewedGregorianMonthKey = format(viewDate, 'yyyy-MM');
+
+  useEffect(() => {
+    if (!downloadMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      const root = downloadMenuRef.current;
+      if (root && root.contains(target)) return;
+      setDownloadMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDownloadMenuOpen(false);
+    };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [downloadMenuOpen]);
 
   // If the settings panel opens, always close the quick-inspect popup so it can't get "stuck".
   useEffect(() => {
@@ -2867,22 +2889,95 @@ export function Calendar() {
               מדריך תפעולי
             </button>
 
-            <button
-              type="button"
-              onClick={async () => {
-                if (!ensureDownloadsWork()) return;
-                try {
-                  await exportMonthPdf();
-                } catch (e: any) {
-                  window.alert(`שגיאה בהורדה: ${String(e?.message ?? e)}`);
-                }
-              }}
-              className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
-              title="הורדת PDF של החודש"
-            >
-              <span aria-hidden="true">⬇️</span>
-              הורדה
-            </button>
+            <div ref={downloadMenuRef} className="relative inline-flex items-center">
+              <button
+                type="button"
+                onClick={() => setDownloadMenuOpen((v) => !v)}
+                className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
+                aria-haspopup="menu"
+                aria-expanded={downloadMenuOpen}
+                title="הורדה / תצוגה מקדימה"
+              >
+                <span aria-hidden="true">⬇️</span>
+                הורדה
+              </button>
+
+              {downloadMenuOpen ? (
+                <div
+                  role="menu"
+                  dir="rtl"
+                  className="absolute right-0 top-full mt-2 w-[260px] rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden z-50"
+                >
+                  <button
+                    type="button"
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-slate-50"
+                    onClick={async () => {
+                      setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
+                      try {
+                        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
+                          location: 'Jerusalem',
+                        });
+                        const blob = await exportPdfBlobFromHtml(html, settingsForExport);
+                        const url = URL.createObjectURL(blob);
+                        const w = window.open(url, '_blank', 'noopener,noreferrer');
+                        if (!w) {
+                          URL.revokeObjectURL(url);
+                          window.alert('חלון התצוגה המקדימה נחסם. אפשר לאפשר popups או לפתוח בטאב חדש.');
+                          return;
+                        }
+                        window.setTimeout(() => URL.revokeObjectURL(url), 20_000);
+                      } catch (e: any) {
+                        window.alert(`שגיאה בתצוגה מקדימה: ${String(e?.message ?? e)}`);
+                      }
+                    }}
+                  >
+                    תצוגה מקדימה PDF (חודש)
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-slate-50 border-t border-slate-100"
+                    onClick={async () => {
+                      setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
+                      try {
+                        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
+                          location: 'Jerusalem',
+                        });
+                        const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
+                        await downloadPdfFromHtml(filename, html, settingsForExport);
+                        setSaveFlash('ה‑PDF נשלח להורדה');
+                        window.setTimeout(() => setSaveFlash(null), 1400);
+                      } catch (e: any) {
+                        window.alert(`שגיאה בהורדה: ${String(e?.message ?? e)}`);
+                      }
+                    }}
+                  >
+                    הורד PDF (חודש)
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-slate-50 border-t border-slate-100"
+                    onClick={() => {
+                      setDownloadMenuOpen(false);
+                      openYearPdfRangeDialog('preview');
+                    }}
+                  >
+                    תצוגה מקדימה PDF (שנה)
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-slate-50 border-t border-slate-100"
+                    onClick={() => {
+                      setDownloadMenuOpen(false);
+                      openYearPdfRangeDialog('download');
+                    }}
+                  >
+                    הורד PDF (שנה)
+                  </button>
+                </div>
+              ) : null}
+            </div>
 
             <button
               type="button"
