@@ -2840,7 +2840,7 @@ export function Calendar() {
 
         <div
           dir="rtl"
-          className="flex flex-wrap items-center gap-2 justify-center sm:justify-start"
+          className="flex w-full flex-wrap items-center gap-2 justify-end"
         >
           <button
             type="button"
