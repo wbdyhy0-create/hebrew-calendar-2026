@@ -406,6 +406,11 @@ export function Calendar() {
   const [tenantEditorOpen, setTenantEditorOpen] = useState(false);
   const [tenantDraftId, setTenantDraftId] = useState('');
   const [tenantDraftName, setTenantDraftName] = useState('');
+  const isCalendar2026Host = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const host = (window.location.hostname || '').toLowerCase();
+    return host === 'hebrew-calendar-2026.vercel.app' || host.endsWith('.hebrew-calendar-2026.vercel.app');
+  }, []);
   const [publishIncludeUserPresets, setPublishIncludeUserPresets] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     try {
@@ -3393,52 +3398,58 @@ export function Calendar() {
                   />
                   כלול סגנונות שמורים שלי (פריסטים) בקטלוג לענן
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 select-none">
-                  <input
-                    type="checkbox"
-                    checked={(settings as any).showFinanceSidebar === true}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...(s as any),
-                        showFinanceSidebar: Boolean(e.target.checked),
-                      }))
-                    }
-                  />
-                  Enable Finance News Sidebar (טננט פעיל בלבד)
-                </label>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-slate-700">
-                    טננט פעיל
-                    <select
-                      className="ms-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm"
-                      value={activeTenantId}
-                      onChange={(e) => setActiveTenantId(sanitizeTenantIdForUi(String(e.target.value || 'default')))}
-                      title="הטננט שאליו Publish יישמר בענן"
+                {!isCalendar2026Host && (
+                  <>
+                    <label className="flex items-center gap-2 text-sm text-slate-700 select-none">
+                      <input
+                        type="checkbox"
+                        checked={(settings as any).showFinanceSidebar === true}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...(s as any),
+                            showFinanceSidebar: Boolean(e.target.checked),
+                          }))
+                        }
+                      />
+                      Enable Finance News Sidebar (טננט פעיל בלבד)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-slate-700">
+                        טננט פעיל
+                        <select
+                          className="ms-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm"
+                          value={activeTenantId}
+                          onChange={(e) =>
+                            setActiveTenantId(sanitizeTenantIdForUi(String(e.target.value || 'default')))
+                          }
+                          title="הטננט שאליו Publish יישמר בענן"
+                        >
+                          <option value="default">default</option>
+                          {tenants.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.id})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setTenantEditorOpen(true)}
+                        className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                        title="ניהול רשימת טננטים"
+                      >
+                        ניהול טננטים
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSettings(DEFAULT_SETTINGS)}
+                      className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                     >
-                      <option value="default">default</option>
-                      {tenants.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name} ({t.id})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setTenantEditorOpen(true)}
-                    className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                    title="ניהול רשימת טננטים"
-                  >
-                    ניהול טננטים
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSettings(DEFAULT_SETTINGS)}
-                  className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                >
-                  איפוס
-                </button>
+                      איפוס
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             <SettingsSearchBar onPick={jumpToSetting} />
