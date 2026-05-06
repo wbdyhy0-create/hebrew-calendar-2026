@@ -703,16 +703,88 @@ export function Calendar() {
     printInProgressRef.current = true;
     try {
       const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, { location: 'Jerusalem' });
-      const w = window.open('', '_blank', 'noopener,noreferrer');
-      if (!w) throw new Error('חלון ההדפסה נחסם. אפשר לאפשר popups או לפתוח בטאב חדש.');
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      w.focus();
+      const openPopup = () => window.open('', '_blank', 'noopener,noreferrer');
 
-      // In some browsers, calling `print()` too early opens an empty tab without triggering the OS dialog.
-      // Wait for the new document to be ready, then print.
-      const tryPrint = () => {
+      const popup = openPopup();
+      if (popup) {
+        popup.document.open();
+        popup.document.write(html);
+        popup.document.close();
+        popup.focus();
+
+        // In some browsers, calling `print()` too early opens an empty tab without triggering the OS dialog.
+        // Wait for the new document to be ready, then print.
+        const tryPrint = () => {
+          try {
+            popup.focus();
+            popup.print();
+          } catch {
+            // ignore
+          }
+        };
+
+        const start = Date.now();
+        const poll = () => {
+          const elapsed = Date.now() - start;
+          if (elapsed > 4000) {
+            tryPrint();
+            return;
+          }
+          try {
+            if (popup.document?.readyState === 'complete') {
+              tryPrint();
+              return;
+            }
+          } catch {
+            tryPrint();
+            return;
+          }
+          window.setTimeout(poll, 120);
+        };
+
+        try {
+          popup.addEventListener?.('load', () => tryPrint(), { once: true } as any);
+        } catch {
+          // ignore
+        }
+
+        window.setTimeout(poll, 120);
+        return;
+      }
+
+      // Popup blocked → print via hidden iframe (same page, avoids popup blockers).
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      iframe.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(iframe);
+
+      const cleanup = () => {
+        try {
+          iframe.remove();
+        } catch {
+          // ignore
+        }
+      };
+
+      const w = iframe.contentWindow;
+      const d = iframe.contentDocument;
+      if (!w || !d) {
+        cleanup();
+        throw new Error('הדפסה נחסמה/נכשלה (iframe לא נטען). נסה לאפשר הדפסה או לפתוח בטאב חדש.');
+      }
+
+      d.open();
+      d.write(html);
+      d.close();
+
+      const tryIframePrint = () => {
         try {
           w.focus();
           w.print();
@@ -723,31 +795,26 @@ export function Calendar() {
 
       const start = Date.now();
       const poll = () => {
-        const elapsed = Date.now() - start;
-        if (elapsed > 4000) {
-          tryPrint();
+        if (Date.now() - start > 5000) {
+          tryIframePrint();
+          window.setTimeout(cleanup, 2500);
           return;
         }
         try {
-          if (w.document?.readyState === 'complete') {
-            tryPrint();
+          if (d.readyState === 'complete') {
+            tryIframePrint();
+            window.setTimeout(cleanup, 2500);
             return;
           }
         } catch {
-          // ignore cross-origin/edge cases, fall back to timeout print
-          tryPrint();
+          tryIframePrint();
+          window.setTimeout(cleanup, 2500);
           return;
         }
         window.setTimeout(poll, 120);
       };
 
-      // Best-effort: also hook onload when available.
-      try {
-        w.addEventListener?.('load', () => tryPrint(), { once: true } as any);
-      } catch {
-        // ignore
-      }
-
+      iframe.addEventListener('load', () => poll(), { once: true });
       window.setTimeout(poll, 120);
     } finally {
       printInProgressRef.current = false;
