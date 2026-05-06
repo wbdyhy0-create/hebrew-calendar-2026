@@ -2835,6 +2835,40 @@ export function Calendar() {
               מדריך תפעולי
             </button>
 
+            <button
+              type="button"
+              onClick={async () => {
+                if (!ensureDownloadsWork()) return;
+                try {
+                  await exportMonthPdf();
+                } catch (e: any) {
+                  window.alert(`שגיאה בהורדה: ${String(e?.message ?? e)}`);
+                }
+              }}
+              className="px-3 py-2 text-sm rounded-md border border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100 active:bg-sky-100/80 transition flex items-center gap-2"
+              title="הורדת PDF של החודש"
+            >
+              <span aria-hidden="true">⬇️</span>
+              הורדה
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (!ensureDownloadsWork()) return;
+                try {
+                  await printMonth();
+                } catch (e: any) {
+                  window.alert(`שגיאה בהדפסה: ${String(e?.message ?? e)}`);
+                }
+              }}
+              className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 active:bg-amber-100/80 transition flex items-center gap-2"
+              title="הדפסת החודש"
+            >
+              <span aria-hidden="true">🖨️</span>
+              הדפסה
+            </button>
+
           </div>
         </div>
 
