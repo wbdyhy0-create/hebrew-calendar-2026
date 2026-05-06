@@ -3070,7 +3070,7 @@ export function Calendar() {
           <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-sm">
             <div className="flex w-full flex-col items-end gap-2 px-3 py-2.5 sm:px-4">
               <div className="w-full text-right font-normal text-slate-900">עיצוב</div>
-              <div className="flex w-full flex-wrap items-center justify-end gap-2">
+              <div className="flex w-full flex-row-reverse flex-wrap items-center justify-start gap-2">
                 {saveFlash ? (
                   <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md">
                     {saveFlash}
