@@ -5081,7 +5081,10 @@ export function Calendar() {
                 (resolveCalendarLayoutZoomPercent(settings) / 100)
               })`,
                   }),
-              transformOrigin: 'center center',
+              // Anchor scaling to the top so the calendar grows downward inside the canvas
+              // instead of drifting upward when zoom/auto-fit is applied.
+              transformOrigin:
+                settings.layoutCenterVertically && !settings.layoutFillHeight ? 'center center' : 'top center',
             }}
           >
             <div
