@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'node:child_process'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -80,6 +82,16 @@ export default defineConfig({
         }
       })(),
     ),
+  },
+  resolve: {
+    alias: {
+      // Calendar 2026 vendors the suite source tree; alias the workspace package so
+      // studio imports (`@hebrew-calendar/shared`) work in a single-package Vercel build.
+      '@hebrew-calendar/shared': path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        'hebrew-calendar-suite/packages/shared/src/index.ts',
+      ),
+    },
   },
   /** נדרש ל־Electron (טעינת index.html מ־file:// אחרי build). */
   base: './',
