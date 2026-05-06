@@ -3173,9 +3173,10 @@ export function Calendar() {
                 >
                   ייבוא סגנון (JSON)
                 </button>
-                <button
-                  type="button"
-                  onClick={async () => {
+                {!isCalendar2026Host && (
+                  <button
+                    type="button"
+                    onClick={async () => {
                     try {
                       const publishUrl = (() => {
                         const fromEnv = (import.meta as any).env?.VITE_PUBLISH_URL?.trim?.();
@@ -3276,13 +3277,16 @@ export function Calendar() {
                     } catch (e: any) {
                       window.alert(`Publish נכשל: ${String(e?.message ?? e)}`);
                     }
-                  }}
-                  className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                  title="פרסום קונפיגורציה"
-                >
-                  פרסום קונפיגורציה
-                </button>
-                <button
+                    }}
+                    className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    title="פרסום קונפיגורציה"
+                  >
+                    פרסום קונפיגורציה
+                  </button>
+                )}
+                {!isCalendar2026Host && (
+                  <>
+                    <button
                   type="button"
                   onClick={async () => {
                     const ok = window.confirm(
@@ -3343,7 +3347,7 @@ export function Calendar() {
                 >
                   פרסום איפוס
                 </button>
-                <button
+                    <button
                   type="button"
                   onClick={async () => {
                     const ok = window.confirm(
@@ -3390,14 +3394,16 @@ export function Calendar() {
                 >
                   מחק סגנונות משתמש מהענן
                 </button>
-                <label className="flex items-center gap-2 text-sm text-slate-700 select-none">
-                  <input
-                    type="checkbox"
-                    checked={publishIncludeUserPresets}
-                    onChange={(e) => setPublishIncludeUserPresets(Boolean(e.target.checked))}
-                  />
-                  כלול סגנונות שמורים שלי (פריסטים) בקטלוג לענן
-                </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-700 select-none">
+                      <input
+                        type="checkbox"
+                        checked={publishIncludeUserPresets}
+                        onChange={(e) => setPublishIncludeUserPresets(Boolean(e.target.checked))}
+                      />
+                      כלול סגנונות שמורים שלי (פריסטים) בקטלוג לענן
+                    </label>
+                  </>
+                )}
                 {!isCalendar2026Host && (
                   <>
                     <label className="flex items-center gap-2 text-sm text-slate-700 select-none">
