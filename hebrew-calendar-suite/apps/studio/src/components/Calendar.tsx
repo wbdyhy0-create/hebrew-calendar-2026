@@ -3046,22 +3046,24 @@ export function Calendar() {
               ) : null}
             </div>
 
-            <button
-              type="button"
-              onClick={async () => {
-                if (!ensureDownloadsWork()) return;
-                try {
-                  await printMonth();
-                } catch (e: any) {
-                  window.alert(`שגיאה בהדפסה: ${String(e?.message ?? e)}`);
-                }
-              }}
-              className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 active:bg-amber-100/80 transition flex items-center gap-2"
-              title="הדפסת החודש"
-            >
-              <span aria-hidden="true">🖨️</span>
-              הדפסה
-            </button>
+            {!isCalendar2026Host && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!ensureDownloadsWork()) return;
+                  try {
+                    await printMonth();
+                  } catch (e: any) {
+                    window.alert(`שגיאה בהדפסה: ${String(e?.message ?? e)}`);
+                  }
+                }}
+                className="px-3 py-2 text-sm rounded-md border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 active:bg-amber-100/80 transition flex items-center gap-2"
+                title="הדפסת החודש"
+              >
+                <span aria-hidden="true">🖨️</span>
+                הדפסה
+              </button>
+            )}
 
           </div>
         </div>
