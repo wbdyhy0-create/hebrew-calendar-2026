@@ -708,15 +708,47 @@ export function Calendar() {
       w.document.open();
       w.document.write(html);
       w.document.close();
-      // Give the browser a moment to load fonts/images before print.
       w.focus();
-      window.setTimeout(() => {
+
+      // In some browsers, calling `print()` too early opens an empty tab without triggering the OS dialog.
+      // Wait for the new document to be ready, then print.
+      const tryPrint = () => {
         try {
+          w.focus();
           w.print();
         } catch {
           // ignore
         }
-      }, 350);
+      };
+
+      const start = Date.now();
+      const poll = () => {
+        const elapsed = Date.now() - start;
+        if (elapsed > 4000) {
+          tryPrint();
+          return;
+        }
+        try {
+          if (w.document?.readyState === 'complete') {
+            tryPrint();
+            return;
+          }
+        } catch {
+          // ignore cross-origin/edge cases, fall back to timeout print
+          tryPrint();
+          return;
+        }
+        window.setTimeout(poll, 120);
+      };
+
+      // Best-effort: also hook onload when available.
+      try {
+        w.addEventListener?.('load', () => tryPrint(), { once: true } as any);
+      } catch {
+        // ignore
+      }
+
+      window.setTimeout(poll, 120);
     } finally {
       printInProgressRef.current = false;
     }
