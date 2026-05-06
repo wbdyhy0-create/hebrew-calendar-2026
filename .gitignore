@@ -15,7 +15,14 @@ release
 
 # Local-only / nested repos
 _vendor/
-hebrew-calendar-suite/
+
+# Hebrew calendar suite (tracked source, ignore artifacts)
+hebrew-calendar-suite/**/node_modules/
+hebrew-calendar-suite/**/dist/
+hebrew-calendar-suite/**/dist-ssr/
+hebrew-calendar-suite/**/.vercel/
+hebrew-calendar-suite/**/.turbo/
+hebrew-calendar-suite/**/.next/
 
 # Editor directories and files
 .vscode/*

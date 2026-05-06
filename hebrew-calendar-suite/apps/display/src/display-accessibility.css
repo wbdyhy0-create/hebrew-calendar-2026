@@ -1,0 +1,145 @@
+/**
+ * Display — semantic color tokens and high-contrast "low brightness" mode.
+ * PDF export uses standalone HTML documents and never receives `html.accessibility-mode`.
+ */
+
+:root {
+  /* Defaults: app continues to rely on inline styles from Studio settings */
+  --display-page-bg: transparent;
+  --display-grid-frame-bg: transparent;
+  --display-grid-cell-bg: transparent;
+  --display-calendar-text-primary: inherit;
+  --display-calendar-text-accent: inherit;
+  --display-calendar-line: inherit;
+}
+
+/**
+ * Accessible dark palette — reduced glare for light-sensitive viewers.
+ */
+html.accessibility-mode {
+  --display-page-bg: #1a1a1a;
+  --display-grid-frame-bg: #1a1a1a;
+  --display-grid-cell-bg: #002b36;
+  --display-calendar-text-primary: #fdf6e3;
+  --display-calendar-text-accent: #b58900;
+  --display-calendar-line: #586e75;
+
+  color-scheme: dark;
+}
+
+/* ---------- App shell ---------- */
+html.accessibility-mode .display-app-root {
+  background: var(--display-page-bg) !important;
+  color: var(--display-calendar-text-primary) !important;
+}
+
+/* Fixed sidebar (downloads / view toggles) */
+html.accessibility-mode aside.display-fixed-sidebar {
+  background: rgba(26, 26, 26, 0.96) !important;
+  color: var(--display-calendar-text-primary) !important;
+  border-color: var(--display-calendar-line) !important;
+}
+
+html.accessibility-mode aside.display-fixed-sidebar summary {
+  color: var(--display-calendar-text-primary) !important;
+}
+
+html.accessibility-mode aside.display-fixed-sidebar .chip {
+  background: rgba(0, 43, 54, 0.65) !important;
+  border-color: var(--display-calendar-line) !important;
+  color: var(--display-calendar-text-primary) !important;
+}
+
+html.accessibility-mode aside.display-fixed-sidebar .chip-active {
+  background: rgba(181, 137, 0, 0.28) !important;
+  border-color: var(--display-calendar-text-accent) !important;
+  color: var(--display-calendar-text-primary) !important;
+}
+
+html.accessibility-mode .display-floating-clock .chip {
+  background: rgba(0, 43, 54, 0.85) !important;
+  border-color: var(--display-calendar-line) !important;
+  color: var(--display-calendar-text-primary) !important;
+}
+
+html.accessibility-mode .display-acc-toggle-on {
+  box-shadow: 0 0 0 2px rgba(181, 137, 0, 0.45) !important;
+}
+
+/**
+ * Keyboard focus — WCAG 2.4.7 (Focus Visible). Gold ring separates from Solarized base03 background.
+ * PDF export never loads this stylesheet (standalone print HTML only).
+ */
+html.accessibility-mode :focus-visible {
+  outline: 3px solid #b58900 !important;
+  outline-offset: 2px !important;
+}
+
+html.accessibility-mode .display-day-cell-focusable:focus-visible {
+  z-index: 4;
+}
+
+/* ---------- Month calendar (screen only; PDF is separate DOM) ---------- */
+html.accessibility-mode [data-display-canvas-frame] {
+  background-color: var(--display-grid-frame-bg) !important;
+  background-image: none !important;
+  border-color: var(--display-calendar-line) !important;
+}
+
+html.accessibility-mode [data-display-calendar-host] [data-inspect='month-grid'] {
+  background: var(--display-grid-cell-bg) !important;
+  border-color: var(--display-calendar-line) !important;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+}
+
+html.accessibility-mode [data-display-calendar-host] [data-inspect='header'] {
+  background: var(--display-grid-cell-bg) !important;
+  border-color: var(--display-calendar-line) !important;
+}
+
+html.accessibility-mode [data-display-calendar-host] [data-inspect='header'] * {
+  color: var(--display-calendar-text-primary) !important;
+}
+
+html.accessibility-mode [data-display-weekday-header] {
+  background: var(--display-grid-cell-bg) !important;
+  /* Cream for all header copy (incl. EN sub-labels) — small text needs max contrast */
+  color: var(--display-calendar-text-primary) !important;
+  border-color: var(--display-calendar-line) !important;
+}
+
+html.accessibility-mode [data-display-day-cell='in'],
+html.accessibility-mode [data-display-day-cell='pad'] {
+  background: var(--display-grid-cell-bg) !important;
+  border-color: var(--display-calendar-line) !important;
+  color: var(--display-calendar-text-primary) !important;
+}
+
+html.accessibility-mode [data-display-day-cell='pad'] {
+  opacity: 0.88;
+}
+
+/* Inline colors on nested elements (times, fractions, reminders) */
+html.accessibility-mode [data-display-calendar-host] [data-display-day-cell] *,
+html.accessibility-mode [data-display-calendar-host] [data-display-day-cell] *::before {
+  color: var(--display-calendar-text-primary) !important;
+}
+
+/* Events + labels: cream for small typography (≥4.5:1 on #002b36) */
+html.accessibility-mode [data-display-calendar-host] [data-display-event-stack] *,
+html.accessibility-mode [data-display-calendar-host] [data-display-event-stack]::before {
+  color: var(--display-calendar-text-primary) !important;
+}
+
+/* Zmanim clocks — explicit block; same cream as body text */
+html.accessibility-mode [data-display-calendar-host] [data-display-zmanim-block],
+html.accessibility-mode [data-display-calendar-host] [data-display-zmanim-block] *,
+html.accessibility-mode [data-display-calendar-host] [data-display-zmanim-block] *::before {
+  color: #fdf6e3 !important;
+}
+
+html.accessibility-mode [data-display-today-cell='1'] {
+  box-shadow: inset 0 0 0 3px var(--display-calendar-text-accent) !important;
+}

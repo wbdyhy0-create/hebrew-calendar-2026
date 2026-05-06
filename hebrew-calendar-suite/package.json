@@ -1,0 +1,18 @@
+{
+  "name": "hebrew-calendar-suite",
+  "private": true,
+  "version": "0.0.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:studio": "npm --workspace apps/studio run dev",
+    "build:studio": "npm --workspace apps/studio run build",
+    "dev:display": "npm --workspace apps/display run dev",
+    "build:display": "npm --workspace apps/display run build",
+    "dev:admin": "npm --workspace apps/admin run dev",
+    "build:admin": "npm --workspace apps/admin run build"
+  }
+}
+

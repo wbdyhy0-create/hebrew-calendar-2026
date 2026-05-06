@@ -1,0 +1,15 @@
+{
+  "name": "@hebrew-calendar/shared",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@hebcal/core": "^6.3.0",
+    "date-fns": "^4.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+
