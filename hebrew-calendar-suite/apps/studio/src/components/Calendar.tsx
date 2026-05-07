@@ -843,10 +843,11 @@ export function Calendar() {
                 headerLayoutStyle: 'floating',
                 headerBarOffsetYPx: 0,
                 headerBarHeightPx: Math.max(56, Number((settingsForExport as any).headerBarHeightPx ?? 0) || 0),
-                // Avoid the "white cover" look in PDF by keeping the header bar transparent in exports.
-                headerBarBg: 'transparent',
-                headerBarBorderWidthPx: 0,
-                headerBarBorderColor: 'transparent',
+                headerBarBorderWidthPx: Math.max(
+                  1,
+                  Number((settingsForExport as any).headerBarBorderWidthPx ?? 0) || 0,
+                ),
+                headerBarBorderColor: String((settingsForExport as any).headerBarBorderColor ?? '#E2E8F0') || '#E2E8F0',
                 headerBarMarginBottomPx: Math.max(
                   10,
                   Number((settingsForExport as any).headerBarMarginBottomPx ?? 0) || 0,
