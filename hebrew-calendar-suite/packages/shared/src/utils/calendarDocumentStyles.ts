@@ -593,9 +593,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         padding-left: ${settings.canvasPaddingPx}px;
         padding-right: ${settings.canvasPaddingPx}px;
         padding-bottom: ${settings.canvasPaddingPx}px;
-        /* In printable/export HTML, top padding creates a "white shelf" above the grid and can
-           visually cover the top header area. Keep it only for integrated header layouts. */
-        padding-top: ${isIntegrated ? settings.canvasPaddingTopPx : 0}px;
+        padding-top: ${settings.canvasPaddingTopPx}px;
         border: ${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor};
         border-radius: ${canvasR}px;
         overflow: hidden;
@@ -911,7 +909,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         min-height: ${pageHeightMm}mm;
         height: auto !important;
         overflow: visible !important;
-        padding-top: calc(${settings.canvasPaddingTopPx}px + ${pdfCanvasExtraTopPadPx}px) !important;
+        padding-top: ${pdfCanvasExtraTopPadPx}px !important;
       }
   `;
 }
