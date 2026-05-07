@@ -75,6 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
 
       res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', 'inline; filename="calendar.pdf"')
       res.setHeader('Cache-Control', 'no-store')
       res.status(200).send(pdf)
     } finally {

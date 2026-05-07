@@ -817,6 +817,17 @@ export function Calendar() {
     setIsExporting(true);
 
     try {
+      const isPdfBlob = async (blob: Blob): Promise<boolean> => {
+        try {
+          if (!(blob instanceof Blob) || blob.size < 5) return false;
+          const ab = await blob.slice(0, 5).arrayBuffer();
+          const sig = new TextDecoder('ascii').decode(new Uint8Array(ab));
+          return sig === '%PDF-';
+        } catch {
+          return false;
+        }
+      };
+
       // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
       try {
         const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
@@ -836,7 +847,12 @@ export function Calendar() {
         if (resp.ok) {
           const ab = await resp.arrayBuffer();
           const blob = new Blob([ab], { type: 'application/pdf' });
-          if (blob.size > 0) return { blob, filename, source: 'server' };
+          if (blob.size > 0 && (await isPdfBlob(blob))) return { blob, filename, source: 'server' };
+          // eslint-disable-next-line no-console
+          console.warn('export-month-pdf returned non-PDF payload', {
+            size: blob.size,
+            contentType: resp.headers.get('content-type'),
+          });
         } else {
           // eslint-disable-next-line no-console
           console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
