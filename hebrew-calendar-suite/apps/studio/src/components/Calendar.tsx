@@ -831,11 +831,46 @@ export function Calendar() {
       // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
       try {
         const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
+        const rawHeaderBg = String((settingsForExport as any).headerBarBg ?? '');
+        const headerBgLooksInvisible =
+          rawHeaderBg.trim() === '' ||
+          rawHeaderBg.trim().toLowerCase() === 'transparent' ||
+          /rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*0\s*\)/i.test(rawHeaderBg);
+
         const exportSettings: any = {
           ...settingsForExport,
           // In some setups the header bar is nudged upward for on-screen layout.
           // In print-to-PDF this can clip the header entirely. Clamp to keep it visible.
           headerBarOffsetYPx: Math.max(0, Number((settingsForExport as any).headerBarOffsetYPx ?? 0) || 0),
+          ...(isCalendar2026Host
+            ? {
+                // 2026-only: ensure the top header bar is actually visible in PDF,
+                // even if a theme makes it transparent or too small.
+                headerLayoutStyle: 'floating',
+                headerBarOffsetYPx: 0,
+                headerBarHeightPx: Math.max(56, Number((settingsForExport as any).headerBarHeightPx ?? 0) || 0),
+                headerBarBorderWidthPx: Math.max(
+                  1,
+                  Number((settingsForExport as any).headerBarBorderWidthPx ?? 0) || 0,
+                ),
+                headerBarBorderColor: String((settingsForExport as any).headerBarBorderColor ?? '#E2E8F0') || '#E2E8F0',
+                headerBarMarginBottomPx: Math.max(
+                  10,
+                  Number((settingsForExport as any).headerBarMarginBottomPx ?? 0) || 0,
+                ),
+                headerBarBg: headerBgLooksInvisible ? 'rgba(255,255,255,0.92)' : rawHeaderBg,
+
+                // 2026-only: prevent "table/grid shift" from covering the header in PDF.
+                // Users sometimes set negative offsets for on-screen layout tweaks.
+                // In print-to-PDF, those can pull the grid upward and hide the header bar.
+                tableOffsetYPx: Math.max(0, Number((settingsForExport as any).tableOffsetYPx ?? 0) || 0),
+                gridOffsetYPx: Math.max(0, Number((settingsForExport as any).gridOffsetYPx ?? 0) || 0),
+                gridWeekdayHeaderRowOffsetYPx: Math.max(
+                  0,
+                  Number((settingsForExport as any).gridWeekdayHeaderRowOffsetYPx ?? 0) || 0,
+                ),
+              }
+            : null),
         };
         const html = buildPrintableMonthHtml(viewDate, exportSettings, overrides, {
           location: 'Jerusalem',
