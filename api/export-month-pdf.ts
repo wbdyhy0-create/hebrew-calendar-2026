@@ -3,20 +3,16 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import chromium from '@sparticuz/chromium'
 import puppeteer from 'puppeteer-core'
 
-import { buildPrintableMonthHtml } from '../hebrew-calendar-suite/packages/shared/src/utils/printMonth'
-import { resolvePdfPageDimensionsMm } from '../hebrew-calendar-suite/packages/shared/src/utils/pdfPage'
-import type { CalendarSettings } from '../hebrew-calendar-suite/packages/shared/src/utils/settings'
-import type { OverridesMap } from '../hebrew-calendar-suite/packages/shared/src/overrides'
-
 export const config = {
   runtime: 'nodejs',
   maxDuration: 60,
+  memory: 1024,
 }
 
 type Payload = {
-  viewDateIso: string
-  settings: CalendarSettings
-  overrides: OverridesMap
+  html: string
+  widthMm: number
+  heightMm: number
 }
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -30,21 +26,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const body = req.body as Payload | undefined
-  if (!body || typeof body.viewDateIso !== 'string' || !isPlainObject(body.settings) || !isPlainObject(body.overrides)) {
-    res.status(400).json({ error: 'Invalid payload. Expected { viewDateIso: string, settings: object, overrides: object }' })
+  if (
+    !body ||
+    typeof body.html !== 'string' ||
+    !body.html.trim() ||
+    !Number.isFinite(Number(body.widthMm)) ||
+    !Number.isFinite(Number(body.heightMm))
+  ) {
+    res.status(400).json({ error: 'Invalid payload. Expected { html: string, widthMm: number, heightMm: number }' })
     return
   }
-
-  const viewDate = new Date(body.viewDateIso)
-  if (!Number.isFinite(viewDate.getTime())) {
-    res.status(400).json({ error: 'Invalid viewDateIso. Expected ISO date string.' })
-    return
-  }
-
-  const settings = body.settings as CalendarSettings
-  const overrides = body.overrides as OverridesMap
-  const html = buildPrintableMonthHtml(viewDate, settings, overrides, { location: 'Jerusalem', renderMode: 'screen' })
-  const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settings)
+  const html = body.html
+  const widthMm = Number(body.widthMm)
+  const heightMm = Number(body.heightMm)
 
   try {
     const executablePath = await chromium.executablePath()

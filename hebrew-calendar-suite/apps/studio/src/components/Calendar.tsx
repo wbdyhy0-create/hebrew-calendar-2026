@@ -819,13 +819,18 @@ export function Calendar() {
     try {
       // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
       try {
+        const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
+        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
+          location: 'Jerusalem',
+          renderMode: 'screen',
+        });
         const resp = await fetch('/api/export-month-pdf', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            viewDateIso: viewDate.toISOString(),
-            settings: settingsForExport,
-            overrides,
+            html,
+            widthMm,
+            heightMm,
           }),
         });
         if (resp.ok) {
