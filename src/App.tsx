@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react';
 import { Calendar } from './components/Calendar';
 
 type BoundaryState = { error?: Error };
@@ -34,10 +34,64 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
 }
 
 export default function App() {
+  const [trial, setTrial] = useState<
+    | {
+        ok: true;
+        trialDays: number;
+        installYmd: string;
+        nowYmd: string;
+        daysUsed: number;
+        daysLeft: number;
+        expired: boolean;
+      }
+    | { ok: false; error: string }
+    | null
+  >(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const api = window.HebrewGregorianDesktop?.trial?.getStatus;
+        if (!api) return; // web build: no trial lock
+        const st = await api();
+        if (alive) setTrial(st as any);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <AppErrorBoundary>
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white relative">
         <Calendar />
+
+        {trial && (trial as any).ok === true && (trial as any).expired ? (
+          <div
+            className="fixed inset-0 z-[200] bg-white/95 backdrop-blur-sm flex items-center justify-center p-6"
+            dir="rtl"
+          >
+            <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-xl p-6 text-center">
+              <div className="text-xl font-bold text-slate-900">StyleCal – סטודיו אישי לעיצוב לוחות שנה</div>
+              <div className="mt-2 text-base font-semibold text-rose-700">תקופת הניסיון הסתיימה 🛑</div>
+              <div className="mt-4 text-sm text-slate-700 leading-relaxed">
+                נשמח שתמשיך ליצור ולעצב לוחות שנה בסטייל הייחודי שלך!
+                <br />
+                כדי לפתוח את הנעילה ולהמשיך להשתמש בתוכנה, יש לרכוש רישיון שימוש.
+              </div>
+              <div className="mt-4 text-sm text-slate-900 font-semibold">
+                לרכישה ולקבלת קוד הפעלה, נא ליצור קשר: <span className="font-mono">0522284432</span>
+              </div>
+              <div className="mt-4 text-xs text-slate-500">
+                (תאריך התקנה: {(trial as any).installYmd} • עברו {(trial as any).daysUsed} ימים)
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
     </AppErrorBoundary>
   );
