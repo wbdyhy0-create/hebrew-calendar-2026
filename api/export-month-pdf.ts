@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const settings = body.settings as CalendarSettings
   const overrides = body.overrides as OverridesMap
-  const html = buildPrintableMonthHtml(viewDate, settings, overrides, { location: 'Jerusalem' })
+  const html = buildPrintableMonthHtml(viewDate, settings, overrides, { location: 'Jerusalem', renderMode: 'screen' })
   const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settings)
 
   try {

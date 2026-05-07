@@ -62,29 +62,41 @@ export function buildPrintableMonthHtml(
   viewDate: Date,
   settings: CalendarSettings,
   overrides: OverridesMap,
-  _opts?: { location?: 'Jerusalem' | 'TelAviv' },
+  _opts?: { location?: 'Jerusalem' | 'TelAviv'; renderMode?: 'pdf' | 'screen' },
 ) {
   const weeks = getMonthGridWeeks(viewDate)
-  // Auto-fit PDF: when enabled, compute a cell height that fills the page vertically.
-  const weekCount = Math.max(5, Math.min(6, weeks.length || 6))
-  const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96)
-  const approxHeaderH = 0
-  const approxDowH = settings.gridWeekdayHeaderHeightPx + settings.gridWeekdayHeaderRowOffsetYPx
-  const approxCanvasPad = settings.canvasPaddingTopPx + settings.canvasPaddingPx * 2
-  const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8
-  const availForCells = Math.max(220, pagePxH - approxHeaderH - approxDowH - approxCanvasPad - approxBorders)
-  const autoCellH = Math.round(availForCells / weekCount)
-  // Chrome print-to-PDF can paginate inside CSS grids. In 6-week months, this may push the last row
-  // to the next page (leaving a blank gap). Ensure the printable HTML uses a cell height that fits
-  // a full month into a single page.
-  // After switching zmanim to two stacked lines (י-ם / ת״א), some special days need extra room.
-  const fittedCellH = Math.min(170, Math.max(96, autoCellH))
-  // Printable/PDF should always auto-fit the cell height to the page, so the calendar fills the page
-  // (especially for 5-week months where fixed heights leave large blank areas).
-  const effectiveSettings = { ...settings, pdfExportCellHeightPx: fittedCellH }
-  const printLayoutZoomPct = resolveCalendarLayoutZoomPercent(effectiveSettings)
-  const pdfFontMul = printLayoutZoomPct > 0 ? 100 / printLayoutZoomPct : 1
-  const pdfFs = (px: number) => Math.max(1, Math.round(Number(px) * pdfFontMul))
+  const renderMode = _opts?.renderMode ?? 'pdf'
+
+  // For PDF printing we previously auto-fitted cell height and compensated for layout zoom
+  // by scaling font sizes. That improves page fill but can diverge from on-screen layout.
+  // In "screen" mode we intentionally avoid those adjustments to match the app view.
+  const effectiveSettings = (() => {
+    if (renderMode !== 'pdf') return settings
+
+    // Auto-fit PDF: compute a cell height that fills the page vertically.
+    const weekCount = Math.max(5, Math.min(6, weeks.length || 6))
+    const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96)
+    const approxHeaderH = 0
+    const approxDowH = settings.gridWeekdayHeaderHeightPx + settings.gridWeekdayHeaderRowOffsetYPx
+    const approxCanvasPad = settings.canvasPaddingTopPx + settings.canvasPaddingPx * 2
+    const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8
+    const availForCells = Math.max(220, pagePxH - approxHeaderH - approxDowH - approxCanvasPad - approxBorders)
+    const autoCellH = Math.round(availForCells / weekCount)
+    // Chrome print-to-PDF can paginate inside CSS grids. In 6-week months, this may push the last row
+    // to the next page (leaving a blank gap). Ensure the printable HTML uses a cell height that fits
+    // a full month into a single page.
+    // After switching zmanim to two stacked lines (י-ם / ת״א), some special days need extra room.
+    const fittedCellH = Math.min(170, Math.max(96, autoCellH))
+    return { ...settings, pdfExportCellHeightPx: fittedCellH }
+  })()
+
+  const pdfFontMul = (() => {
+    if (renderMode !== 'pdf') return 1
+    const printLayoutZoomPct = resolveCalendarLayoutZoomPercent(effectiveSettings)
+    return printLayoutZoomPct > 0 ? 100 / printLayoutZoomPct : 1
+  })()
+
+  const pdfFs = (px: number) => (renderMode === 'pdf' ? Math.max(1, Math.round(Number(px) * pdfFontMul)) : px)
   const paddingStrength = Number(effectiveSettings.paddingCellStrength)
   const paddingBg = mixHexWithWhite(
     effectiveSettings.paddingCellColor,
