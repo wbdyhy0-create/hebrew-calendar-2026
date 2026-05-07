@@ -2,6 +2,64 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const fs = require('fs/promises');
 const path = require('path');
 
+const TRIAL_DAYS = 14;
+
+function toYmdUtc(d) {
+  const dt = new Date(d);
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(dt.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+async function getOrCreateTrialState() {
+  const filePath = path.join(app.getPath('userData'), '.hg_trial.json');
+  let raw = '';
+  try {
+    raw = await fs.readFile(filePath, 'utf-8');
+  } catch {
+    raw = '';
+  }
+
+  let installYmd = '';
+  if (raw) {
+    try {
+      const j = JSON.parse(raw);
+      if (j && typeof j.installYmd === 'string') installYmd = String(j.installYmd);
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(installYmd)) {
+    installYmd = toYmdUtc(Date.now());
+    try {
+      await fs.writeFile(filePath, JSON.stringify({ installYmd }, null, 2), 'utf-8');
+    } catch {
+      // ignore
+    }
+  }
+
+  return { filePath, installYmd };
+}
+
+function computeTrialStatus(installYmd) {
+  // Compare in UTC to avoid DST/timezone drift.
+  const installMs = Date.parse(`${installYmd}T00:00:00.000Z`);
+  const nowYmd = toYmdUtc(Date.now());
+  const nowMs = Date.parse(`${nowYmd}T00:00:00.000Z`);
+  const daysUsed = Math.max(0, Math.floor((nowMs - installMs) / 86400000));
+  const daysLeft = Math.max(0, TRIAL_DAYS - daysUsed);
+  return {
+    trialDays: TRIAL_DAYS,
+    installYmd,
+    nowYmd,
+    daysUsed,
+    daysLeft,
+    expired: daysUsed >= TRIAL_DAYS,
+  };
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
@@ -26,6 +84,17 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('hg:trial-status', async () => {
+    try {
+      const st = await getOrCreateTrialState();
+      const status = computeTrialStatus(st.installYmd);
+      return { ok: true, ...status };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return { ok: false, error: msg };
+    }
+  });
+
   ipcMain.handle('hg:save-json', async (_evt, payload) => {
     const suggestedName =
       payload && typeof payload.suggestedName === 'string' && payload.suggestedName.trim()

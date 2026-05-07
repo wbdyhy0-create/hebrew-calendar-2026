@@ -9,5 +9,10 @@ contextBridge.exposeInMainWorld('HebrewGregorianDesktop', {
       return await ipcRenderer.invoke('hg:open-json')
     },
   },
+  trial: {
+    getStatus: async () => {
+      return await ipcRenderer.invoke('hg:trial-status')
+    },
+  },
 })
 

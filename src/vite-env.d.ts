@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
-declare const __APP_BUILD__: string;
-
 declare global {
+  const __APP_BUILD__: string;
+
   interface Window {
     HebrewGregorianDesktop?: {
       files?: {
@@ -17,7 +17,23 @@ declare global {
           | { ok: false; error: string }
         >;
       };
+      trial?: {
+        getStatus: () => Promise<
+          | {
+              ok: true;
+              trialDays: number;
+              installYmd: string;
+              nowYmd: string;
+              daysUsed: number;
+              daysLeft: number;
+              expired: boolean;
+            }
+          | { ok: false; error: string }
+        >;
+      };
     };
   }
 }
+
+export {}
 
