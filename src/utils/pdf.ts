@@ -346,6 +346,13 @@ export async function exportPdfBlobFromHtml(
         }
       });
 
+      // Some user configurations move the header bar up via translateY (headerBarOffsetYPx).
+      // When the canvas top padding is zeroed for capture, this can clip the top of the header.
+      // Keep the header inside the capture box by neutralizing its translateY during capture.
+      scope.querySelectorAll<HTMLElement>('.headerBar').forEach((hb) => {
+        hb.style.setProperty('transform', 'translateY(0px)', 'important');
+      });
+
       // Force grid layout and centered headers in the clone before capture.
       scope.querySelectorAll<HTMLElement>('.grid').forEach((grid) => {
         grid.style.display = 'grid';
