@@ -5444,6 +5444,196 @@ export function Calendar() {
         onClose={() => setStylePackOpen(false)}
         onSelectTheme={(id) => setSettings((s) => applyStylePackId(s, id))}
       />
+
+      {exportStyleOpen ? (
+        <div
+          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={() => setExportStyleOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-xl border border-slate-200 bg-white shadow-xl"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="font-normal text-slate-900">ייצוא סגנון (JSON)</div>
+              <div className="flex items-center gap-2">
+                {exportStyleCopied ? (
+                  <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">
+                    {exportStyleCopied}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  onClick={() => setExportStyleOpen(false)}
+                >
+                  סגור
+                </button>
+              </div>
+            </div>
+
+            <div className="px-4 py-3">
+              <p className="text-xs text-slate-600 mb-2">העתק את ה‑JSON הזה ושמור אותו לגיבוי/שיתוף.</p>
+              <textarea
+                className="w-full min-h-[280px] rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-900"
+                value={exportStyleJson}
+                readOnly
+                spellCheck={false}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <div className="mt-3 flex justify-end gap-2">
+                {window.HebrewGregorianDesktop?.files?.saveJson ? (
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    onClick={async () => {
+                      try {
+                        const suggestedName = `calendar-style-${format(viewDate, 'yyyy-MM-dd')}.json`;
+                        const resp = await window.HebrewGregorianDesktop!.files!.saveJson({
+                          suggestedName,
+                          content: exportStyleJson,
+                        });
+                        if ((resp as any)?.ok && !(resp as any)?.canceled) {
+                          setExportStyleCopied('נשמר לקובץ');
+                          window.setTimeout(() => setExportStyleCopied(null), 1600);
+                        }
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  >
+                    שמור לקובץ
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(exportStyleJson);
+                      setExportStyleCopied('הועתק ללוח');
+                      window.setTimeout(() => setExportStyleCopied(null), 1400);
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                >
+                  העתק ללוח
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {importStyleOpen ? (
+        <div
+          className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={() => setImportStyleOpen(false)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-xl border border-slate-200 bg-white shadow-lg"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="font-semibold text-slate-900">ייבוא סגנון (JSON)</div>
+              <button
+                type="button"
+                className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                onClick={() => setImportStyleOpen(false)}
+              >
+                סגור
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="text-sm text-slate-700">
+                הדבק כאן JSON של <span className="font-mono">{'{ settings, overrides, fonts }'}</span>.
+              </div>
+              <textarea
+                className="w-full min-h-[260px] rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-900"
+                value={importStyleJson}
+                onChange={(e) => setImportStyleJson(e.target.value)}
+                spellCheck={false}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+                  onClick={async () => {
+                    try {
+                      const parsed = JSON.parse(importStyleJson || '{}') as any;
+                      const nextSettings = parsed?.settings;
+                      const nextOverrides = parsed?.overrides;
+                      const nextFonts = parsed?.fonts;
+                      if (!nextSettings || typeof nextSettings !== 'object') {
+                        window.alert('JSON לא כולל settings תקין.');
+                        return;
+                      }
+                      await importTransferFonts(nextFonts);
+                      setSettings((_) => ({ ...DEFAULT_SETTINGS, ...(nextSettings as any) } as any));
+                      setOverrides((_) =>
+                        nextOverrides && typeof nextOverrides === 'object' ? (nextOverrides as any) : ({} as any),
+                      );
+                      try {
+                        saveSettings({ ...DEFAULT_SETTINGS, ...(nextSettings as any) } as any);
+                        saveOverrides(
+                          nextOverrides && typeof nextOverrides === 'object' ? (nextOverrides as any) : ({} as any),
+                        );
+                      } catch {
+                        // ignore
+                      }
+                      setImportStyleOpen(false);
+                      setSaveFlash('הסגנון יובא');
+                      window.setTimeout(() => setSaveFlash(null), 1400);
+                    } catch (e: any) {
+                      window.alert(`ייבוא נכשל: ${String(e?.message ?? e)}`);
+                    }
+                  }}
+                >
+                  החל סגנון
+                </button>
+                {window.HebrewGregorianDesktop?.files?.openJson ? (
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    onClick={async () => {
+                      try {
+                        const resp = await window.HebrewGregorianDesktop!.files!.openJson();
+                        if ((resp as any)?.ok && !(resp as any)?.canceled) {
+                          setImportStyleJson(String((resp as any).content ?? ''));
+                        }
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  >
+                    פתח קובץ
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  onClick={async () => {
+                    try {
+                      const t = await navigator.clipboard.readText();
+                      setImportStyleJson(t || '');
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  title="הדבק מהלוח"
+                >
+                  הדבק מהלוח
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
