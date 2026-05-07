@@ -887,6 +887,25 @@ export function Calendar() {
     }
   };
 
+  const exportMonthPdfBlobFromLiveDom = async (): Promise<{ blob: Blob; filename: string }> => {
+    const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
+    const target = canvasEl ?? calendarContentRef.current;
+    if (!target) {
+      throw new Error('לא נמצא לוח לצילום.');
+    }
+
+    // Stabilize layout: ensure fonts are ready before capture (prevents text "drift").
+    try {
+      await (document as any).fonts?.ready;
+    } catch {
+      // ignore
+    }
+
+    const blob = await exportPdfBlobFromCalendarElement(target, settingsForExport, { multiPage: false });
+    const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
+    return { blob, filename };
+  };
+
   const [isExporting, setIsExporting] = useState(false);
   const [yearPdfDialogOpen, setYearPdfDialogOpen] = useState(false);
   const [yearPdfDialogMode, setYearPdfDialogMode] = useState<'preview' | 'download'>('preview');
@@ -2982,10 +3001,7 @@ export function Calendar() {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
                       try {
-                        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
-                          location: 'Jerusalem',
-                        });
-                        const blob = await exportPdfBlobFromHtml(html, settingsForExport);
+                        const { blob } = await exportMonthPdfBlobFromLiveDom();
                         const url = URL.createObjectURL(blob);
                         const w = window.open(url, '_blank', 'noopener,noreferrer');
                         if (!w) {
@@ -3008,13 +3024,21 @@ export function Calendar() {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
                       try {
-                        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
-                          location: 'Jerusalem',
+                        const { blob, filename } = await exportMonthPdfBlobFromLiveDom();
+                        const handle = await requestSaveHandle(filename, {
+                          mime: 'application/pdf',
+                          description: 'PDF',
+                          extensions: ['.pdf'],
                         });
-                        const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
-                        await downloadPdfFromHtml(filename, html, settingsForExport);
-                        setSaveFlash('ה‑PDF נשלח להורדה');
-                        window.setTimeout(() => setSaveFlash(null), 1400);
+                        if (handle) {
+                          await saveBlobToHandle(handle, blob);
+                          setSaveFlash('ה‑PDF נשמר');
+                        } else {
+                          const popup = openDownloadPopup();
+                          if (popup) downloadBlobViaPopup(popup, filename, blob);
+                          setSaveFlash('ה‑PDF נשלח להורדה');
+                        }
+                        window.setTimeout(() => setSaveFlash(null), 1800);
                       } catch (e: any) {
                         window.alert(`שגיאה בהורדה: ${String(e?.message ?? e)}`);
                       }
