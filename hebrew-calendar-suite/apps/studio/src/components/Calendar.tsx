@@ -831,12 +831,6 @@ export function Calendar() {
       // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
       try {
         const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
-        const rawHeaderBg = String((settingsForExport as any).headerBarBg ?? '');
-        const headerBgLooksInvisible =
-          rawHeaderBg.trim() === '' ||
-          rawHeaderBg.trim().toLowerCase() === 'transparent' ||
-          /rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*0\s*\)/i.test(rawHeaderBg);
-
         const exportSettings: any = {
           ...settingsForExport,
           // In some setups the header bar is nudged upward for on-screen layout.
@@ -845,7 +839,7 @@ export function Calendar() {
           ...(isCalendar2026Host
             ? {
                 // 2026-only: ensure the top header bar is actually visible in PDF,
-                // even if a theme makes it transparent or too small.
+                // without changing on-screen theme colors.
                 headerLayoutStyle: 'floating',
                 headerBarOffsetYPx: 0,
                 headerBarHeightPx: Math.max(56, Number((settingsForExport as any).headerBarHeightPx ?? 0) || 0),
@@ -858,7 +852,6 @@ export function Calendar() {
                   10,
                   Number((settingsForExport as any).headerBarMarginBottomPx ?? 0) || 0,
                 ),
-                headerBarBg: headerBgLooksInvisible ? 'rgba(255,255,255,0.92)' : rawHeaderBg,
 
                 // 2026-only: prevent "table/grid shift" from covering the header in PDF.
                 // Users sometimes set negative offsets for on-screen layout tweaks.
@@ -872,10 +865,22 @@ export function Calendar() {
               }
             : null),
         };
-        const html = buildPrintableMonthHtml(viewDate, exportSettings, overrides, {
+        let html = buildPrintableMonthHtml(viewDate, exportSettings, overrides, {
           location: 'Jerusalem',
           renderMode: 'screen',
         });
+
+        if (isCalendar2026Host) {
+          // 2026-only: ensure the header always stacks above the grid in PDF output.
+          // This avoids "white cover" effects caused by grid backgrounds overlapping the header area.
+          const inject = `<style>
+            .headerWrap{ position:relative !important; z-index: 20 !important; }
+            .headerWrap > *{ position:relative !important; z-index: 20 !important; }
+            .gridWrap{ position:relative !important; z-index: 1 !important; }
+            .grid{ position:relative !important; z-index: 1 !important; }
+          </style>`;
+          html = html.includes('</head>') ? html.replace('</head>', `${inject}</head>`) : `${inject}${html}`;
+        }
         const resp = await fetch('/api/export-month-pdf', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
