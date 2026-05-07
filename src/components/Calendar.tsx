@@ -1833,17 +1833,17 @@ export function Calendar() {
       />
 
       {colorSampleImageOpen && colorSampleImageDataUrl ? (
-        <div className="fixed inset-0 z-[125] bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[125] pointer-events-none">
           <div
             dir="rtl"
-            className="fixed w-[min(960px,calc(100vw-24px))] max-h-[min(720px,calc(100vh-24px))] rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+            className="fixed pointer-events-auto w-[360px] max-h-[520px] rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden"
             style={{
               left: Math.max(12, Math.round(colorSamplePos?.x ?? 12)),
               top: Math.max(12, Math.round(colorSamplePos?.y ?? 12)),
             }}
           >
             <div
-              className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 cursor-move select-none"
+              className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 cursor-move select-none"
               onPointerDown={(e) => {
                 e.stopPropagation();
                 (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
@@ -1863,9 +1863,9 @@ export function Calendar() {
                 const dy = e.clientY - st.startY;
                 const nextX = st.startPosX + dx;
                 const nextY = st.startPosY + dy;
-                // Clamp to viewport with a small margin so the title bar stays reachable.
-                const w = Math.min(960, Math.max(520, window.innerWidth - 24));
-                const h = Math.min(720, Math.max(380, window.innerHeight - 24));
+                // Clamp so titlebar stays reachable.
+                const w = 360;
+                const h = 520;
                 const maxX = Math.max(12, window.innerWidth - w - 12);
                 const maxY = Math.max(12, window.innerHeight - Math.min(h, window.innerHeight - 24) - 12);
                 setColorSamplePos({
@@ -1889,11 +1889,11 @@ export function Calendar() {
                 colorSampleDragRef.current = null;
               }}
             >
-              <div className="text-sm font-semibold text-slate-900">דגימת צבע מתמונה</div>
+              <div className="text-sm font-semibold text-slate-900">תמונה לדגימת צבעים</div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+                  className="rounded-md border border-slate-200 bg-white px-2 py-1 text-sm hover:bg-slate-50"
                   onClick={() => {
                     setPendingImageKey('__color_sample__');
                     if (imgPickerRef.current) imgPickerRef.current.value = '';
@@ -1905,7 +1905,7 @@ export function Calendar() {
                 </button>
                 <button
                   type="button"
-                  className="h-9 w-9 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  className="h-8 w-8 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                   aria-label="סגור"
                   onClick={() => setColorSampleImageOpen(false)}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -1915,106 +1915,94 @@ export function Calendar() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-0 overflow-auto max-h-[min(720px,calc(100vh-24px))]">
-              <div className="p-4 bg-white">
-                <div className="text-xs text-slate-600 mb-2">
-                  קליק על התמונה יוסיף צבע (HEX). לחיצה על צבע תעתיק אותו.
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-                  <img
-                    src={colorSampleImageDataUrl}
-                    alt="תמונה לדגימה"
-                    className="w-full h-auto block select-none cursor-crosshair"
-                    draggable={false}
-                    onClick={async (e) => {
-                      const imgEl = e.currentTarget as HTMLImageElement;
-                      const hex = await sampleHexFromImage(
-                        colorSampleImageDataUrl,
-                        e.clientX,
-                        e.clientY,
-                        imgEl,
-                      );
-                      if (!hex) {
-                        setSaveFlash('לא הצלחתי לדגום מהתמונה.');
-                        window.setTimeout(() => setSaveFlash(null), 1600);
-                        return;
-                      }
-                      setColorSampledHexes((prev) => {
-                        const next = [hex, ...prev.filter((x) => x !== hex)];
-                        return next.slice(0, 32);
-                      });
-                      try {
-                        await navigator.clipboard.writeText(hex);
-                        setSaveFlash(`נדגם ${hex} (הועתק ללוח)`);
-                        window.setTimeout(() => setSaveFlash(null), 1400);
-                      } catch {
-                        setSaveFlash(`נדגם ${hex}`);
-                        window.setTimeout(() => setSaveFlash(null), 1200);
-                      }
-                    }}
-                  />
-                </div>
+            <div className="p-3">
+              <div className="text-xs text-slate-600 mb-2">
+                קליק על התמונה ידגום צבע. צבע אחרון:{" "}
+                <span className="font-mono text-slate-900">
+                  {colorSampledHexes[0] ?? '—'}
+                </span>
               </div>
 
-              <aside className="p-4 border-t lg:border-t-0 lg:border-r border-slate-200 bg-white">
-                <div className="text-sm font-semibold text-slate-900">צבעים שנדגמו</div>
-                <div className="mt-2 grid grid-cols-4 gap-2">
-                  {colorSampledHexes.length ? (
-                    colorSampledHexes.map((hex) => (
-                      <button
-                        key={hex}
-                        type="button"
-                        className="h-10 rounded-md border border-slate-200"
-                        style={{ background: hex }}
-                        title={`${hex} (העתקה)`}
-                        onClick={async () => {
-                          try {
-                            await navigator.clipboard.writeText(hex);
-                            setSaveFlash(`הועתק ${hex}`);
-                            window.setTimeout(() => setSaveFlash(null), 1100);
-                          } catch {
-                            setSaveFlash(hex);
-                            window.setTimeout(() => setSaveFlash(null), 900);
-                          }
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <div className="col-span-4 text-xs text-slate-500">
-                      אין עדיין צבעים. לחץ על התמונה כדי לדגום.
-                    </div>
-                  )}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                <img
+                  src={colorSampleImageDataUrl}
+                  alt="תמונה לדגימה"
+                  className="w-full h-auto max-h-[260px] object-contain block select-none cursor-crosshair bg-white"
+                  draggable={false}
+                  onClick={async (e) => {
+                    const imgEl = e.currentTarget as HTMLImageElement;
+                    const hex = await sampleHexFromImage(
+                      colorSampleImageDataUrl,
+                      e.clientX,
+                      e.clientY,
+                      imgEl,
+                    );
+                    if (!hex) {
+                      setSaveFlash('לא הצלחתי לדגום מהתמונה.');
+                      window.setTimeout(() => setSaveFlash(null), 1600);
+                      return;
+                    }
+                    setColorSampledHexes((prev) => {
+                      const next = [hex, ...prev.filter((x) => x !== hex)];
+                      return next.slice(0, 12);
+                    });
+                    try {
+                      await navigator.clipboard.writeText(hex);
+                      setSaveFlash(`נדגם ${hex} (הועתק ללוח)`);
+                      window.setTimeout(() => setSaveFlash(null), 1400);
+                    } catch {
+                      setSaveFlash(`נדגם ${hex}`);
+                      window.setTimeout(() => setSaveFlash(null), 1200);
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    setColorSampleImageDataUrl(null);
+                    setColorSampledHexes([]);
+                    setColorSampleImageOpen(false);
+                  }}
+                >
+                  מחק תמונה
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-40"
+                  disabled={!colorSampledHexes.length}
+                  onClick={() => setColorSampledHexes([])}
+                >
+                  נקה יעד
+                </button>
+              </div>
+
+              {colorSampledHexes.length ? (
+                <div className="mt-3 grid grid-cols-8 gap-2">
+                  {colorSampledHexes.map((hex) => (
+                    <button
+                      key={hex}
+                      type="button"
+                      className="h-6 w-6 rounded border border-slate-200"
+                      style={{ background: hex }}
+                      title={`${hex} (העתקה)`}
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(hex);
+                          setSaveFlash(`הועתק ${hex}`);
+                          window.setTimeout(() => setSaveFlash(null), 900);
+                        } catch {
+                          setSaveFlash(hex);
+                          window.setTimeout(() => setSaveFlash(null), 900);
+                        }
+                      }}
+                    />
+                  ))}
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-40"
-                    disabled={!colorSampledHexes.length}
-                    onClick={() => setColorSampledHexes([])}
-                  >
-                    נקה
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-40"
-                    disabled={!colorSampledHexes.length}
-                    onClick={async () => {
-                      const txt = colorSampledHexes.join('\n');
-                      try {
-                        await navigator.clipboard.writeText(txt);
-                        setSaveFlash('כל הצבעים הועתקו');
-                        window.setTimeout(() => setSaveFlash(null), 1200);
-                      } catch {
-                        setSaveFlash('לא הצלחתי להעתיק.');
-                        window.setTimeout(() => setSaveFlash(null), 1200);
-                      }
-                    }}
-                    title="מעתיק רשימת HEX לשורות"
-                  >
-                    העתק הכל
-                  </button>
-                </div>
-              </aside>
+              ) : null}
             </div>
           </div>
         </div>
