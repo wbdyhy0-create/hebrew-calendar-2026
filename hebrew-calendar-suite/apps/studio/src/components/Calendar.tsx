@@ -1107,6 +1107,9 @@ export function Calendar() {
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
+  const [monthPdfPreviewOpen, setMonthPdfPreviewOpen] = useState(false);
+  const [monthPdfPreviewUrl, setMonthPdfPreviewUrl] = useState<string | null>(null);
+  const monthPdfPreviewUrlRef = useRef<string | null>(null);
   const [colorPalettePos, setColorPalettePos] = useState<{ x: number; y: number }>(() => ({
     x: 24,
     y: 160,
@@ -1145,6 +1148,20 @@ export function Calendar() {
       window.removeEventListener('keydown', onKey);
     };
   }, [downloadMenuOpen]);
+
+  useEffect(() => {
+    if (monthPdfPreviewOpen) return;
+    const prev = monthPdfPreviewUrlRef.current;
+    if (prev) {
+      monthPdfPreviewUrlRef.current = null;
+      setMonthPdfPreviewUrl(null);
+      try {
+        URL.revokeObjectURL(prev);
+      } catch {
+        // ignore
+      }
+    }
+  }, [monthPdfPreviewOpen]);
 
   // If the settings panel opens, always close the quick-inspect popup so it can't get "stuck".
   useEffect(() => {
@@ -3022,29 +3039,23 @@ export function Calendar() {
                     onClick={async () => {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
-                      // Open preview window immediately (keep browser gesture) to avoid popup blockers.
-                      const previewWin = window.open('about:blank', '_blank', 'noopener,noreferrer');
+                      setMonthPdfPreviewOpen(true);
+                      setMonthPdfPreviewUrl(null);
                       try {
                         const { blob } = await exportMonthPdfBlob();
                         const url = URL.createObjectURL(blob);
-                        if (!previewWin) {
-                          URL.revokeObjectURL(url);
-                          window.alert('חלון התצוגה המקדימה נחסם. אפשר לאפשר popups או לפתוח בטאב חדש.');
-                          return;
+                        const prev = monthPdfPreviewUrlRef.current;
+                        if (prev) {
+                          try {
+                            URL.revokeObjectURL(prev);
+                          } catch {
+                            // ignore
+                          }
                         }
-                        try {
-                          previewWin.location.href = url;
-                          previewWin.focus?.();
-                        } catch {
-                          // ignore
-                        }
-                        window.setTimeout(() => URL.revokeObjectURL(url), 20_000);
+                        monthPdfPreviewUrlRef.current = url;
+                        setMonthPdfPreviewUrl(url);
                       } catch (e: any) {
-                        try {
-                          previewWin?.close?.();
-                        } catch {
-                          // ignore
-                        }
+                        setMonthPdfPreviewOpen(false);
                         window.alert(`שגיאה בתצוגה מקדימה: ${String(e?.message ?? e)}`);
                       }
                     }}
@@ -3174,6 +3185,48 @@ export function Calendar() {
           onJumpToAnchor={(anchorId) => jumpToSetting(anchorId)}
           onClose={() => setHelpOpen(false)}
         />
+      ) : null}
+
+      {monthPdfPreviewOpen ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-3">
+          <div className="w-[min(980px,96vw)] max-h-[92vh] rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden flex flex-col">
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 text-sm font-normal text-slate-900 flex items-center justify-between gap-3">
+              <div>תצוגה מקדימה PDF (חודש)</div>
+              <div className="flex items-center gap-2">
+                {monthPdfPreviewUrl ? (
+                  <a
+                    className="px-3 py-2 text-xs rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+                    href={monthPdfPreviewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    פתח בטאב חדש
+                  </a>
+                ) : null}
+                <button
+                  type="button"
+                  className="px-3 py-2 text-xs rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
+                  onClick={() => setMonthPdfPreviewOpen(false)}
+                >
+                  סגור
+                </button>
+              </div>
+            </div>
+            <div className="p-2 bg-white flex-1 min-h-[320px]">
+              {monthPdfPreviewUrl ? (
+                <iframe
+                  title="Month PDF Preview"
+                  className="w-full h-full rounded-xl border border-slate-200"
+                  src={monthPdfPreviewUrl}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-slate-600">
+                  מכין PDF…
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {yearPdfDialogOpen ? (
