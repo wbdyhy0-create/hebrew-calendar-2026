@@ -6052,6 +6052,29 @@ export function Calendar() {
                 onFocus={(e) => e.currentTarget.select()}
               />
               <div className="mt-3 flex justify-end gap-2">
+                {window.HebrewGregorianDesktop?.files?.saveJson ? (
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    onClick={async () => {
+                      try {
+                        const suggestedName = `calendar-style-${format(viewDate, 'yyyy-MM-dd')}.json`;
+                        const resp = await window.HebrewGregorianDesktop!.files!.saveJson({
+                          suggestedName,
+                          content: exportStyleJson,
+                        });
+                        if ((resp as any)?.ok && !(resp as any)?.canceled) {
+                          setExportStyleCopied('נשמר לקובץ');
+                          window.setTimeout(() => setExportStyleCopied(null), 1600);
+                        }
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  >
+                    שמור לקובץ
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
@@ -6141,6 +6164,24 @@ export function Calendar() {
                 >
                   החל סגנון
                 </button>
+                {window.HebrewGregorianDesktop?.files?.openJson ? (
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                    onClick={async () => {
+                      try {
+                        const resp = await window.HebrewGregorianDesktop!.files!.openJson();
+                        if ((resp as any)?.ok && !(resp as any)?.canceled) {
+                          setImportStyleJson(String((resp as any).content ?? ''));
+                        }
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  >
+                    פתח קובץ
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"

@@ -1,4 +1,5 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const fs = require('fs/promises');
 const path = require('path');
 
 function createWindow() {
@@ -9,6 +10,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
 
@@ -24,6 +26,34 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('hg:save-json', async (_evt, payload) => {
+    const suggestedName =
+      payload && typeof payload.suggestedName === 'string' && payload.suggestedName.trim()
+        ? payload.suggestedName.trim()
+        : 'calendar-style.json';
+    const content = payload && typeof payload.content === 'string' ? payload.content : '';
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'שמור JSON',
+      defaultPath: suggestedName,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (canceled || !filePath) return { ok: true, canceled: true };
+    await fs.writeFile(filePath, content, 'utf-8');
+    return { ok: true, canceled: false, filePath };
+  });
+
+  ipcMain.handle('hg:open-json', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'פתח JSON',
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (canceled || !filePaths || !filePaths[0]) return { ok: true, canceled: true };
+    const filePath = filePaths[0];
+    const content = await fs.readFile(filePath, 'utf-8');
+    return { ok: true, canceled: false, filePath, content };
+  });
+
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
