@@ -8,6 +8,11 @@ import { resolvePdfPageDimensionsMm } from '../hebrew-calendar-suite/packages/sh
 import type { CalendarSettings } from '../hebrew-calendar-suite/packages/shared/src/utils/settings'
 import type { OverridesMap } from '../hebrew-calendar-suite/packages/shared/src/overrides'
 
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 60,
+}
+
 type Payload = {
   viewDateIso: string
   settings: CalendarSettings

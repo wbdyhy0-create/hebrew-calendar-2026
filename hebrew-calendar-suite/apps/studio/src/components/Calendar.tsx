@@ -812,7 +812,7 @@ export function Calendar() {
     }
   };
 
-  const exportMonthPdfBlob = async (): Promise<{ blob: Blob; filename: string }> => {
+  const exportMonthPdfBlob = async (): Promise<{ blob: Blob; filename: string; source: 'server' | 'client' }> => {
     const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
     setIsExporting(true);
 
@@ -831,7 +831,7 @@ export function Calendar() {
         if (resp.ok) {
           const ab = await resp.arrayBuffer();
           const blob = new Blob([ab], { type: 'application/pdf' });
-          if (blob.size > 0) return { blob, filename };
+          if (blob.size > 0) return { blob, filename, source: 'server' };
         } else {
           // eslint-disable-next-line no-console
           console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
@@ -852,7 +852,7 @@ export function Calendar() {
       }
 
       const blob = await exportPdfBlobFromCalendarElement(target, settingsForExport, { multiPage: false });
-      return { blob, filename };
+      return { blob, filename, source: 'client' };
     } finally {
       setIsExporting(false);
     }
@@ -1060,6 +1060,7 @@ export function Calendar() {
   const [pdfPreviewTitle, setPdfPreviewTitle] = useState<string>('תצוגה מקדימה PDF');
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const pdfPreviewUrlRef = useRef<string | null>(null);
+  const [pdfPreviewSourceLabel, setPdfPreviewSourceLabel] = useState<string | null>(null);
   const [colorPalettePos, setColorPalettePos] = useState<{ x: number; y: number }>(() => ({
     x: 24,
     y: 160,
@@ -1105,6 +1106,7 @@ export function Calendar() {
     if (prev) {
       pdfPreviewUrlRef.current = null;
       setPdfPreviewUrl(null);
+      setPdfPreviewSourceLabel(null);
       try {
         URL.revokeObjectURL(prev);
       } catch {
@@ -2992,8 +2994,10 @@ export function Calendar() {
                       setPdfPreviewTitle('תצוגה מקדימה PDF (חודש)');
                       setPdfPreviewOpen(true);
                       setPdfPreviewUrl(null);
+                      setPdfPreviewSourceLabel(null);
                       try {
-                        const { blob } = await exportMonthPdfBlob();
+                        const { blob, source } = await exportMonthPdfBlob();
+                        setPdfPreviewSourceLabel(source === 'server' ? 'שרת (Chromium)' : 'דפדפן (fallback)');
                         const url = URL.createObjectURL(blob);
                         const prev = pdfPreviewUrlRef.current;
                         if (prev) {
@@ -3142,7 +3146,12 @@ export function Calendar() {
         <div className="fixed inset-0 z-[90] bg-slate-900/40">
           <div className="absolute inset-0 bg-white shadow-2xl overflow-hidden flex flex-col">
             <div className="px-3 sm:px-4 py-3 border-b border-slate-200 bg-slate-50 text-sm font-normal text-slate-900 flex items-center justify-between gap-3">
-              <div className="truncate">{pdfPreviewTitle}</div>
+              <div className="min-w-0">
+                <div className="truncate">{pdfPreviewTitle}</div>
+                {pdfPreviewSourceLabel ? (
+                  <div className="mt-1 text-[11px] text-slate-500">מקור PDF: {pdfPreviewSourceLabel}</div>
+                ) : null}
+              </div>
               <div className="flex items-center gap-2 shrink-0">
                 {pdfPreviewUrl ? (
                   <a
