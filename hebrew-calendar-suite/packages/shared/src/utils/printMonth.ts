@@ -90,9 +90,10 @@ export function buildPrintableMonthHtml(
     return { ...settings, pdfExportCellHeightPx: fittedCellH }
   })()
 
+  const printLayoutZoomPct = renderMode === 'pdf' ? resolveCalendarLayoutZoomPercent(effectiveSettings) : 100
+
   const pdfFontMul = (() => {
     if (renderMode !== 'pdf') return 1
-    const printLayoutZoomPct = resolveCalendarLayoutZoomPercent(effectiveSettings)
     return printLayoutZoomPct > 0 ? 100 / printLayoutZoomPct : 1
   })()
 

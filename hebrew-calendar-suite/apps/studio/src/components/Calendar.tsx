@@ -29,23 +29,15 @@ import {
 } from '@hebrew-calendar/shared';
 import { buildCalendarDayMetas } from '../utils/monthViewModel';
 import {
-  downloadPdfFromHtml,
-  exportPdfBlobFromHtml,
   exportPdfBlobFromCalendarElement,
   exportYearPdfBlobFromCalendarCapture,
 } from '../utils/pdf';
-import {
-  downloadHtmlFromPrintableHtml,
-  exportPngBlobFromPrintableHtml,
-  downloadPngFromPrintableHtml,
-} from '../utils/exportDownloads';
 import {
   downloadBlobViaPopup,
   isEmbeddedFrame,
   openDownloadPopup,
   requestSaveHandle,
   saveBlobToHandle,
-  saveTextToHandle,
 } from '../utils/download';
 import {
   resolveCalendarLayoutZoomPercent,
@@ -56,7 +48,6 @@ import {
   resolvePdfPageDimensionsMm,
 } from '../utils/pdfPage';
 import { buildPrintableMonthHtml } from '../utils/printMonth';
-import { buildPrintableYearPdfHtml } from '../utils/printYearPdf';
 import {
   DEFAULT_SETTINGS,
   HEADER_BOX4_CENTER_OFFSET_X_PX,
@@ -821,111 +812,50 @@ export function Calendar() {
     }
   };
 
-  const exportMonthPdf = async () => {
-    const element = calendarContentRef.current;
-    if (!element) return;
-    setSaveFlash('מכין PDF…');
+  const exportMonthPdfBlob = async (): Promise<{ blob: Blob; filename: string }> => {
+    const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
     setIsExporting(true);
 
-    const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
-    const captureTarget = canvasEl ?? element;
-
     try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
+      // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
+      try {
+        const resp = await fetch('/api/export-month-pdf', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            viewDateIso: viewDate.toISOString(),
+            settings: settingsForExport,
+            overrides,
+          }),
+        });
+        if (resp.ok) {
+          const ab = await resp.arrayBuffer();
+          const blob = new Blob([ab], { type: 'application/pdf' });
+          if (blob.size > 0) return { blob, filename };
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
+        }
+      } catch {
+        // ignore: fall back to client export
+      }
 
-      const canvas = await html2canvas(captureTarget, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: '#fff',
-        logging: false,
-        width: 1123,
-        height: 794,
-        windowWidth: 1123,
-        windowHeight: 794,
-        onclone: (clonedDoc) => {
-          const clonedCanvas = clonedDoc.querySelector('[data-inspect="background"]') as HTMLElement | null;
-          const clonedParent = clonedCanvas?.parentElement as HTMLElement | null;
+      // Fallback: client-side html2canvas capture.
+      const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
+      const target = canvasEl ?? calendarContentRef.current;
+      if (!target) throw new Error('לא נמצא לוח לצילום.');
 
-          // Expand to exact A4 landscape pixel canvas (96dpi) just for capture.
-          if (clonedCanvas) {
-            clonedCanvas.style.width = '1123px';
-            clonedCanvas.style.minWidth = '1123px';
-            clonedCanvas.style.height = '794px';
+      try {
+        await (document as any).fonts?.ready;
+      } catch {
+        // ignore
+      }
 
-            // Ensure header/top content isn't clipped by scroll in the cloned capture.
-            clonedCanvas.scrollTop = 0;
-            clonedCanvas.scrollLeft = 0;
-            clonedCanvas.style.overflow = 'visible';
-          }
-          if (clonedParent) {
-            clonedParent.style.width = '1200px';
-            clonedParent.style.maxWidth = '1200px';
-          }
-
-          const style = clonedDoc.createElement('style');
-          style.innerHTML = `
-            .break-words { overflow: visible !important; max-height: none !important; }
-            /* PDF capture hardening: html2canvas can render blur/filters and transforms differently. */
-            [data-inspect="month-grid"] { backdrop-filter: none !important; filter: none !important; }
-            [data-inspect="header"] { filter: none !important; opacity: 1 !important; }
-            [data-inspect="header"] * { opacity: 1 !important; filter: none !important; }
-            /* Avoid weekday header row disappearing when using row offset sliders. */
-            [data-inspect="weekdays"] { transform: none !important; }
-          `;
-          clonedDoc.head.appendChild(style);
-        },
-      });
-
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
-      pdf.save(`calendar-${format(viewDate, 'yyyy-MM')}.pdf`);
-      setSaveFlash('הורד!');
-      setTimeout(() => setSaveFlash(null), 1400);
+      const blob = await exportPdfBlobFromCalendarElement(target, settingsForExport, { multiPage: false });
+      return { blob, filename };
     } finally {
       setIsExporting(false);
     }
-  };
-
-  const exportMonthPdfBlob = async (): Promise<{ blob: Blob; filename: string }> => {
-    const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
-
-    // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
-    try {
-      const resp = await fetch('/api/export-month-pdf', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          viewDateIso: viewDate.toISOString(),
-          settings: settingsForExport,
-          overrides,
-        }),
-      });
-      if (resp.ok) {
-        const ab = await resp.arrayBuffer();
-        const blob = new Blob([ab], { type: 'application/pdf' });
-        if (blob.size > 0) return { blob, filename };
-      } else {
-        // eslint-disable-next-line no-console
-        console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
-      }
-    } catch {
-      // ignore: fall back to client export
-    }
-
-    // Fallback: client-side html2canvas capture.
-    const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
-    const target = canvasEl ?? calendarContentRef.current;
-    if (!target) throw new Error('לא נמצא לוח לצילום.');
-
-    try {
-      await (document as any).fonts?.ready;
-    } catch {
-      // ignore
-    }
-
-    const blob = await exportPdfBlobFromCalendarElement(target, settingsForExport, { multiPage: false });
-    return { blob, filename };
   };
 
   const [isExporting, setIsExporting] = useState(false);
