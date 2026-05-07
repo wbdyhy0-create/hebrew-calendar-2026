@@ -3022,17 +3022,29 @@ export function Calendar() {
                     onClick={async () => {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
+                      // Open preview window immediately (keep browser gesture) to avoid popup blockers.
+                      const previewWin = window.open('about:blank', '_blank', 'noopener,noreferrer');
                       try {
                         const { blob } = await exportMonthPdfBlob();
                         const url = URL.createObjectURL(blob);
-                        const w = window.open(url, '_blank', 'noopener,noreferrer');
-                        if (!w) {
+                        if (!previewWin) {
                           URL.revokeObjectURL(url);
                           window.alert('חלון התצוגה המקדימה נחסם. אפשר לאפשר popups או לפתוח בטאב חדש.');
                           return;
                         }
+                        try {
+                          previewWin.location.href = url;
+                          previewWin.focus?.();
+                        } catch {
+                          // ignore
+                        }
                         window.setTimeout(() => URL.revokeObjectURL(url), 20_000);
                       } catch (e: any) {
+                        try {
+                          previewWin?.close?.();
+                        } catch {
+                          // ignore
+                        }
                         window.alert(`שגיאה בתצוגה מקדימה: ${String(e?.message ?? e)}`);
                       }
                     }}
@@ -3046,17 +3058,20 @@ export function Calendar() {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
                       try {
-                        const { blob, filename } = await exportMonthPdfBlob();
+                        // Request a save handle and/or open a popup immediately (keep browser gesture).
+                        const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
                         const handle = await requestSaveHandle(filename, {
                           mime: 'application/pdf',
                           description: 'PDF',
                           extensions: ['.pdf'],
                         });
+                        const popup = handle ? null : openDownloadPopup();
+
+                        const { blob } = await exportMonthPdfBlob();
                         if (handle) {
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PDF נשמר');
                         } else {
-                          const popup = openDownloadPopup();
                           if (popup) downloadBlobViaPopup(popup, filename, blob);
                           setSaveFlash('ה‑PDF נשלח להורדה');
                         }
