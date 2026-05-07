@@ -324,6 +324,17 @@ export function Calendar() {
   const [stylePresets, setStylePresets] = useState<StylePreset[]>(() =>
     typeof window === 'undefined' ? [] : loadStylePresets(),
   );
+  const KEEP_CELL_SIZES_KEY = 'hg:keepCellTextSizesOnStyleApply:v1';
+  const [keepCellTextSizesOnStyleApply, setKeepCellTextSizesOnStyleApply] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      const raw = window.localStorage.getItem(KEEP_CELL_SIZES_KEY);
+      if (raw === null) return true; // default ON (matches Studio/2026 behavior)
+      return raw === '1' || raw === 'true';
+    } catch {
+      return true;
+    }
+  });
   const [stylePresetSelectedId, setStylePresetSelectedId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     const items = loadStylePresets();
@@ -660,9 +671,27 @@ export function Calendar() {
     saveStylePresets(stylePresets);
   }, [stylePresets]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(KEEP_CELL_SIZES_KEY, keepCellTextSizesOnStyleApply ? '1' : '0');
+    } catch {
+      // ignore
+    }
+  }, [keepCellTextSizesOnStyleApply]);
+
   const applyStylePreset = (p: StylePreset) => {
     try {
-      const next = p.settings;
+      const next: CalendarSettings = keepCellTextSizesOnStyleApply
+        ? {
+            ...p.settings,
+            // Preserve current cell typography sizes when switching styles.
+            gregDayFontPx: settings.gregDayFontPx,
+            hebDayFontPx: settings.hebDayFontPx,
+            eventTitleFontPx: settings.eventTitleFontPx,
+            shabbatTimesFontPx: settings.shabbatTimesFontPx,
+          }
+        : p.settings;
       setSettings(next);
       setSaveFlash(`הוחל סגנון: ${p.name}`);
       window.setTimeout(() => setSaveFlash(null), 1600);
@@ -3978,6 +4007,18 @@ export function Calendar() {
               <div className="text-sm font-semibold text-slate-900">סגנונות שמורים</div>
               <div className="mt-1 text-xs text-slate-600">
                 שמור את כל ההגדרות הנוכחיות בשם, והחל אותן בלחיצה אחת.
+              </div>
+
+              <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={keepCellTextSizesOnStyleApply}
+                  onChange={(e) => setKeepCellTextSizesOnStyleApply(e.target.checked)}
+                />
+                שמור את גודל הטקסט בתוך התאים גם כשמחליפים סגנון
+              </label>
+              <div className="mt-1 text-xs text-slate-500">
+                אם כבוי — החלפת סגנון תחליף גם את גדלי הטקסט (לועזי/עברי/אירועים/זמנים) לפי הסגנון.
               </div>
 
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
