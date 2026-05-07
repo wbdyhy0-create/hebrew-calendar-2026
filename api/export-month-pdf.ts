@@ -74,10 +74,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         pageRanges: '1',
       })
 
+      // Ensure binary output. Some runtimes may coerce Uint8Array to string if sent directly.
+      const buf = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf as unknown as Uint8Array)
+
+      res.statusCode = 200
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', 'inline; filename="calendar.pdf"')
       res.setHeader('Cache-Control', 'no-store')
-      res.status(200).send(pdf)
+      res.setHeader('Content-Length', String(buf.byteLength))
+      res.end(buf)
     } finally {
       await browser.close().catch(() => {})
     }
