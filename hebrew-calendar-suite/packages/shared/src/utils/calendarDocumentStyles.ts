@@ -385,7 +385,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
   const pdfTimesFontPx = Math.max(4, Math.round(shabbatTimesVisualPx * layoutFontMul))
   const pdfHebDayOffsetXPx = Math.round(Number((settings as any).hebDayOffsetXPx ?? 0))
   const pdfHebDayOffsetYPx = Math.round(Number((settings as any).hebDayOffsetYPx ?? 0))
-  const pdfCanvasExtraTopPadPx = headerLayout === 'right_block' ? 28 : 0;
+  const pdfCanvasExtraTopPadPx = 0;
 
   const cellCssColor = (raw: unknown, fallback: string) => {
     const s = typeof raw === 'string' ? raw.trim() : ''
@@ -909,7 +909,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         min-height: ${pageHeightMm}mm;
         height: auto !important;
         overflow: visible !important;
-        padding-top: ${pdfCanvasExtraTopPadPx}px !important;
+        padding-top: ${isIntegrated ? settings.canvasPaddingTopPx : pdfCanvasExtraTopPadPx}px !important;
       }
   `;
 }
