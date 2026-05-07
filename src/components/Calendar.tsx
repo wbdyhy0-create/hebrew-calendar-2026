@@ -316,6 +316,11 @@ export function Calendar() {
   const [settings, setSettings] = useState<CalendarSettings>(() =>
     typeof window === 'undefined' ? DEFAULT_SETTINGS : loadSettings(),
   );
+  const [exportStyleOpen, setExportStyleOpen] = useState(false);
+  const [exportStyleJson, setExportStyleJson] = useState('');
+  const [exportStyleCopied, setExportStyleCopied] = useState<string | null>(null);
+  const [importStyleOpen, setImportStyleOpen] = useState(false);
+  const [importStyleJson, setImportStyleJson] = useState('');
   const [stylePresets, setStylePresets] = useState<StylePreset[]>(() =>
     typeof window === 'undefined' ? [] : loadStylePresets(),
   );
@@ -352,6 +357,64 @@ export function Calendar() {
   const [fontBusy, setFontBusy] = useState<string | null>(null);
   const fontPickerRef = useRef<HTMLInputElement | null>(null);
   const [fontDragActive, setFontDragActive] = useState(false);
+
+  const exportTransferFonts = async () => {
+    const items = await listStoredFonts();
+    const out: any[] = [];
+    for (const it of items) {
+      const full = await getStoredFont(it.id);
+      if (!full) continue;
+      const bytes = new Uint8Array(full.data);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]!);
+      const dataBase64 = btoa(bin);
+      out.push({
+        id: full.id,
+        family: full.family,
+        fileName: full.fileName,
+        weight: full.weight,
+        style: full.style,
+        mime: full.mime,
+        createdAt: full.createdAt,
+        dataBase64,
+      });
+    }
+    return out;
+  };
+
+  const importTransferFonts = async (fonts: any) => {
+    if (!Array.isArray(fonts)) return;
+    for (const f of fonts) {
+      if (!f || typeof f !== 'object') continue;
+      const id = String(f.id ?? '');
+      const family = String(f.family ?? '');
+      const fileName = String(f.fileName ?? '');
+      const mime = String(f.mime ?? '');
+      const dataBase64 = String(f.dataBase64 ?? '');
+      if (!id || !family || !fileName || !mime || !dataBase64) continue;
+      let bin = '';
+      try {
+        bin = atob(dataBase64);
+      } catch {
+        continue;
+      }
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const rec: StoredFont = {
+        id,
+        family,
+        fileName,
+        weight: typeof f.weight === 'string' ? f.weight : undefined,
+        style: typeof f.style === 'string' ? f.style : undefined,
+        mime,
+        data: bytes.buffer,
+        createdAt: Number(f.createdAt) || Date.now(),
+      };
+      await putStoredFont(rec);
+      await registerStoredFont(rec);
+    }
+    setUploadedFonts(await listStoredFonts());
+  };
 
   const fontTargets = settings.fontApplyTargets ?? ['all'];
   const hasFontTarget = (t: (typeof fontTargets)[number]) =>
@@ -4460,6 +4523,42 @@ export function Calendar() {
               <span className="truncate">פלטת צבעים</span>
             </button>
           </div>
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={async () => {
+                const fonts = await exportTransferFonts();
+                const json = JSON.stringify({ settings, overrides, fonts }, null, 2);
+                setExportStyleJson(json);
+                setExportStyleCopied(null);
+                setExportStyleOpen(true);
+                try {
+                  await navigator.clipboard.writeText(json);
+                  setExportStyleCopied('הועתק ללוח');
+                  window.setTimeout(() => setExportStyleCopied(null), 1400);
+                } catch {
+                  // ignore
+                }
+              }}
+              title="העתקת סגנון כ‑JSON"
+            >
+              <span className="truncate">ייצוא סגנון (JSON)</span>
+            </button>
+          </div>
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={() => {
+                setImportStyleJson('');
+                setImportStyleOpen(true);
+              }}
+              title="ייבוא settings/overrides מג׳סון"
+            >
+              <span className="truncate">ייבוא סגנון (JSON)</span>
+            </button>
+          </div>
           <button
             type="button"
             className="mt-2 w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-slate-900 text-white hover:bg-slate-800 transition"
@@ -5484,14 +5583,14 @@ export function Calendar() {
                 onFocus={(e) => e.currentTarget.select()}
               />
               <div className="mt-3 flex justify-end gap-2">
-                {window.HebrewGregorianDesktop?.files?.saveJson ? (
+                {(window as any).HebrewGregorianDesktop?.files?.saveJson ? (
                   <button
                     type="button"
                     className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                     onClick={async () => {
                       try {
                         const suggestedName = `calendar-style-${format(viewDate, 'yyyy-MM-dd')}.json`;
-                        const resp = await window.HebrewGregorianDesktop!.files!.saveJson({
+                        const resp = await (window as any).HebrewGregorianDesktop!.files!.saveJson({
                           suggestedName,
                           content: exportStyleJson,
                         });
@@ -5596,13 +5695,13 @@ export function Calendar() {
                 >
                   החל סגנון
                 </button>
-                {window.HebrewGregorianDesktop?.files?.openJson ? (
+                {(window as any).HebrewGregorianDesktop?.files?.openJson ? (
                   <button
                     type="button"
                     className="px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                     onClick={async () => {
                       try {
-                        const resp = await window.HebrewGregorianDesktop!.files!.openJson();
+                        const resp = await (window as any).HebrewGregorianDesktop!.files!.openJson();
                         if ((resp as any)?.ok && !(resp as any)?.canceled) {
                           setImportStyleJson(String((resp as any).content ?? ''));
                         }
