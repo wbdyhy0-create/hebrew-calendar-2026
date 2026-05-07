@@ -862,6 +862,18 @@ export function Calendar() {
                   0,
                   Number((settingsForExport as any).gridWeekdayHeaderRowOffsetYPx ?? 0) || 0,
                 ),
+
+                // 2026-only: keep header text inside the bar (avoid clipping that looks like a white cover).
+                headerTextScaleXPercent: 100,
+                headerTextScaleYPercent: 100,
+                headerBox1OffsetYPx: Math.max(0, Number((settingsForExport as any).headerBox1OffsetYPx ?? 0) || 0),
+                headerBox2OffsetYPx: Math.max(0, Number((settingsForExport as any).headerBox2OffsetYPx ?? 0) || 0),
+                headerBox3OffsetYPx: Math.max(0, Number((settingsForExport as any).headerBox3OffsetYPx ?? 0) || 0),
+                headerBox4OffsetYPx: Math.max(0, Number((settingsForExport as any).headerBox4OffsetYPx ?? 0) || 0),
+                headerDatePairSeparatorOffsetYPx: Math.max(
+                  0,
+                  Number((settingsForExport as any).headerDatePairSeparatorOffsetYPx ?? 0) || 0,
+                ),
               }
             : null),
         };
