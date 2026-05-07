@@ -593,7 +593,7 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         padding-left: ${settings.canvasPaddingPx}px;
         padding-right: ${settings.canvasPaddingPx}px;
         padding-bottom: ${settings.canvasPaddingPx}px;
-        padding-top: ${settings.canvasPaddingTopPx}px;
+        padding-top: 0px;
         border: ${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor};
         border-radius: ${canvasR}px;
         overflow: hidden;
