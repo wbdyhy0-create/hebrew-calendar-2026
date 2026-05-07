@@ -887,14 +887,37 @@ export function Calendar() {
     }
   };
 
-  const exportMonthPdfBlobFromLiveDom = async (): Promise<{ blob: Blob; filename: string }> => {
-    const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
-    const target = canvasEl ?? calendarContentRef.current;
-    if (!target) {
-      throw new Error('לא נמצא לוח לצילום.');
+  const exportMonthPdfBlob = async (): Promise<{ blob: Blob; filename: string }> => {
+    const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
+
+    // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
+    try {
+      const resp = await fetch('/api/export-month-pdf', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          viewDateIso: viewDate.toISOString(),
+          settings: settingsForExport,
+          overrides,
+        }),
+      });
+      if (resp.ok) {
+        const ab = await resp.arrayBuffer();
+        const blob = new Blob([ab], { type: 'application/pdf' });
+        if (blob.size > 0) return { blob, filename };
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
+      }
+    } catch {
+      // ignore: fall back to client export
     }
 
-    // Stabilize layout: ensure fonts are ready before capture (prevents text "drift").
+    // Fallback: client-side html2canvas capture.
+    const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
+    const target = canvasEl ?? calendarContentRef.current;
+    if (!target) throw new Error('לא נמצא לוח לצילום.');
+
     try {
       await (document as any).fonts?.ready;
     } catch {
@@ -902,7 +925,6 @@ export function Calendar() {
     }
 
     const blob = await exportPdfBlobFromCalendarElement(target, settingsForExport, { multiPage: false });
-    const filename = `calendar-${format(viewDate, 'yyyy-MM')}.pdf`;
     return { blob, filename };
   };
 
@@ -3001,7 +3023,7 @@ export function Calendar() {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
                       try {
-                        const { blob } = await exportMonthPdfBlobFromLiveDom();
+                        const { blob } = await exportMonthPdfBlob();
                         const url = URL.createObjectURL(blob);
                         const w = window.open(url, '_blank', 'noopener,noreferrer');
                         if (!w) {
@@ -3024,7 +3046,7 @@ export function Calendar() {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
                       try {
-                        const { blob, filename } = await exportMonthPdfBlobFromLiveDom();
+                        const { blob, filename } = await exportMonthPdfBlob();
                         const handle = await requestSaveHandle(filename, {
                           mime: 'application/pdf',
                           description: 'PDF',
