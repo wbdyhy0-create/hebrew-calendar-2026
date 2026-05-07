@@ -1080,6 +1080,25 @@ export function Calendar() {
         monthTargets: monthTargets ?? undefined,
       });
       setViewDate(prevViewDate);
+      if (yearPdfDialogMode === 'preview') {
+        setSaveFlash(null);
+        setPdfPreviewTitle(`תצוגה מקדימה PDF (שנה) — ${monthRangeLabel}`);
+        setPdfPreviewOpen(true);
+        setPdfPreviewUrl(null);
+        const url = URL.createObjectURL(blob);
+        const prev = pdfPreviewUrlRef.current;
+        if (prev) {
+          try {
+            URL.revokeObjectURL(prev);
+          } catch {
+            // ignore
+          }
+        }
+        pdfPreviewUrlRef.current = url;
+        setPdfPreviewUrl(url);
+        return;
+      }
+
       const handle = await requestSaveHandle(suggested, { mime: 'application/pdf', description: 'PDF', extensions: ['.pdf'] });
       if (handle) {
         await saveBlobToHandle(handle, blob);
@@ -1107,9 +1126,10 @@ export function Calendar() {
   const [colorPaletteOpen, setColorPaletteOpen] = useState(false);
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement | null>(null);
-  const [monthPdfPreviewOpen, setMonthPdfPreviewOpen] = useState(false);
-  const [monthPdfPreviewUrl, setMonthPdfPreviewUrl] = useState<string | null>(null);
-  const monthPdfPreviewUrlRef = useRef<string | null>(null);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewTitle, setPdfPreviewTitle] = useState<string>('תצוגה מקדימה PDF');
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const pdfPreviewUrlRef = useRef<string | null>(null);
   const [colorPalettePos, setColorPalettePos] = useState<{ x: number; y: number }>(() => ({
     x: 24,
     y: 160,
@@ -1150,18 +1170,18 @@ export function Calendar() {
   }, [downloadMenuOpen]);
 
   useEffect(() => {
-    if (monthPdfPreviewOpen) return;
-    const prev = monthPdfPreviewUrlRef.current;
+    if (pdfPreviewOpen) return;
+    const prev = pdfPreviewUrlRef.current;
     if (prev) {
-      monthPdfPreviewUrlRef.current = null;
-      setMonthPdfPreviewUrl(null);
+      pdfPreviewUrlRef.current = null;
+      setPdfPreviewUrl(null);
       try {
         URL.revokeObjectURL(prev);
       } catch {
         // ignore
       }
     }
-  }, [monthPdfPreviewOpen]);
+  }, [pdfPreviewOpen]);
 
   // If the settings panel opens, always close the quick-inspect popup so it can't get "stuck".
   useEffect(() => {
@@ -3039,12 +3059,13 @@ export function Calendar() {
                     onClick={async () => {
                       setDownloadMenuOpen(false);
                       if (!ensureDownloadsWork()) return;
-                      setMonthPdfPreviewOpen(true);
-                      setMonthPdfPreviewUrl(null);
+                      setPdfPreviewTitle('תצוגה מקדימה PDF (חודש)');
+                      setPdfPreviewOpen(true);
+                      setPdfPreviewUrl(null);
                       try {
                         const { blob } = await exportMonthPdfBlob();
                         const url = URL.createObjectURL(blob);
-                        const prev = monthPdfPreviewUrlRef.current;
+                        const prev = pdfPreviewUrlRef.current;
                         if (prev) {
                           try {
                             URL.revokeObjectURL(prev);
@@ -3052,10 +3073,10 @@ export function Calendar() {
                             // ignore
                           }
                         }
-                        monthPdfPreviewUrlRef.current = url;
-                        setMonthPdfPreviewUrl(url);
+                        pdfPreviewUrlRef.current = url;
+                        setPdfPreviewUrl(url);
                       } catch (e: any) {
-                        setMonthPdfPreviewOpen(false);
+                        setPdfPreviewOpen(false);
                         window.alert(`שגיאה בתצוגה מקדימה: ${String(e?.message ?? e)}`);
                       }
                     }}
@@ -3187,16 +3208,16 @@ export function Calendar() {
         />
       ) : null}
 
-      {monthPdfPreviewOpen ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-3">
-          <div className="w-[min(980px,96vw)] max-h-[92vh] rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 text-sm font-normal text-slate-900 flex items-center justify-between gap-3">
-              <div>תצוגה מקדימה PDF (חודש)</div>
-              <div className="flex items-center gap-2">
-                {monthPdfPreviewUrl ? (
+      {pdfPreviewOpen ? (
+        <div className="fixed inset-0 z-[90] bg-slate-900/40">
+          <div className="absolute inset-0 bg-white shadow-2xl overflow-hidden flex flex-col">
+            <div className="px-3 sm:px-4 py-3 border-b border-slate-200 bg-slate-50 text-sm font-normal text-slate-900 flex items-center justify-between gap-3">
+              <div className="truncate">{pdfPreviewTitle}</div>
+              <div className="flex items-center gap-2 shrink-0">
+                {pdfPreviewUrl ? (
                   <a
                     className="px-3 py-2 text-xs rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
-                    href={monthPdfPreviewUrl}
+                    href={pdfPreviewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -3206,23 +3227,17 @@ export function Calendar() {
                 <button
                   type="button"
                   className="px-3 py-2 text-xs rounded-md border border-slate-200 bg-white hover:bg-slate-50 active:bg-slate-100 transition"
-                  onClick={() => setMonthPdfPreviewOpen(false)}
+                  onClick={() => setPdfPreviewOpen(false)}
                 >
                   סגור
                 </button>
               </div>
             </div>
-            <div className="p-2 bg-white flex-1 min-h-[320px]">
-              {monthPdfPreviewUrl ? (
-                <iframe
-                  title="Month PDF Preview"
-                  className="w-full h-full rounded-xl border border-slate-200"
-                  src={monthPdfPreviewUrl}
-                />
+            <div className="flex-1 min-h-0 bg-white">
+              {pdfPreviewUrl ? (
+                <iframe title="PDF Preview" className="w-full h-full" src={pdfPreviewUrl} />
               ) : (
-                <div className="h-full flex items-center justify-center text-sm text-slate-600">
-                  מכין PDF…
-                </div>
+                <div className="h-full flex items-center justify-center text-sm text-slate-600">מכין PDF…</div>
               )}
             </div>
           </div>
