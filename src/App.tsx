@@ -93,10 +93,13 @@ export default function App() {
           >
             <video
               className="w-full h-full object-cover"
-              src="/splash.webm.mp4"
+              src="./splash.webm.mp4"
               autoPlay
               muted
               playsInline
+              loop
+              preload="auto"
+              onError={() => setShowSplash(false)}
             />
           </div>
         ) : null}
