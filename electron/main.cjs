@@ -1,8 +1,21 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const fs = require('fs/promises');
+const fsSync = require('fs');
 const path = require('path');
 
 const TRIAL_DAYS = 14;
+
+function readAppMode() {
+  try {
+    const p = path.join(__dirname, 'appMode.json');
+    const raw = fsSync.readFileSync(p, 'utf-8');
+    const j = JSON.parse(raw);
+    const mode = j && typeof j.mode === 'string' ? j.mode : 'full';
+    return mode === 'trial' ? 'trial' : 'full';
+  } catch {
+    return 'full';
+  }
+}
 
 function toYmdUtc(d) {
   const dt = new Date(d);
@@ -85,10 +98,12 @@ function createWindow() {
 
 app.whenReady().then(() => {
   ipcMain.handle('hg:trial-status', async () => {
+    const mode = readAppMode();
+    if (mode !== 'trial') return { ok: true, enabled: false };
     try {
       const st = await getOrCreateTrialState();
       const status = computeTrialStatus(st.installYmd);
-      return { ok: true, ...status };
+      return { ok: true, enabled: true, ...status };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       return { ok: false, error: msg };

@@ -104,7 +104,10 @@ export default function App() {
           </div>
         ) : null}
 
-        {trial && (trial as any).ok === true && (trial as any).expired ? (
+        {trial &&
+        (trial as any).ok === true &&
+        (trial as any).enabled === true &&
+        (trial as any).expired ? (
           <div
             className="fixed inset-0 z-[200] bg-white/95 backdrop-blur-sm flex items-center justify-center p-6"
             dir="rtl"

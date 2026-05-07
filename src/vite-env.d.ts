@@ -21,6 +21,7 @@ declare global {
         getStatus: () => Promise<
           | {
               ok: true;
+              enabled: boolean;
               trialDays: number;
               installYmd: string;
               nowYmd: string;
