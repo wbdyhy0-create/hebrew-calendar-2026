@@ -93,7 +93,7 @@ export function buildPrintMonthChromeHtml(
   void gMonthDays;
 
   const headerHtml = `
-    <div style="
+    <div class="headerBar" style="
       position: relative;
       width: 100%;
       height: ${settings.headerBarHeightPx}px;
