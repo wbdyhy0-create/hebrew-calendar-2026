@@ -337,6 +337,9 @@ export async function exportPdfBlobFromHtml(
       }
       scope.querySelectorAll<HTMLElement>('.canvas').forEach((c) => {
         c.style.setProperty('overflow', 'visible', 'important');
+        // During PDF capture, ignore the on-screen canvas top padding (which is user-configurable)
+        // to avoid a white "shelf" overlay above the header/grid.
+        c.style.setProperty('padding-top', '0px', 'important');
         if (!opts?.multiPage) {
           c.style.setProperty('height', 'auto', 'important');
           c.style.setProperty('min-height', `${heightMm}mm`, 'important');
