@@ -861,6 +861,9 @@ export function Calendar() {
                   0,
                   Number((settingsForExport as any).gridWeekdayHeaderRowOffsetYPx ?? 0) || 0,
                 ),
+                // 2026-only: avoid a white "shelf" above the grid in PDF capture.
+                // This is often caused by canvas top padding that exists only in printable layout.
+                canvasPaddingTopPx: 0,
 
                 // 2026-only: keep header text inside the bar (avoid clipping that looks like a white cover).
                 headerTextScaleXPercent: 100,
