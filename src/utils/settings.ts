@@ -7,6 +7,7 @@ export const HEADER_LAYOUT_STYLES = [
   'right_block',
   'centered_pill',
   'minimal_text',
+  'grid_integrated',
 ] as const;
 
 export type HeaderLayoutStyle = (typeof HEADER_LAYOUT_STYLES)[number];
@@ -91,6 +92,23 @@ export type CalendarSettings = {
   hebDayFontPx: number;
   eventTitleFontPx: number;
   shabbatTimesFontPx: number;
+  /** סדר תאריכים בתוך התא (בפינה): עברי/לועזי או לועזי/עברי */
+  cellDateOrder: 'greg_then_heb' | 'heb_then_greg';
+  /** הזזת תאריך לועזי (px) בתוך התא */
+  gregDayOffsetXPx: number;
+  gregDayOffsetYPx: number;
+  /** הזזת תאריך עברי (px) בתוך התא */
+  hebDayOffsetXPx: number;
+  hebDayOffsetYPx: number;
+  /** הזזת טקסט אירועים (px) בתוך התא */
+  eventOffsetXPx: number;
+  eventOffsetYPx: number;
+  /** הזזת בלוק זמנים (px) בתוך התא */
+  timesOffsetXPx: number;
+  timesOffsetYPx: number;
+
+  /** רווח בין משבצות כאשר הכותרת משולבת ברשת (px) */
+  gridIntegratedGapPx: number;
   showParsha: boolean;
   // Kept for backward-compatible settings migration.
   // The app currently uses @hebcal/core built-in Zmanim only.
@@ -241,6 +259,16 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
   hebDayFontPx: 7,
   eventTitleFontPx: 6,
   shabbatTimesFontPx: 5,
+  cellDateOrder: 'greg_then_heb',
+  gregDayOffsetXPx: 0,
+  gregDayOffsetYPx: 0,
+  hebDayOffsetXPx: 0,
+  hebDayOffsetYPx: 0,
+  eventOffsetXPx: 0,
+  eventOffsetYPx: 0,
+  timesOffsetXPx: 0,
+  timesOffsetYPx: 0,
+  gridIntegratedGapPx: 4,
   showParsha: true,
   shabbatTimesSource: 'hebcal',
   zmanimCity: 'Jerusalem',
@@ -409,6 +437,26 @@ export function loadSettings(): CalendarSettings {
       merged.stylePackId = DEFAULT_SETTINGS.stylePackId;
     }
     merged.headerLayoutStyle = sanitizeHeaderLayoutStyle(merged.headerLayoutStyle);
+
+    if (merged.cellDateOrder !== 'greg_then_heb' && merged.cellDateOrder !== 'heb_then_greg') {
+      merged.cellDateOrder = DEFAULT_SETTINGS.cellDateOrder;
+    }
+
+    for (const k of [
+      'gregDayOffsetXPx',
+      'gregDayOffsetYPx',
+      'hebDayOffsetXPx',
+      'hebDayOffsetYPx',
+      'eventOffsetXPx',
+      'eventOffsetYPx',
+      'timesOffsetXPx',
+      'timesOffsetYPx',
+      'gridIntegratedGapPx',
+    ] as const) {
+      const n = Number((merged as any)[k]);
+      (merged as any)[k] = Number.isFinite(n) ? n : (DEFAULT_SETTINGS as any)[k];
+    }
+
     merged.layoutCenterVertically = merged.layoutCenterVertically !== false;
     merged.layoutAutoFitToCanvas = merged.layoutAutoFitToCanvas !== false;
     merged.layoutFillHeight = merged.layoutFillHeight !== false;

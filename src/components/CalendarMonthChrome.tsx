@@ -143,15 +143,22 @@ function HeaderBarNew({
 }
 
 function gridShellProps(
-  _layout: HeaderLayoutStyle,
+  layout: HeaderLayoutStyle,
   settings: CalendarSettings,
 ): { className: string; style: CSSProperties } {
+  const gap = layout === 'grid_integrated' ? Math.max(0, Math.round(Number(settings.gridIntegratedGapPx) || 0)) : 0;
   return {
-    className: 'relative grid grid-cols-7 overflow-hidden backdrop-blur-[1px] shadow-sm',
+    className:
+      layout === 'grid_integrated'
+        ? 'relative grid grid-cols-7 backdrop-blur-[1px] shadow-sm'
+        : 'relative grid grid-cols-7 overflow-hidden backdrop-blur-[1px] shadow-sm',
     style: {
       border: `${settings.gridBorderWidthPx}px solid ${settings.gridBorderColor}`,
       background: settings.gridShellBg,
       borderRadius: resolveDetachedGridBorderRadiusPx(settings),
+      gap: gap ? `${gap}px` : undefined,
+      padding: gap ? `${gap}px` : undefined,
+      overflow: layout === 'grid_integrated' ? 'visible' : 'hidden',
     },
   };
 }
@@ -174,6 +181,8 @@ export function CalendarMonthChrome({
 
   const shell = gridShellProps(layout, settings);
   const headerFontStyle = headerFontFamily ? ({ fontFamily: headerFontFamily } as const) : null;
+  const integratedHeader = layout === 'grid_integrated';
+  const headerTrackH = integratedHeader ? Math.max(42, Math.round(Number(settings.headerBarHeightPx) || 78)) : 0;
   const grid = (
     <div
       {...shell}
@@ -187,13 +196,28 @@ export function CalendarMonthChrome({
               flex: 1,
               display: 'grid',
               gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-              gridTemplateRows: `${weekdayTrackH}px repeat(${weekRows}, minmax(${minWeekRowH}px, 1fr))`,
+              gridTemplateRows: `${integratedHeader ? `${headerTrackH}px ` : ''}${weekdayTrackH}px repeat(${weekRows}, minmax(${minWeekRowH}px, 1fr))`,
               gridAutoRows: '1fr',
               alignContent: 'stretch',
             }
           : null),
       }}
     >
+      {integratedHeader ? (
+        <div style={{ gridColumn: '1 / -1' }}>
+          <HeaderBarNew
+            settings={{
+              ...settings,
+              // integrated header: no external spacing, stay “glued” to grid
+              headerBarMarginBottomPx: 0,
+              headerBarOffsetYPx: 0,
+            }}
+            hebrewMonthTitle={hebrewMonthTitle}
+            gregorianLabel={gregorianLabel}
+            onEditHeader={onEditHeader}
+          />
+        </div>
+      ) : null}
       {gridChildren}
     </div>
   );
@@ -206,12 +230,14 @@ export function CalendarMonthChrome({
       ].join(' ')}
       style={headerFontStyle ?? undefined}
     >
-      <HeaderBarNew
-        settings={settings}
-        hebrewMonthTitle={hebrewMonthTitle}
-        gregorianLabel={gregorianLabel}
-        onEditHeader={onEditHeader}
-      />
+      {integratedHeader ? null : (
+        <HeaderBarNew
+          settings={settings}
+          hebrewMonthTitle={hebrewMonthTitle}
+          gregorianLabel={gregorianLabel}
+          onEditHeader={onEditHeader}
+        />
+      )}
       {grid}
     </div>
   );

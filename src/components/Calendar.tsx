@@ -340,6 +340,10 @@ export function Calendar() {
   const [editAlign, setEditAlign] = useState<'right' | 'center' | 'left'>('center');
   const imgPickerRef = useRef<HTMLInputElement | null>(null);
   const [pendingImageKey, setPendingImageKey] = useState<string | null>(null);
+  const [colorSampleImageOpen, setColorSampleImageOpen] = useState(false);
+  const [colorSampleImageDataUrl, setColorSampleImageDataUrl] = useState<string | null>(null);
+  const [colorSampledHexes, setColorSampledHexes] = useState<string[]>([]);
+  const colorSampleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const imgDragRef = useRef<{
     key: string;
     startX: number;
@@ -1319,6 +1323,48 @@ export function Calendar() {
     }
   };
 
+  const sampleHexFromImage = async (
+    dataUrl: string,
+    imgClientX: number,
+    imgClientY: number,
+    imgEl: HTMLImageElement,
+  ): Promise<string | null> => {
+    try {
+      const rect = imgEl.getBoundingClientRect();
+      const x = (imgClientX - rect.left) / Math.max(1, rect.width);
+      const y = (imgClientY - rect.top) / Math.max(1, rect.height);
+      const cx = Math.max(0, Math.min(1, x));
+      const cy = Math.max(0, Math.min(1, y));
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = dataUrl;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('load_failed'));
+      });
+
+      const w = Math.max(1, img.naturalWidth || img.width || 1);
+      const h = Math.max(1, img.naturalHeight || img.height || 1);
+      const canvas = colorSampleCanvasRef.current ?? document.createElement('canvas');
+      colorSampleCanvasRef.current = canvas;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return null;
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const px = Math.max(0, Math.min(w - 1, Math.round(cx * (w - 1))));
+      const py = Math.max(0, Math.min(h - 1, Math.round(cy * (h - 1))));
+      const d = ctx.getImageData(px, py, 1, 1).data;
+      const to2 = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, '0');
+      return `#${to2(d[0] ?? 0)}${to2(d[1] ?? 0)}${to2(d[2] ?? 0)}`.toUpperCase();
+    } catch {
+      return null;
+    }
+  };
+
   const isLandingOnly =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('landing') === '1';
@@ -1699,6 +1745,13 @@ export function Calendar() {
           (async () => {
             const compressed = await compressImageToDataUrl(file);
             if (compressed && compressed.startsWith('data:image/')) {
+              if (key === '__color_sample__') {
+                setColorSampleImageDataUrl(compressed);
+                setColorSampledHexes([]);
+                setColorSampleImageOpen(true);
+                setPendingImageKey(null);
+                return;
+              }
               setOverrides((prev) => {
                 const copy = { ...prev };
                 const storeKey = recurringOverrideKeyFromIsoDate(key);
@@ -1726,6 +1779,13 @@ export function Calendar() {
             reader.onload = () => {
               const dataUrl = String(reader.result ?? '');
               if (!dataUrl.startsWith('data:image/')) return;
+              if (key === '__color_sample__') {
+                setColorSampleImageDataUrl(dataUrl);
+                setColorSampledHexes([]);
+                setColorSampleImageOpen(true);
+                setPendingImageKey(null);
+                return;
+              }
               setOverrides((prev) => {
                 const copy = { ...prev };
                 const storeKey = recurringOverrideKeyFromIsoDate(key);
@@ -1750,6 +1810,142 @@ export function Calendar() {
           })();
         }}
       />
+
+      {colorSampleImageOpen && colorSampleImageDataUrl ? (
+        <div className="fixed inset-0 z-[125] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div
+            dir="rtl"
+            className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="text-sm font-semibold text-slate-900">דגימת צבע מתמונה</div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+                  onClick={() => {
+                    setPendingImageKey('__color_sample__');
+                    if (imgPickerRef.current) imgPickerRef.current.value = '';
+                    imgPickerRef.current?.click();
+                  }}
+                >
+                  החלף תמונה
+                </button>
+                <button
+                  type="button"
+                  className="h-9 w-9 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  aria-label="סגור"
+                  onClick={() => setColorSampleImageOpen(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-0">
+              <div className="p-4 bg-white">
+                <div className="text-xs text-slate-600 mb-2">
+                  קליק על התמונה יוסיף צבע (HEX). לחיצה על צבע תעתיק אותו.
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+                  <img
+                    src={colorSampleImageDataUrl}
+                    alt="תמונה לדגימה"
+                    className="w-full h-auto block select-none cursor-crosshair"
+                    draggable={false}
+                    onClick={async (e) => {
+                      const imgEl = e.currentTarget as HTMLImageElement;
+                      const hex = await sampleHexFromImage(
+                        colorSampleImageDataUrl,
+                        e.clientX,
+                        e.clientY,
+                        imgEl,
+                      );
+                      if (!hex) {
+                        setSaveFlash('לא הצלחתי לדגום מהתמונה.');
+                        window.setTimeout(() => setSaveFlash(null), 1600);
+                        return;
+                      }
+                      setColorSampledHexes((prev) => {
+                        const next = [hex, ...prev.filter((x) => x !== hex)];
+                        return next.slice(0, 32);
+                      });
+                      try {
+                        await navigator.clipboard.writeText(hex);
+                        setSaveFlash(`נדגם ${hex} (הועתק ללוח)`);
+                        window.setTimeout(() => setSaveFlash(null), 1400);
+                      } catch {
+                        setSaveFlash(`נדגם ${hex}`);
+                        window.setTimeout(() => setSaveFlash(null), 1200);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <aside className="p-4 border-t lg:border-t-0 lg:border-r border-slate-200 bg-white">
+                <div className="text-sm font-semibold text-slate-900">צבעים שנדגמו</div>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {colorSampledHexes.length ? (
+                    colorSampledHexes.map((hex) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        className="h-10 rounded-md border border-slate-200"
+                        style={{ background: hex }}
+                        title={`${hex} (העתקה)`}
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(hex);
+                            setSaveFlash(`הועתק ${hex}`);
+                            window.setTimeout(() => setSaveFlash(null), 1100);
+                          } catch {
+                            setSaveFlash(hex);
+                            window.setTimeout(() => setSaveFlash(null), 900);
+                          }
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-xs text-slate-500">
+                      אין עדיין צבעים. לחץ על התמונה כדי לדגום.
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-40"
+                    disabled={!colorSampledHexes.length}
+                    onClick={() => setColorSampledHexes([])}
+                  >
+                    נקה
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-40"
+                    disabled={!colorSampledHexes.length}
+                    onClick={async () => {
+                      const txt = colorSampledHexes.join('\n');
+                      try {
+                        await navigator.clipboard.writeText(txt);
+                        setSaveFlash('כל הצבעים הועתקו');
+                        window.setTimeout(() => setSaveFlash(null), 1200);
+                      } catch {
+                        setSaveFlash('לא הצלחתי להעתיק.');
+                        window.setTimeout(() => setSaveFlash(null), 1200);
+                      }
+                    }}
+                    title="מעתיק רשימת HEX לשורות"
+                  >
+                    העתק הכל
+                  </button>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {inspect.key !== 'none' &&
       (inspect.key === 'header' ||
         inspect.key === 'weekdays' ||
@@ -2496,11 +2692,36 @@ export function Calendar() {
                 <option value="right_block">קלאסי ימני — בלוק חודש/שנה בצד (ימין ב־RTL)</option>
                 <option value="centered_pill">כדור במרכז — תג חודש במרכז, כותרות מתחת</option>
                 <option value="minimal_text">מינימליסטי — בלי פס, טקסט גדול מעל הלוח</option>
+                <option value="grid_integrated">כותרת מול רשת + רווח בין משבצות</option>
               </select>
               <div className="mt-1 text-xs text-slate-500">
                 מבנה נקבע ב״ערכת סגנונות״; כאן אפשר לעקוף ידנית.
               </div>
             </label>
+
+            {settings.headerLayoutStyle === 'grid_integrated' ? (
+              <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
+                <div id="settings-anchor-grid-gap" className="scroll-mt-24" />
+                רווח בין משבצות (כאשר כותרת מול הרשת) ({Math.round(Number(settings.gridIntegratedGapPx) || 0)}px)
+                <input
+                  className="mt-2 w-full"
+                  type="range"
+                  min={0}
+                  max={18}
+                  step={1}
+                  value={Number(settings.gridIntegratedGapPx) || 0}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      gridIntegratedGapPx: Number(e.target.value),
+                    }))
+                  }
+                />
+                <div className="mt-1 text-xs text-slate-500">
+                  טיפ: 3–6 נראה הכי טבעי. ערך 0 יחזיר לרשת צפופה בלי רווחים.
+                </div>
+              </label>
+            ) : null}
 
             {/* header bar WYSIWYG controls removed */}
 
@@ -3010,6 +3231,140 @@ export function Calendar() {
               />
             </label>
 
+            <div
+              id="settings-anchor-typography-offsets"
+              className="sm:col-span-2 lg:col-span-3 scroll-mt-24 rounded-lg border border-slate-200 bg-white/80 p-3"
+            >
+              <div className="text-sm font-semibold text-slate-900">הזזת טקסט בתוך התאים</div>
+              <div className="mt-1 text-xs text-slate-600">
+                כל בלוק עצמאי: תאריך לועזי, תאריך עברי, טקסט אירוע, וזמנים (כניסה/יציאה/פרשה).
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <label className="text-sm text-slate-700">
+                  לועזי — ימין/שמאל ({Math.round(Number(settings.gregDayOffsetXPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-40}
+                    max={40}
+                    step={1}
+                    value={Number(settings.gregDayOffsetXPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, gregDayOffsetXPx: Number(e.target.value) }))}
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  לועזי — למעלה/למטה ({Math.round(Number(settings.gregDayOffsetYPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-40}
+                    max={40}
+                    step={1}
+                    value={Number(settings.gregDayOffsetYPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, gregDayOffsetYPx: Number(e.target.value) }))}
+                  />
+                </label>
+
+                <label className="text-sm text-slate-700">
+                  עברי — ימין/שמאל ({Math.round(Number(settings.hebDayOffsetXPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-40}
+                    max={40}
+                    step={1}
+                    value={Number(settings.hebDayOffsetXPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, hebDayOffsetXPx: Number(e.target.value) }))}
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  עברי — למעלה/למטה ({Math.round(Number(settings.hebDayOffsetYPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-40}
+                    max={40}
+                    step={1}
+                    value={Number(settings.hebDayOffsetYPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, hebDayOffsetYPx: Number(e.target.value) }))}
+                  />
+                </label>
+
+                <label className="text-sm text-slate-700">
+                  אירועים — ימין/שמאל ({Math.round(Number(settings.eventOffsetXPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-60}
+                    max={60}
+                    step={1}
+                    value={Number(settings.eventOffsetXPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, eventOffsetXPx: Number(e.target.value) }))}
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  אירועים — למעלה/למטה ({Math.round(Number(settings.eventOffsetYPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-60}
+                    max={60}
+                    step={1}
+                    value={Number(settings.eventOffsetYPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, eventOffsetYPx: Number(e.target.value) }))}
+                  />
+                </label>
+
+                <label className="text-sm text-slate-700">
+                  זמנים — ימין/שמאל ({Math.round(Number(settings.timesOffsetXPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-60}
+                    max={60}
+                    step={1}
+                    value={Number(settings.timesOffsetXPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, timesOffsetXPx: Number(e.target.value) }))}
+                  />
+                </label>
+                <label className="text-sm text-slate-700">
+                  זמנים — למעלה/למטה ({Math.round(Number(settings.timesOffsetYPx) || 0)}px)
+                  <input
+                    className="mt-2 w-full"
+                    type="range"
+                    min={-60}
+                    max={60}
+                    step={1}
+                    value={Number(settings.timesOffsetYPx) || 0}
+                    onChange={(e) => setSettings((s) => ({ ...s, timesOffsetYPx: Number(e.target.value) }))}
+                  />
+                </label>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                  onClick={() =>
+                    setSettings((s) => ({
+                      ...s,
+                      gregDayOffsetXPx: 0,
+                      gregDayOffsetYPx: 0,
+                      hebDayOffsetXPx: 0,
+                      hebDayOffsetYPx: 0,
+                      eventOffsetXPx: 0,
+                      eventOffsetYPx: 0,
+                      timesOffsetXPx: 0,
+                      timesOffsetYPx: 0,
+                    }))
+                  }
+                >
+                  אפס הזזות
+                </button>
+              </div>
+            </div>
+
             <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
               <div className="text-xs font-bold text-slate-700 mb-2">
                 תצוגת תא אמיתית (כמו בלוח)
@@ -3500,6 +3855,24 @@ export function Calendar() {
             </SettingsCategory>
 
             <SettingsCategory icon="📌" title="כותרת, מבנה וכללי">
+            <label className="text-sm text-slate-700 sm:col-span-2 lg:col-span-3">
+              <div id="settings-anchor-cell-date-order" className="scroll-mt-24" />
+              סדר תאריכים בפינה (עברי/לועזי)
+              <select
+                className="mt-2 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm"
+                value={settings.cellDateOrder}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    cellDateOrder: e.target.value as any,
+                  }))
+                }
+              >
+                <option value="greg_then_heb">לועזי ואז עברי</option>
+                <option value="heb_then_greg">עברי ואז לועזי</option>
+              </select>
+            </label>
+
             <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
               <input
                 type="checkbox"
@@ -4232,7 +4605,10 @@ export function Calendar() {
               key: 'headerEdit',
               label: 'עריכת פס',
               cls: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:bg-fuchsia-100',
-              items: [{ label: 'פס עליון (חדש)', anchorId: 'settings-anchor-header-new' }],
+              items: [
+                { label: 'פס עליון (חדש)', anchorId: 'settings-anchor-header-new' },
+                { label: 'רווח בין משבצות (כותרת מול רשת)', anchorId: 'settings-anchor-grid-gap' },
+              ],
             },
             // header bar shortcuts removed
             {
@@ -4256,6 +4632,8 @@ export function Calendar() {
                 { label: 'העלאת/מחיקת גופנים', anchorId: 'settings-anchor-typography-upload' },
                 { label: 'משקל כללי', anchorId: 'settings-anchor-typography-weight' },
                 { label: 'גדלי טקסט בתאים', anchorId: 'settings-anchor-typography-sizes' },
+                { label: 'סדר תאריכים בפינה', anchorId: 'settings-anchor-cell-date-order' },
+                { label: 'הזזות טקסט בתוך תאים', anchorId: 'settings-anchor-typography-offsets' },
               ],
             },
             {
@@ -4521,6 +4899,20 @@ export function Calendar() {
               onClick={() => setColorPaletteOpen((v) => !v)}
             >
               <span className="truncate">פלטת צבעים</span>
+            </button>
+          </div>
+          <div className="relative w-full">
+            <button
+              type="button"
+              className="w-full text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
+              onClick={() => {
+                setPendingImageKey('__color_sample__');
+                if (imgPickerRef.current) imgPickerRef.current.value = '';
+                imgPickerRef.current?.click();
+              }}
+              title="בחר תמונה ואז לחץ עליה לדגימת צבע"
+            >
+              <span className="truncate">דגימה מתמונה</span>
             </button>
           </div>
           <div className="relative w-full">
@@ -5075,7 +5467,9 @@ export function Calendar() {
                           : 'max-h-12 sm:max-h-14',
                       ].join(' ')}
                       style={{
-                        transform: `translate(${offX}px, ${offY}px)`,
+                        transform: `translate(${offX + (Number(settings.eventOffsetXPx) || 0)}px, ${
+                          offY + (Number(settings.eventOffsetYPx) || 0)
+                        }px)`,
                         textAlign,
                       }}
                     >
@@ -5109,6 +5503,12 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
                     fontSize: `${settings.shabbatTimesFontPx / 10}em`,                    
+                    transform:
+                      (Number(settings.timesOffsetXPx) || 0) || (Number(settings.timesOffsetYPx) || 0)
+                        ? `translate(${Math.round(Number(settings.timesOffsetXPx) || 0)}px, ${Math.round(
+                            Number(settings.timesOffsetYPx) || 0,
+                          )}px)`
+                        : undefined,
                     fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
@@ -5133,6 +5533,12 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right"
                   style={{
                     fontSize: `${settings.shabbatTimesFontPx / 10}em`,                   
+                    transform:
+                      (Number(settings.timesOffsetXPx) || 0) || (Number(settings.timesOffsetYPx) || 0)
+                        ? `translate(${Math.round(Number(settings.timesOffsetXPx) || 0)}px, ${Math.round(
+                            Number(settings.timesOffsetYPx) || 0,
+                          )}px)`
+                        : undefined,
                     fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
@@ -5164,6 +5570,12 @@ export function Calendar() {
                   className="absolute inset-x-2 bottom-2 z-20 min-w-0 max-w-full leading-snug text-slate-800 text-right space-y-0.5"
                   style={{
                     fontSize: `${settings.shabbatTimesFontPx / 10}em`,
+                    transform:
+                      (Number(settings.timesOffsetXPx) || 0) || (Number(settings.timesOffsetYPx) || 0)
+                        ? `translate(${Math.round(Number(settings.timesOffsetXPx) || 0)}px, ${Math.round(
+                            Number(settings.timesOffsetYPx) || 0,
+                          )}px)`
+                        : undefined,
                     fontFamily: shouldApplyFontTo('cellTimes')
                       ? resolveFontFamilyFor('cellTimes')
                       : undefined,
