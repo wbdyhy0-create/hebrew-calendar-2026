@@ -593,7 +593,9 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
         padding-left: ${settings.canvasPaddingPx}px;
         padding-right: ${settings.canvasPaddingPx}px;
         padding-bottom: ${settings.canvasPaddingPx}px;
-        padding-top: ${settings.canvasPaddingTopPx}px;
+        /* In printable/export HTML, top padding creates a "white shelf" above the grid and can
+           visually cover the top header area. Keep it only for integrated header layouts. */
+        padding-top: ${isIntegrated ? settings.canvasPaddingTopPx : 0}px;
         border: ${settings.canvasBorderWidthPx}px solid ${settings.canvasBorderColor};
         border-radius: ${canvasR}px;
         overflow: hidden;
