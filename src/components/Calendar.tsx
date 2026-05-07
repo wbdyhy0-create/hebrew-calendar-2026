@@ -344,6 +344,14 @@ export function Calendar() {
   const [colorSampleImageDataUrl, setColorSampleImageDataUrl] = useState<string | null>(null);
   const [colorSampledHexes, setColorSampledHexes] = useState<string[]>([]);
   const colorSampleCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [colorSamplePos, setColorSamplePos] = useState<{ x: number; y: number } | null>(null);
+  const colorSampleDragRef = useRef<null | {
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startPosX: number;
+    startPosY: number;
+  }>(null);
   const imgDragRef = useRef<{
     key: string;
     startX: number;
@@ -1057,6 +1065,19 @@ export function Calendar() {
     // Focus overlay so Escape works reliably.
     window.setTimeout(() => livePickerOverlayRef.current?.focus(), 0);
   }, [livePicker]);
+
+  useEffect(() => {
+    if (!colorSampleImageOpen) return;
+    // Center on open (and when window size changes, keep last position).
+    setColorSamplePos((prev) => {
+      if (prev) return prev;
+      const w = Math.min(960, Math.max(520, window.innerWidth - 80));
+      const h = Math.min(720, Math.max(380, window.innerHeight - 80));
+      const x = Math.max(12, Math.round((window.innerWidth - w) / 2));
+      const y = Math.max(12, Math.round((window.innerHeight - h) / 2));
+      return { x, y };
+    });
+  }, [colorSampleImageOpen]);
 
   const rgbToHex = (rgb: string): string | null => {
     // Supports: rgb(r,g,b) / rgba(r,g,b,a)
@@ -1812,12 +1833,62 @@ export function Calendar() {
       />
 
       {colorSampleImageOpen && colorSampleImageDataUrl ? (
-        <div className="fixed inset-0 z-[125] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[125] bg-black/40 backdrop-blur-sm">
           <div
             dir="rtl"
-            className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+            className="fixed w-[min(960px,calc(100vw-24px))] max-h-[min(720px,calc(100vh-24px))] rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+            style={{
+              left: Math.max(12, Math.round(colorSamplePos?.x ?? 12)),
+              top: Math.max(12, Math.round(colorSamplePos?.y ?? 12)),
+            }}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <div
+              className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 cursor-move select-none"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                const cur = colorSamplePos ?? { x: 12, y: 12 };
+                colorSampleDragRef.current = {
+                  pointerId: e.pointerId,
+                  startX: e.clientX,
+                  startY: e.clientY,
+                  startPosX: cur.x,
+                  startPosY: cur.y,
+                };
+              }}
+              onPointerMove={(e) => {
+                const st = colorSampleDragRef.current;
+                if (!st || st.pointerId !== e.pointerId) return;
+                const dx = e.clientX - st.startX;
+                const dy = e.clientY - st.startY;
+                const nextX = st.startPosX + dx;
+                const nextY = st.startPosY + dy;
+                // Clamp to viewport with a small margin so the title bar stays reachable.
+                const w = Math.min(960, Math.max(520, window.innerWidth - 24));
+                const h = Math.min(720, Math.max(380, window.innerHeight - 24));
+                const maxX = Math.max(12, window.innerWidth - w - 12);
+                const maxY = Math.max(12, window.innerHeight - Math.min(h, window.innerHeight - 24) - 12);
+                setColorSamplePos({
+                  x: Math.min(maxX, Math.max(12, Math.round(nextX))),
+                  y: Math.min(maxY, Math.max(12, Math.round(nextY))),
+                });
+              }}
+              onPointerUp={(e) => {
+                const st = colorSampleDragRef.current;
+                if (!st || st.pointerId !== e.pointerId) return;
+                colorSampleDragRef.current = null;
+                try {
+                  (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+                } catch {
+                  // ignore
+                }
+              }}
+              onPointerCancel={(e) => {
+                const st = colorSampleDragRef.current;
+                if (!st || st.pointerId !== e.pointerId) return;
+                colorSampleDragRef.current = null;
+              }}
+            >
               <div className="text-sm font-semibold text-slate-900">דגימת צבע מתמונה</div>
               <div className="flex items-center gap-2">
                 <button
@@ -1828,6 +1899,7 @@ export function Calendar() {
                     if (imgPickerRef.current) imgPickerRef.current.value = '';
                     imgPickerRef.current?.click();
                   }}
+                  onPointerDown={(e) => e.stopPropagation()}
                 >
                   החלף תמונה
                 </button>
@@ -1836,13 +1908,14 @@ export function Calendar() {
                   className="h-9 w-9 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                   aria-label="סגור"
                   onClick={() => setColorSampleImageOpen(false)}
+                  onPointerDown={(e) => e.stopPropagation()}
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-0">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-0 overflow-auto max-h-[min(720px,calc(100vh-24px))]">
               <div className="p-4 bg-white">
                 <div className="text-xs text-slate-600 mb-2">
                   קליק על התמונה יוסיף צבע (HEX). לחיצה על צבע תעתיק אותו.
