@@ -4157,7 +4157,7 @@ export function Calendar() {
                     className="mt-2 w-full"
                     type="range"
                     min={0}
-                    max={48}
+                    max={120}
                     value={settings.headerBarMarginBottomPx}
                 onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarMarginBottomPx: Number(e.target.value) }))
