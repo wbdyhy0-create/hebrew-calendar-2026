@@ -34,6 +34,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [trial, setTrial] = useState<
     | {
         ok: true;
@@ -47,6 +48,18 @@ export default function App() {
     | { ok: false; error: string }
     | null
   >(null);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowSplash(false), 5000);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') setShowSplash(false);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -69,6 +82,24 @@ export default function App() {
     <AppErrorBoundary>
       <main className="min-h-screen bg-white relative">
         <Calendar />
+
+        {showSplash ? (
+          <div
+            className="fixed inset-0 z-[210] bg-black flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-label="מסך פתיחה"
+            onMouseDown={() => setShowSplash(false)}
+          >
+            <video
+              className="w-full h-full object-cover"
+              src="/splash.webm.mp4"
+              autoPlay
+              muted
+              playsInline
+            />
+          </div>
+        ) : null}
 
         {trial && (trial as any).ok === true && (trial as any).expired ? (
           <div
