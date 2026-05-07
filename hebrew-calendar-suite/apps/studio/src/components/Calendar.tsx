@@ -831,13 +831,7 @@ export function Calendar() {
       // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
       try {
         const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
-        const exportSettings: any = {
-          ...settingsForExport,
-          // In some setups the header bar is nudged upward for on-screen layout.
-          // In print-to-PDF this can clip the header entirely. Clamp to keep it visible.
-          headerBarOffsetYPx: Math.max(0, Number((settingsForExport as any).headerBarOffsetYPx ?? 0) || 0),
-        };
-        const html = buildPrintableMonthHtml(viewDate, exportSettings, overrides, {
+        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
           location: 'Jerusalem',
           renderMode: 'screen',
         });
