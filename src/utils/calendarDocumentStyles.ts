@@ -92,6 +92,15 @@ export function buildPrintMonthChromeHtml(
   const { gregTitle, hebTitle, gMonthDays, gridHtml } = parts;
   void gMonthDays;
 
+  const box1Text =
+    settings.headerBox1ManualEnabled && (settings.headerBox1ManualText ?? '').trim()
+      ? (settings.headerBox1ManualText ?? '').trim()
+      : settings.titleMain;
+  const box2Text =
+    settings.headerBox2ManualEnabled && (settings.headerBox2ManualText ?? '').trim()
+      ? (settings.headerBox2ManualText ?? '').trim()
+      : settings.titleSub;
+
   const headerHtml = `
     <div class="headerBar" style="
       position: relative;
@@ -106,8 +115,8 @@ export function buildPrintMonthChromeHtml(
       box-sizing: border-box;
       ${settings.headerBarMaxWidthPx > 0 ? `max-width: ${settings.headerBarMaxWidthPx}px; margin-left: auto; margin-right: auto;` : ''}
     ">
-      <div style="position:absolute;right:${settings.headerBox1OffsetXPx}px;top:${settings.headerBox1OffsetYPx}px;font-size:${settings.headerBox1FontPx}px;font-weight:${settings.headerBox1FontWeight};color:${settings.headerBox1Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(settings.titleMain)}</div>
-      <div style="position:absolute;right:${settings.headerBox2OffsetXPx}px;top:${settings.headerBox2OffsetYPx}px;font-size:${settings.headerBox2FontPx}px;font-weight:${settings.headerBox2FontWeight};color:${settings.headerBox2Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(settings.titleSub)}</div>
+      <div style="position:absolute;right:${settings.headerBox1OffsetXPx}px;top:${settings.headerBox1OffsetYPx}px;font-size:${settings.headerBox1FontPx}px;font-weight:${settings.headerBox1FontWeight};color:${settings.headerBox1Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(box1Text)}</div>
+      <div style="position:absolute;right:${settings.headerBox2OffsetXPx}px;top:${settings.headerBox2OffsetYPx}px;font-size:${settings.headerBox2FontPx}px;font-weight:${settings.headerBox2FontWeight};color:${settings.headerBox2Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(box2Text)}</div>
       <div style="position:absolute;right:${settings.headerBox3OffsetXPx}px;top:${settings.headerBox3OffsetYPx}px;font-size:${settings.headerBox3FontPx}px;font-weight:${settings.headerBox3FontWeight};color:${settings.headerBox3Color};white-space:nowrap;line-height:1.2;direction:rtl;">${esc(hebTitle)}</div>
       <div style="position:absolute;right:${settings.headerBox4OffsetXPx}px;top:${settings.headerBox4OffsetYPx}px;font-size:${settings.headerBox4FontPx}px;font-weight:${settings.headerBox4FontWeight};color:${settings.headerBox4Color};white-space:nowrap;line-height:1.2;direction:ltr;">${esc(gregTitle)}</div>
     </div>
