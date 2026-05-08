@@ -25,6 +25,12 @@ export type FastTzaitStyle = 'hebcal_tzeit' | 'sunset_minutes';
 export type CalendarSettings = {
   titleMain: string;
   titleSub: string;
+  /** Optional manual override for header box 1 text (when enabled). */
+  headerBox1ManualEnabled?: boolean;
+  headerBox1ManualText?: string;
+  /** Optional manual override for header box 2 text (when enabled). */
+  headerBox2ManualEnabled?: boolean;
+  headerBox2ManualText?: string;
   /** צורת הכותרת והחיבור לרשת (לא רק צבעים). */
   headerLayoutStyle: HeaderLayoutStyle;
 
@@ -211,6 +217,10 @@ export type CalendarSettings = {
 export const DEFAULT_SETTINGS: CalendarSettings = {
   titleMain: 'לוח שנה עברי‑לועזי',
   titleSub: 'מועדים · ראשי חודשים · זמני שבת',
+  headerBox1ManualEnabled: false,
+  headerBox1ManualText: '',
+  headerBox2ManualEnabled: false,
+  headerBox2ManualText: '',
   headerLayoutStyle: 'floating',
   headerBarHeightPx: 78,
   headerBarRadiusPx: 16,
@@ -437,6 +447,11 @@ export function loadSettings(): CalendarSettings {
       merged.stylePackId = DEFAULT_SETTINGS.stylePackId;
     }
     merged.headerLayoutStyle = sanitizeHeaderLayoutStyle(merged.headerLayoutStyle);
+
+    merged.headerBox1ManualEnabled = merged.headerBox1ManualEnabled === true;
+    merged.headerBox2ManualEnabled = merged.headerBox2ManualEnabled === true;
+    if (typeof merged.headerBox1ManualText !== 'string') merged.headerBox1ManualText = '';
+    if (typeof merged.headerBox2ManualText !== 'string') merged.headerBox2ManualText = '';
 
     if (merged.cellDateOrder !== 'greg_then_heb' && merged.cellDateOrder !== 'heb_then_greg') {
       merged.cellDateOrder = DEFAULT_SETTINGS.cellDateOrder;

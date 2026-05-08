@@ -26,6 +26,14 @@ function HeaderBarNew({
   gregorianLabel: string;
   onEditHeader: () => void;
 }) {
+  const box1Text =
+    settings.headerBox1ManualEnabled && (settings.headerBox1ManualText ?? '').trim()
+      ? (settings.headerBox1ManualText ?? '').trim()
+      : settings.titleMain;
+  const box2Text =
+    settings.headerBox2ManualEnabled && (settings.headerBox2ManualText ?? '').trim()
+      ? (settings.headerBox2ManualText ?? '').trim()
+      : settings.titleSub;
   return (
     <div
       dir="ltr"
@@ -62,7 +70,7 @@ function HeaderBarNew({
           userSelect: 'none',
         }}
       >
-        {settings.titleMain}
+        {box1Text}
       </div>
 
       {/* תיבה 2: כותרת משנה */}
@@ -81,7 +89,7 @@ function HeaderBarNew({
           userSelect: 'none',
         }}
       >
-        {settings.titleSub}
+        {box2Text}
       </div>
 
       {/* תיבה 3: חודש עברי */}

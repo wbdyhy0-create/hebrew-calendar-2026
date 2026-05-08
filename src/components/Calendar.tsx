@@ -4250,6 +4250,38 @@ export function Calendar() {
                 <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1">
                   תיבה 1 — כותרת ראשית
                 </div>
+                <label className="sm:col-span-2 lg:col-span-3 text-sm text-slate-700">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium">טקסט ידני לתיבה 1</span>
+                    <span className="text-xs text-slate-500">במקום {`"${DEFAULT_SETTINGS.titleMain}"`}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={settings.headerBox1ManualEnabled === true}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          headerBox1ManualEnabled: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span>הפעל טקסט ידני</span>
+                  </div>
+                  <textarea
+                    className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-50"
+                    rows={2}
+                    value={settings.headerBox1ManualText ?? ''}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        headerBox1ManualText: e.target.value,
+                      }))
+                    }
+                    disabled={settings.headerBox1ManualEnabled !== true}
+                    placeholder="כתוב כאן את הטקסט לתיבה 1…"
+                  />
+                </label>
             <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox1OffsetXPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
@@ -4281,6 +4313,38 @@ export function Calendar() {
                 <div className="sm:col-span-2 lg:col-span-3 text-sm font-semibold text-slate-800 border-b border-slate-200 pb-1 mt-2">
                   תיבה 2 — כותרת משנה
                 </div>
+                <label className="sm:col-span-2 lg:col-span-3 text-sm text-slate-700">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium">טקסט ידני לתיבה 2</span>
+                    <span className="text-xs text-slate-500">במקום {`"${DEFAULT_SETTINGS.titleSub}"`}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={settings.headerBox2ManualEnabled === true}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          headerBox2ManualEnabled: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span>הפעל טקסט ידני</span>
+                  </div>
+                  <textarea
+                    className="mt-2 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-50"
+                    rows={2}
+                    value={settings.headerBox2ManualText ?? ''}
+                    onChange={(e) =>
+                      setSettings((s) => ({
+                        ...s,
+                        headerBox2ManualText: e.target.value,
+                      }))
+                    }
+                    disabled={settings.headerBox2ManualEnabled !== true}
+                    placeholder="כתוב כאן את הטקסט לתיבה 2…"
+                  />
+                </label>
             <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox2OffsetXPx}px)
                   <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
