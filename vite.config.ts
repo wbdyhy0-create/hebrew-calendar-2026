@@ -158,6 +158,8 @@ export default defineConfig(({ mode }) => {
           path.dirname(fileURLToPath(import.meta.url)),
           'hebrew-calendar-suite/packages/shared/src/index.ts',
         ),
+        // Production boots `studio`; license/trial shared modules live under repo `src/`.
+        '@hc2026-root': path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'src'),
       },
     },
     /** נדרש ל־Electron (טעינת index.html מ־file:// אחרי build). */

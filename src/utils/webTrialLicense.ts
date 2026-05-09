@@ -146,3 +146,18 @@ export function getOrCreateWebInstallYmd(): string {
     return toYmdUtc(Date.now());
   }
 }
+
+/** כונן ניסוי ב-Web מיד בהטענת המודול (לא רק בתוך useEffect), למניעת חלון ראשון בלי כתיבה ל-Storage */
+function bootstrapWebLicenseIfApplicable(): void {
+  try {
+    if (typeof window === 'undefined') return;
+    const desktopTrial = window.HebrewGregorianDesktop?.trial?.getStatus;
+    if (typeof desktopTrial === 'function') return;
+    if (readWebLicensedFlag()) return;
+    getOrCreateWebInstallYmd();
+  } catch {
+    /* localStorage לא זמין / מכסה זיכרון */
+  }
+}
+
+bootstrapWebLicenseIfApplicable();
