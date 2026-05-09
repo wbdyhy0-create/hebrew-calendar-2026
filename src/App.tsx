@@ -1,5 +1,13 @@
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react';
 import { Calendar } from './components/Calendar';
+import { WebTrialExpiredOverlay } from './components/WebTrialExpiredOverlay';
+import {
+  computeTrialStatus,
+  getOrCreateWebInstallYmd,
+  readWebLicensedFlag,
+  writeWebLicensedFlag,
+  type WebTrialComputed,
+} from './utils/webTrialLicense';
 
 type BoundaryState = { error?: Error };
 
@@ -11,7 +19,6 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, BoundaryState>
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
-    // eslint-disable-next-line no-console
     console.error(error, info.componentStack);
   }
 
@@ -49,6 +56,9 @@ export default function App() {
     | null
   >(null);
 
+  const [webLicensed, setWebLicensed] = useState(() => readWebLicensedFlag());
+  const [webTrial, setWebTrial] = useState<WebTrialComputed | null>(null);
+
   useEffect(() => {
     const t = window.setTimeout(() => setShowSplash(false), 5000);
     const onKey = (e: KeyboardEvent) => {
@@ -63,20 +73,46 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      try {
-        const api = window.HebrewGregorianDesktop?.trial?.getStatus;
-        if (!api) return; // web build: no trial lock
-        const st = await api();
-        if (alive) setTrial(st as any);
-      } catch {
-        // ignore
+    void (async () => {
+      const desktopTrial = window.HebrewGregorianDesktop?.trial?.getStatus;
+      if (typeof desktopTrial === 'function') {
+        try {
+          const st = await desktopTrial();
+          if (alive) setTrial(st);
+        } catch {
+          // ignore (desktop build)
+        }
+        return;
+      }
+
+      // Web build: persist first-visit UTC date like electron/main.cjs
+      if (readWebLicensedFlag()) {
+        if (alive) {
+          setWebLicensed(true);
+          setWebTrial(null);
+        }
+        return;
+      }
+      const installYmd = getOrCreateWebInstallYmd();
+      if (alive) {
+        setWebLicensed(false);
+        setWebTrial(computeTrialStatus(installYmd));
       }
     })();
     return () => {
       alive = false;
     };
   }, []);
+
+  const showWebTrialLock =
+    typeof window.HebrewGregorianDesktop?.trial?.getStatus !== 'function' &&
+    webTrial?.expired === true &&
+    !webLicensed;
+
+  const onWebLicensed = () => {
+    writeWebLicensedFlag();
+    setWebLicensed(true);
+  };
 
   return (
     <AppErrorBoundary>
@@ -101,7 +137,11 @@ export default function App() {
           </div>
         ) : null}
 
-        {trial && (trial as any).ok === true && (trial as any).expired ? (
+        {showWebTrialLock && webTrial ? (
+          <WebTrialExpiredOverlay status={webTrial} onLicensed={onWebLicensed} />
+        ) : null}
+
+        {trial && trial.ok && trial.expired ? (
           <div
             className="fixed inset-0 z-[200] bg-white/95 backdrop-blur-sm flex items-center justify-center p-6"
             dir="rtl"
@@ -118,7 +158,7 @@ export default function App() {
                 לרכישה ולקבלת קוד הפעלה, נא ליצור קשר: <span className="font-mono">0522284432</span>
               </div>
               <div className="mt-4 text-xs text-slate-500">
-                (תאריך התקנה: {(trial as any).installYmd} • עברו {(trial as any).daysUsed} ימים)
+                (תאריך התקנה: {trial.installYmd} • עברו {trial.daysUsed} ימים)
               </div>
             </div>
           </div>
