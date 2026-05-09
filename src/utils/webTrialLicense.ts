@@ -1,8 +1,11 @@
 /** Web build: mirrors `electron/main.cjs` trial math (UTC calendar days). */
 export const TRIAL_DAYS_WEB = 14;
 
-const LS_INSTALL_YMD = 'hc2026_trial_install_ymd';
-const LS_PERPETUAL = 'hc2026_perpetual_licensed';
+const LS_LICENSE_V1 = 'hebrew-gregorian-calendar:license:v1';
+
+/** Legacy keys — migrated once into `LS_LICENSE_V1`, then removed. */
+const LS_LEGACY_INSTALL_YMD = 'hc2026_trial_install_ymd';
+const LS_LEGACY_PERPETUAL = 'hc2026_perpetual_licensed';
 
 export type WebTrialComputed = {
   trialDays: number;
@@ -11,6 +14,11 @@ export type WebTrialComputed = {
   daysUsed: number;
   daysLeft: number;
   expired: boolean;
+};
+
+type StoredLicenseV1 = {
+  trialInstallYmd?: string;
+  perpetualLicensed?: boolean;
 };
 
 function toYmdUtc(d: number | Date): string {
@@ -37,9 +45,74 @@ export function computeTrialStatus(installYmd: string, trialDays: number = TRIAL
   };
 }
 
+function stripLegacyKeys(ls: Storage) {
+  try {
+    ls.removeItem(LS_LEGACY_INSTALL_YMD);
+    ls.removeItem(LS_LEGACY_PERPETUAL);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readParsedV1(raw: string | null): StoredLicenseV1 {
+  if (!raw?.trim()) return {};
+  try {
+    const j = JSON.parse(raw) as unknown;
+    if (!j || typeof j !== 'object' || Array.isArray(j)) return {};
+    const o = j as Record<string, unknown>;
+    const trialInstallYmd =
+      typeof o.trialInstallYmd === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.trialInstallYmd)
+        ? o.trialInstallYmd
+        : undefined;
+    const perpetualLicensed =
+      typeof o.perpetualLicensed === 'boolean' ? o.perpetualLicensed : undefined;
+    return { trialInstallYmd, perpetualLicensed };
+  } catch {
+    return {};
+  }
+}
+
+function persistV1(next: StoredLicenseV1) {
+  const ls = window.localStorage;
+  ls.setItem(LS_LICENSE_V1, JSON.stringify(next));
+}
+
+/**
+ * מאחד v1 מהדיסק + מפתחות ישנים. אם יש ישנים — כותב v1 פעם אחת ומוחק אותם (מיגציה).
+ */
+function readMergedLicense(): StoredLicenseV1 {
+  if (typeof window === 'undefined') return {};
+  try {
+    const ls = window.localStorage;
+    const fromDisk = readParsedV1(ls.getItem(LS_LICENSE_V1));
+
+    const legacyInstallRaw = ls.getItem(LS_LEGACY_INSTALL_YMD);
+    const legacyInstall =
+      legacyInstallRaw && /^\d{4}-\d{2}-\d{2}$/.test(legacyInstallRaw) ? legacyInstallRaw : undefined;
+    const legacyPerm = ls.getItem(LS_LEGACY_PERPETUAL) === '1';
+
+    const merged: StoredLicenseV1 = {
+      trialInstallYmd: fromDisk.trialInstallYmd ?? legacyInstall,
+      perpetualLicensed: Boolean(fromDisk.perpetualLicensed) || legacyPerm,
+    };
+
+    const hasLegacy =
+      ls.getItem(LS_LEGACY_INSTALL_YMD) !== null || ls.getItem(LS_LEGACY_PERPETUAL) !== null;
+
+    if (hasLegacy) {
+      persistV1(merged);
+      stripLegacyKeys(ls);
+    }
+
+    return merged;
+  } catch {
+    return {};
+  }
+}
+
 export function readWebLicensedFlag(): boolean {
   try {
-    return typeof window !== 'undefined' && window.localStorage.getItem(LS_PERPETUAL) === '1';
+    return readMergedLicense().perpetualLicensed === true;
   } catch {
     return false;
   }
@@ -47,7 +120,13 @@ export function readWebLicensedFlag(): boolean {
 
 export function writeWebLicensedFlag(): void {
   try {
-    window.localStorage.setItem(LS_PERPETUAL, '1');
+    const cur = readMergedLicense();
+    const next: StoredLicenseV1 = {
+      ...cur,
+      perpetualLicensed: true,
+    };
+    persistV1(next);
+    stripLegacyKeys(window.localStorage);
   } catch {
     /* ignore quota / privacy mode */
   }
@@ -55,10 +134,13 @@ export function writeWebLicensedFlag(): void {
 
 export function getOrCreateWebInstallYmd(): string {
   try {
-    const existing = typeof window !== 'undefined' ? window.localStorage.getItem(LS_INSTALL_YMD) : null;
-    if (existing && /^\d{4}-\d{2}-\d{2}$/.test(existing)) return existing;
+    const cur = readMergedLicense();
+    if (cur.trialInstallYmd && /^\d{4}-\d{2}-\d{2}$/.test(cur.trialInstallYmd)) {
+      return cur.trialInstallYmd;
+    }
     const ymd = toYmdUtc(Date.now());
-    window.localStorage.setItem(LS_INSTALL_YMD, ymd);
+    persistV1({ ...cur, trialInstallYmd: ymd });
+    stripLegacyKeys(window.localStorage);
     return ymd;
   } catch {
     return toYmdUtc(Date.now());
