@@ -25,6 +25,11 @@ function toMmDdFromIsoYmd(isoYmd: string): string | null {
   return `${mm}-${dd}`
 }
 
+/** מפתח חוזר מדי שנה ב־overrides (MM-DD) מתאריך yyyy-MM-dd (ירושלים אזרחי). */
+export function recurringDayKeyFromIsoYmd(isoYmd: string): string | null {
+  return toMmDdFromIsoYmd(isoYmd)
+}
+
 /** True when the user saved an override that intentionally shows no centered lines (hides auto holiday text). */
 export function isCenterContentSuppressedByOverride(ovr: DayTextOverride | undefined): boolean {
   if (!ovr) return false

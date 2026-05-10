@@ -12,6 +12,7 @@ import {
   getHebrewDayGematriya,
   mixHexWithWhite,
   normalizeOverridesMapToRecurring,
+  recurringDayKeyFromIsoYmd,
   resolveDayTextOverride,
   buildCalendarDayMetas,
   formatParshaDisplayHe,
@@ -261,6 +262,16 @@ export default function App() {
   })()
   const isProdMode = displayMode === 'prod'
 
+  /** פריסת `hebrew-calendar-admin.*` היא כלי עריכה — לא מצב \"בנק\" של סניף. */
+  const isStaffCalendarAdminHost = (() => {
+    try {
+      const h = window.location.hostname.toLowerCase()
+      return h.includes('calendar-admin') || h === 'localhost'
+    } catch {
+      return false
+    }
+  })()
+
   const [now, setNow] = useState(() => new Date())
   const [displayDate, setDisplayDate] = useState(() => new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('month')
@@ -291,9 +302,8 @@ export default function App() {
   })
   const lastPublishedAtRef = useRef<string | null>(null)
   const didApplyRemoteRef = useRef(false)
-  // Bank (prod) should look identical to Admin.
-  // We only hide specific admin-only actions (e.g. pull config).
-  const isViewerOnly = isProdMode
+  // Bank/display (prod) — ללא סרגל אדמין. אתר האדמין בשם `-admin` נשאר מצב עריכה גם עם VITE_DISPLAY_MODE=prod.
+  const isViewerOnly = isProdMode && !isStaffCalendarAdminHost
   const monthGridRef = useRef<HTMLDivElement | null>(null)
   const [monthCellPx, setMonthCellPx] = useState<number | null>(null)
   const canvasInnerRef = useRef<HTMLDivElement | null>(null)
@@ -308,6 +318,10 @@ export default function App() {
   const [reminderEditorText, setReminderEditorText] = useState('')
   const [reminderPopupOpen, setReminderPopupOpen] = useState(false)
   const [reminderPopupDayKey, setReminderPopupDayKey] = useState<string | null>(null)
+
+  const [overrideEditorOpen, setOverrideEditorOpen] = useState(false)
+  const [overrideEditorIsoKey, setOverrideEditorIsoKey] = useState<string | null>(null)
+  const [overrideEditorText, setOverrideEditorText] = useState('')
 
   useEffect(() => {
     // Display runs on a different origin/port than Studio, so Studio localStorage is not readable here.
@@ -731,6 +745,60 @@ export default function App() {
     setReminderEditorDayKey(dayKey)
     setReminderEditorText(remindersByDay[dayKey] ?? '')
     setReminderEditorOpen(true)
+  }
+
+  const openDayCenterOverrideEditor = (isoKey: string, titles: string[], date: Date) => {
+    setReminderEditorOpen(false)
+    setDisplayDate(date)
+    setOverrideEditorIsoKey(isoKey)
+    const ovr = resolveDayTextOverride(overrides, isoKey)
+    const seed = ovr?.centerLines?.length ? ovr.centerLines : titles
+    setOverrideEditorText((Array.isArray(seed) ? seed : []).join('\n'))
+    setOverrideEditorOpen(true)
+  }
+
+  const persistDisplaySettingsBundle = (nextOverrides: OverridesMap) => {
+    const DISPLAY_BUNDLE_KEY = 'hebrew-gregorian-calendar:display:settings:v1'
+    try {
+      const raw = localStorage.getItem(DISPLAY_BUNDLE_KEY)
+      const parsed = raw ? JSON.parse(raw) : {}
+      const base = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+      const fonts = base.fonts
+      localStorage.setItem(
+        DISPLAY_BUNDLE_KEY,
+        JSON.stringify({
+          ...base,
+          settings,
+          overrides: nextOverrides,
+          ...(fonts ? { fonts } : {}),
+        }),
+      )
+    } catch {
+      // ignore
+    }
+  }
+
+  const saveDayCenterOverride = () => {
+    const iso = overrideEditorIsoKey
+    if (!iso) return
+    const rk = recurringDayKeyFromIsoYmd(iso)
+    if (!rk) return
+
+    const lines = overrideEditorText.replace(/\r\n/g, '\n').split('\n').map((l) => l.trimEnd())
+    const compact = lines.map((l) => l.trim()).filter(Boolean)
+
+    const next: OverridesMap = { ...overrides }
+    if (!compact.length) {
+      delete next[rk]
+    } else {
+      next[rk] = { ...(next[rk] || {}), centerLines: compact }
+    }
+
+    const normalized = normalizeOverridesMapToRecurring(next)
+    setOverrides(normalized)
+    persistDisplaySettingsBundle(normalized)
+    setOverrideEditorOpen(false)
+    setOverrideEditorIsoKey(null)
   }
 
   const saveReminder = () => {
@@ -1321,8 +1389,13 @@ export default function App() {
                     return (
                       <div
                         key={key}
-                        onClick={() => {
-                          if (!inMonth) return
+                        onPointerDown={(ev) => {
+                          if (!inMonth || ev.button !== 0) return
+                          if (isStaffCalendarAdminHost) {
+                            ev.preventDefault()
+                            openDayCenterOverrideEditor(key, m.titles, m.g)
+                            return
+                          }
                           openReminderEditorForDay(key, m.g)
                         }}
                         style={{
@@ -1680,6 +1753,105 @@ export default function App() {
               <button
                 type="button"
                 onClick={saveReminder}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148,163,184,0.25)',
+                  background: 'rgba(16,185,129,0.16)',
+                  color: isLikelyLightBg(settings.calendarCanvasFill) ? '#064e3b' : '#d1fae5',
+                  fontWeight: 900,
+                }}
+              >
+                שמור
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {overrideEditorOpen && overrideEditorIsoKey ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2,6,23,0.55)',
+            display: 'grid',
+            placeItems: 'center',
+            padding: 16,
+            zIndex: 65,
+          }}
+          onMouseDown={() => {
+            setOverrideEditorOpen(false)
+            setOverrideEditorIsoKey(null)
+          }}
+        >
+          <div
+            dir="rtl"
+            style={{
+              width: 'min(620px, 100%)',
+              background: isLikelyLightBg(settings.calendarCanvasFill) ? '#ffffff' : '#0b1220',
+              border: '1px solid rgba(148,163,184,0.25)',
+              borderRadius: 16,
+              padding: 14,
+              color: isLikelyLightBg(settings.calendarCanvasFill) ? '#0f172a' : '#e2e8f0',
+              boxSizing: 'border-box',
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontWeight: 900, marginBottom: 6 }}>עריכת טקסט מרכזי ביום (חוזר מדי שנה)</div>
+            <div style={{ color: isLikelyLightBg(settings.calendarCanvasFill) ? '#475569' : '#94a3b8', fontSize: 12, marginBottom: 6 }}>
+              תאריך:{' '}
+              <span dir="ltr" style={{ fontFamily: 'ui-monospace, monospace' }}>
+                {overrideEditorIsoKey}
+              </span>
+              {' · '}מפתח חוזר:{' '}
+              <span dir="ltr" style={{ fontFamily: 'ui-monospace, monospace' }}>
+                {recurringDayKeyFromIsoYmd(overrideEditorIsoKey) ?? ''}
+              </span>
+            </div>
+            <div style={{ color: isLikelyLightBg(settings.calendarCanvasFill) ? '#64748b' : '#94a3b8', fontSize: 12, marginBottom: 10, lineHeight: 1.35 }}>
+              כל חודש/שנה שבה התאריך הלועזי חוזר (למשל 10 למאי) יציג את אותן שורות. ריק ובשמור — מוחק התאמה
+              ומחזיר טקסט אוטומטי מהשעון העברי.
+            </div>
+            <textarea
+              value={overrideEditorText}
+              onChange={(e) => setOverrideEditorText(e.target.value)}
+              placeholder="שורה אחת לכל שורה במרכז התא…"
+              style={{
+                width: '100%',
+                minHeight: 140,
+                resize: 'vertical',
+                padding: 10,
+                borderRadius: 12,
+                border: '1px solid rgba(148,163,184,0.25)',
+                background: isLikelyLightBg(settings.calendarCanvasFill) ? 'rgba(248,250,252,1)' : 'rgba(15,23,42,0.6)',
+                color: isLikelyLightBg(settings.calendarCanvasFill) ? '#0f172a' : '#e2e8f0',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOverrideEditorOpen(false)
+                  setOverrideEditorIsoKey(null)
+                }}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(148,163,184,0.25)',
+                  background: 'transparent',
+                  color: isLikelyLightBg(settings.calendarCanvasFill) ? '#0f172a' : '#e2e8f0',
+                  fontWeight: 800,
+                }}
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={saveDayCenterOverride}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 10,
