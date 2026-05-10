@@ -93,8 +93,8 @@ export default function App() {
           const r = await fetch('/api/validate-calendar-license', {
             method: 'POST',
             headers: { 'content-type': 'application/json; charset=utf-8' },
-            // Empty code: server may allow trusted embeds based on Origin/Referer.
-            body: JSON.stringify({}),
+            // Empty code: server may allow trusted embeds based on document.referrer (parent URL).
+            body: JSON.stringify({ embedReferrer: typeof document !== 'undefined' ? document.referrer : '' }),
           });
           const j = (await r.json().catch(() => ({}))) as { ok?: boolean };
           if (r.ok && j?.ok === true) {

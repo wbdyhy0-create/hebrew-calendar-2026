@@ -31,22 +31,21 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
 }
 
-function isTrustedEmbedRequest(req: VercelRequest, trusted: Set<string>): boolean {
+function isTrustedEmbedSource(src: string, trusted: Set<string>): boolean {
   if (trusted.size === 0) return false;
-  const origin = String(req.headers.origin ?? '').trim();
-  const referer = String(req.headers.referer ?? '').trim();
-  const src = origin || referer;
   if (!src) return false;
+  const s = String(src).trim();
+  if (!s) return false;
 
   for (const t of trusted) {
     if (!t) continue;
     // If admin entered a bare hostname, allow match on hostname occurrence.
     if (!t.startsWith('http://') && !t.startsWith('https://')) {
-      if (src.includes(`://${t}`)) return true;
-      if (src.includes(t)) return true;
+      if (s.includes(`://${t}`)) return true;
+      if (s.includes(t)) return true;
       continue;
     }
-    if (src.startsWith(t)) return true;
+    if (s.startsWith(t)) return true;
   }
   return false;
 }
@@ -64,7 +63,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Trusted embed auto-unlock (no user code).
   if (!code) {
     const trusted = parseTrustedOrigins(process.env.HC2026_TRUSTED_EMBED_ORIGINS);
-    if (isTrustedEmbedRequest(req, trusted)) {
+    const embedReferrer =
+      isPlainObject(body) && typeof body.embedReferrer === 'string' ? String(body.embedReferrer).trim() : '';
+    const origin = String(req.headers.origin ?? '').trim();
+    const referer = String(req.headers.referer ?? '').trim();
+    const src = embedReferrer || origin || referer;
+
+    if (isTrustedEmbedSource(src, trusted)) {
       res.status(200).json({ ok: true, trustedEmbed: true });
       return;
     }
