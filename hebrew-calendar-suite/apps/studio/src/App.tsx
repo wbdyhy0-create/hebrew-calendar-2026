@@ -85,6 +85,31 @@ export default function App() {
         return;
       }
 
+      // Auto-unlock when embedded from a trusted origin (e.g. your Footnote Wizard page).
+      // This keeps the license scoped to the embed entrypoint without requiring users to enter a code.
+      try {
+        const embedded = typeof window !== 'undefined' && window.self !== window.top;
+        if (embedded && !readWebLicensedFlag()) {
+          const r = await fetch('/api/validate-calendar-license', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json; charset=utf-8' },
+            // Empty code: server may allow trusted embeds based on Origin/Referer.
+            body: JSON.stringify({}),
+          });
+          const j = (await r.json().catch(() => ({}))) as { ok?: boolean };
+          if (r.ok && j?.ok === true) {
+            writeWebLicensedFlag();
+            if (alive) {
+              setWebLicensed(true);
+              setWebTrial(null);
+            }
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       if (readWebLicensedFlag()) {
         if (alive) {
           setWebLicensed(true);
