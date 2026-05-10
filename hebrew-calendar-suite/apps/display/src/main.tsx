@@ -4,6 +4,8 @@ import './index.css'
 import './display-accessibility.css'
 import App from './App.tsx'
 
+;(window as unknown as { __HC_SUITE_APP__?: string }).__HC_SUITE_APP__ = 'display'
+
 class RootErrorBoundary extends Component<{ children: ReactNode }, { err: unknown }> {
   state = { err: null as unknown }
 
