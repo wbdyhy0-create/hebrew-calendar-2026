@@ -1338,11 +1338,13 @@ export function Calendar() {
         return;
       }
 
-      if (key === 'header' || key === 'weekdays' || key === 'cell' || key === 'background') {
+      // Do not intercept cell clicks: the cell itself handles click to open the editor.
+      // Intercept only non-cell inspect targets.
+      if (key === 'cell') return;
+
+      if (key === 'header' || key === 'weekdays' || key === 'background') {
         setInspect({ key, x: e.clientX, y: e.clientY });
-        // Allow cell clicks to reach React handlers (cell editor, etc.).
-        // Other inspect targets should not trigger underlying clicks.
-        if (key !== 'cell') e.stopPropagation();
+        e.stopPropagation();
         return;
       }
 
