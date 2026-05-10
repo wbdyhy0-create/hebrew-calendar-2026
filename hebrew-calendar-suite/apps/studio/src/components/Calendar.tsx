@@ -1340,7 +1340,9 @@ export function Calendar() {
 
       if (key === 'header' || key === 'weekdays' || key === 'cell' || key === 'background') {
         setInspect({ key, x: e.clientX, y: e.clientY });
-        e.stopPropagation();
+        // Allow cell clicks to reach React handlers (cell editor, etc.).
+        // Other inspect targets should not trigger underlying clicks.
+        if (key !== 'cell') e.stopPropagation();
         return;
       }
 
