@@ -86,8 +86,14 @@ export function buildPrintableMonthHtml(
   // Target height of the full grid (DOW row + cell rows) in natural pixels.
   const gridTargetH = Math.max(300, naturalTotal - tableOffset - headerH - gridBorderH);
   const dowH = Math.max(20, Number(settings.gridWeekdayHeaderHeightPx) || 34);
+
+  const isIntegrated = settings.headerLayoutStyle === 'grid_integrated';
+  const integratedGapPx = isIntegrated ? 4 : 0;
+  const integratedPadPx = isIntegrated ? 4 : 0;
+  // In integrated mode, gap × weekCount rows + padding top+bottom reduce space available for cells.
+  const vertGapOverhead = integratedGapPx * weekCount + integratedPadPx * 2;
   // Cell height that fills the grid vertically.
-  const fittedCellH = Math.max(70, Math.floor((gridTargetH - dowH) / weekCount));
+  const fittedCellH = Math.max(70, Math.floor((gridTargetH - dowH - vertGapOverhead) / weekCount));
 
   const effectiveSettings =
     weekCount >= 6 || settings.layoutAutoFitToCanvas
@@ -202,9 +208,16 @@ export function buildPrintableMonthHtml(
               ? settings.eventBg
               : '#ffffff';
 
+      const bw = settings.cellBorderWidthPx;
+      const bc = settings.cellBorderColor;
+      const bs = settings.cellBorderStyle === 'double' ? 'double' : 'solid';
       const borderStyle = settings.showCellBorders
-        ? `border-left: ${settings.cellBorderWidthPx}px solid ${settings.cellBorderColor}; border-bottom: ${settings.cellBorderWidthPx}px solid ${settings.cellBorderColor};`
+        ? isIntegrated
+          ? `border: ${bw}px ${bs} ${bc};`
+          : `border-left: ${bw}px ${bs} ${bc}; border-bottom: ${bw}px ${bs} ${bc};`
         : 'border: none;';
+      const cellRadius = Math.max(0, Math.round(Number(settings.cellCornerRadiusPx) || 0));
+      const radiusStyle = cellRadius ? `border-radius: ${cellRadius}px;` : '';
 
       const hebDay = getHebrewDayGematriya(g);
       const hebMonth = getHebrewDayAndMonth(g).month;
@@ -315,7 +328,7 @@ export function buildPrintableMonthHtml(
       }
 
       cells.push(`
-        <div class="cell ${inMonth ? '' : 'dim'}${inMonth && hasFastTimes ? ' cellFast' : ''}${inMonth && dstLabel ? ' cellDst' : ''}${inMonth && isToday ? ' cellToday' : ''}" style="background:${bg};${borderStyle}">
+        <div class="cell ${inMonth ? '' : 'dim'}${inMonth && hasFastTimes ? ' cellFast' : ''}${inMonth && dstLabel ? ' cellDst' : ''}${inMonth && isToday ? ' cellToday' : ''}" style="background:${bg};${borderStyle}${radiusStyle}">
           ${imgHtml}
           ${
             !inMonth
@@ -377,7 +390,10 @@ export function buildPrintableMonthHtml(
     })
     .join('');
   const gridTemplateRows = `${dowH}px repeat(${weekCount}, ${fittedCellH}px)`;
-  const gridHtml = `<div class="grid" style="height:${gridTargetH}px;grid-template-rows:${gridTemplateRows};">${gridDowRow}${cells.join('')}</div>`;
+  const gridInlineExtra = isIntegrated
+    ? `gap:${integratedGapPx}px;padding:${integratedPadPx}px;box-sizing:border-box;background:transparent;`
+    : '';
+  const gridHtml = `<div class="grid" style="height:${gridTargetH}px;grid-template-rows:${gridTemplateRows};${gridInlineExtra}">${gridDowRow}${cells.join('')}</div>`;
 
   const zoomPct = resolveCalendarLayoutZoomPercent(effectiveSettings);
   const chromeHtml = buildPrintMonthChromeHtml(effectiveSettings, effectiveSettings.headerLayoutStyle, esc, {
