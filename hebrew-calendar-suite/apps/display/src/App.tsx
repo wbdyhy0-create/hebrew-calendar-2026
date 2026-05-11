@@ -67,7 +67,7 @@ function weekdayLabels(mode: string | undefined) {
 type ViewMode = 'month' | 'day'
 
 /** Low-glare accessibility palette (screen only; PDF uses separate HTML). */
-const DISPLAY_PDF_EXPORT_PATH_LS_KEY = 'hebrew-calendar-display:pdf-export-path:v1'
+const DISPLAY_PDF_EXPORT_PATH_LS_KEY = 'hebrew-calendar-display:pdf-export-path:v2'
 const DISPLAY_ACCESSIBILITY_LS_KEY = 'hebrew-calendar-display:accessibility-low-brightness:v1'
 const DISPLAY_A11Y = {
   pageBg: '#1a1a1a',
