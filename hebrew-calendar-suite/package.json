@@ -5,6 +5,10 @@
   "engines": {
     "node": ">=20.10.0"
   },
+  "dependencies": {
+    "@sparticuz/chromium": "^148.0.0",
+    "puppeteer-core": "^24.9.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
