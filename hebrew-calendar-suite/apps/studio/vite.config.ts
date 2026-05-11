@@ -1,9 +1,21 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'node:child_process'
 
+// In the `hebrew-calendar-2026` monorepo, shared web-trial UI lives under repo root `src/`
+// (see `App.tsx` imports from `@hc2026-root/...`).
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const hc2026RootSrc = path.resolve(__dirname, '../../../src')
+
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@hc2026-root': hc2026RootSrc,
+    },
+  },
   plugins: [
     react(),
     // Local-dev shim for `/api/*` so Publish works without `vercel dev`.
