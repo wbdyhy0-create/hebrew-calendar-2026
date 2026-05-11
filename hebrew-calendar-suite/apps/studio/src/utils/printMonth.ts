@@ -62,7 +62,7 @@ export function buildPrintableMonthHtml(
   // Auto-fit PDF: when enabled, compute a cell height that fills the page vertically.
   const weekCount = Math.max(5, Math.min(6, weeks.length || 6));
   const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96);
-  const approxHeaderH = 0;
+  const approxHeaderH = Math.max(0, Number(effectiveSettings.headerBarHeightPx) || 0) + Math.max(0, Number(effectiveSettings.tableOffsetYPx) || 0);
   const approxDowH = settings.gridWeekdayHeaderHeightPx + settings.gridWeekdayHeaderRowOffsetYPx;
   const approxCanvasPad = settings.canvasPaddingTopPx + settings.canvasPaddingPx * 2;
   const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8;
@@ -133,6 +133,7 @@ export function buildPrintableMonthHtml(
   // Note: previously used for @media print fitting. Kept calculation out to avoid stale warnings.
 
   const dowLabels = getWeekdayHeaderLabels(effectiveSettings.weekdayHeaderMode);
+  const dowEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const headerLayout = effectiveSettings.headerLayoutStyle;
 
   const cells: string[] = [];
@@ -347,10 +348,16 @@ export function buildPrintableMonthHtml(
   }
 
   const gridDowRow = dowLabels
-    .map(
-      (d) =>
-        `<div class="dow"><span style="display:inline-block;transform:translateY(${Number(settings.gridWeekdayHeaderTextOffsetYPx) || 0}px);line-height:1;">${esc(d)}</span></div>`,
-    )
+    .map((d, idx) => {
+      const off = Number(effectiveSettings.gridWeekdayHeaderTextOffsetYPx) || 0;
+      const content = effectiveSettings.weekdayHeaderShowEnglish
+        ? `<span style="display:inline-flex;gap:6px;align-items:center;line-height:1;white-space:nowrap;direction:rtl;transform:translateY(${off}px);">
+            <span>${esc(d)}</span>
+            <span dir="ltr" style="font-weight:800;opacity:0.9;">${esc(dowEn[idx] ?? '')}</span>
+          </span>`
+        : `<span style="display:inline-block;transform:translateY(${off}px);line-height:1;">${esc(d)}</span>`;
+      return `<div class="dow" style="background:${esc(effectiveSettings.gridWeekdayHeaderBg)};color:${esc(effectiveSettings.gridWeekdayHeaderTextColor)};height:${Number(effectiveSettings.gridWeekdayHeaderHeightPx) || 34}px;min-height:${Number(effectiveSettings.gridWeekdayHeaderHeightPx) || 34}px;font-size:${Number(effectiveSettings.gridWeekdayHeaderFontPx) || 13}px;font-weight:${effectiveSettings.gridWeekdayHeaderFontWeight};border-bottom:${Number(effectiveSettings.gridWeekdayHeaderBorderBottomWidthPx) || 0}px solid ${esc(effectiveSettings.gridWeekdayHeaderBorderBottomColor)};display:flex;align-items:center;justify-content:center;padding:0 8px;box-sizing:border-box;line-height:1;text-align:center;">${content}</div>`;
+    })
     .join('');
   const gridHtml = `<div class="grid">${gridDowRow}${cells.join('')}</div>`;
 
