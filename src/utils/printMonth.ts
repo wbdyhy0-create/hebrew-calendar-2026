@@ -344,7 +344,7 @@ export function buildPrintableMonthHtml(
   const gridDowRow = dowLabels
     .map(
       (d) =>
-        `<div class="dow"><span style="display:inline-block;transform:translateY(${Number(settings.gridWeekdayHeaderTextOffsetYPx) || 0}px);line-height:1;">${esc(d)}</span></div>`,
+        `<div class="dow" style="background:${esc(effectiveSettings.gridWeekdayHeaderBg)};color:${esc(effectiveSettings.gridWeekdayHeaderTextColor)};height:${Number(effectiveSettings.gridWeekdayHeaderHeightPx) || 34}px;min-height:${Number(effectiveSettings.gridWeekdayHeaderHeightPx) || 34}px;font-size:${Number(effectiveSettings.gridWeekdayHeaderFontPx) || 13}px;font-weight:${effectiveSettings.gridWeekdayHeaderFontWeight};border-bottom:${Number(effectiveSettings.gridWeekdayHeaderBorderBottomWidthPx) || 0}px solid ${esc(effectiveSettings.gridWeekdayHeaderBorderBottomColor)};display:flex;align-items:center;justify-content:center;padding:0 8px;box-sizing:border-box;line-height:1;text-align:center;"><span style="display:inline-block;transform:translateY(${Number(effectiveSettings.gridWeekdayHeaderTextOffsetYPx) || 0}px);line-height:1;">${esc(d)}</span></div>`,
     )
     .join('');
   const gridHtml = `<div class="grid">${gridDowRow}${cells.join('')}</div>`;
