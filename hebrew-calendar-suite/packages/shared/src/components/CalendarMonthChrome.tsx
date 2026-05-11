@@ -148,6 +148,7 @@ function HeaderBarNew({
   const r = Math.max(0, Math.round(Number(settings.headerBarRadiusPx) || 0));
   const bw = Math.max(0, Math.round(Number(settings.headerBarBorderWidthPx) || 0));
   const bc = settings.headerBarBorderColor;
+  const headerBarMarginBottom = Math.max(0, Math.round(Number(settings.headerBarMarginBottomPx) || 0));
 
   return (
     <div
@@ -171,12 +172,12 @@ function HeaderBarNew({
               borderStyle: 'solid',
               borderColor: bc,
               borderRadius: r > 0 ? `${r}px ${r}px 0 0` : 0,
-              marginBottom: 0,
+              marginBottom: headerBarMarginBottom,
             }
           : {
               border: `${bw}px solid ${bc}`,
               borderRadius: settings.headerBarRadiusPx,
-              marginBottom: settings.headerBarMarginBottomPx,
+              marginBottom: headerBarMarginBottom,
             }),
         // Keep vertical clipping for neat header bar,
         // but allow horizontal overflow so long Hebrew titles aren't truncated.
