@@ -399,8 +399,19 @@ export function Calendar() {
   const [tenantDraftName, setTenantDraftName] = useState('');
   const isCalendar2026Host = useMemo(() => {
     if (typeof window === 'undefined') return false;
+    try {
+      const v = String((import.meta as any)?.env?.VITE_PUBLIC_CALENDAR_2026 ?? '').trim();
+      if (v === '1' || v.toLowerCase() === 'true' || v.toLowerCase() === 'yes') return true;
+    } catch {
+      // ignore
+    }
     const host = (window.location.hostname || '').toLowerCase();
-    return host === 'hebrew-calendar-2026.vercel.app' || host.endsWith('.hebrew-calendar-2026.vercel.app');
+    // Production + preview URLs on Vercel for this product; optional explicit env for custom domains.
+    return (
+      host === 'hebrew-calendar-2026.vercel.app' ||
+      host.endsWith('.hebrew-calendar-2026.vercel.app') ||
+      host.includes('hebrew-calendar-2026')
+    );
   }, []);
   const [publishIncludeUserPresets, setPublishIncludeUserPresets] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
@@ -3426,44 +3437,46 @@ export function Calendar() {
                 >
                   שמור
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ok = window.confirm(
-                      'איפוס מקומי מלא לסטודיו בדפדפן זה?\n\nזה ימחק: הגדרות, עריכות/תמונות בתאים, פריסטים שמורים, טננטים שמורים והעדפות פרסום.\n\nהענן/העמדות לא יושפעו.',
-                    );
-                    if (!ok) return;
-                    try {
-                      // Shared settings
-                      window.localStorage.removeItem('hebrew-gregorian-calendar:settings:v5');
-                      // Studio overrides + presets
-                      window.localStorage.removeItem('hebrew-gregorian-calendar:overrides:v2');
-                      window.localStorage.removeItem('hebrew-gregorian-calendar:style-presets:v1');
-                      // Studio tenant UI state
-                      window.localStorage.removeItem('hebrew-gregorian-calendar:studio:tenants:v1');
-                      window.localStorage.removeItem('hebrew-gregorian-calendar:studio:active-tenant:v1');
-                      window.localStorage.removeItem(
-                        'hebrew-gregorian-calendar:studio:publish-include-user-presets:v1',
+                {!isCalendar2026Host ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ok = window.confirm(
+                        'איפוס מקומי מלא לסטודיו בדפדפן זה?\n\nזה ימחק: הגדרות, עריכות/תמונות בתאים, פריסטים שמורים, טננטים שמורים והעדפות פרסום.\n\nהענן/העמדות לא יושפעו.',
                       );
-                      // Best-effort: clear any other local keys this app uses (won't touch other sites).
+                      if (!ok) return;
                       try {
-                        for (let i = window.localStorage.length - 1; i >= 0; i--) {
-                          const k = window.localStorage.key(i);
-                          if (k && k.startsWith('hebrew-gregorian-calendar:')) window.localStorage.removeItem(k);
+                        // Shared settings
+                        window.localStorage.removeItem('hebrew-gregorian-calendar:settings:v5');
+                        // Studio overrides + presets
+                        window.localStorage.removeItem('hebrew-gregorian-calendar:overrides:v2');
+                        window.localStorage.removeItem('hebrew-gregorian-calendar:style-presets:v1');
+                        // Studio tenant UI state
+                        window.localStorage.removeItem('hebrew-gregorian-calendar:studio:tenants:v1');
+                        window.localStorage.removeItem('hebrew-gregorian-calendar:studio:active-tenant:v1');
+                        window.localStorage.removeItem(
+                          'hebrew-gregorian-calendar:studio:publish-include-user-presets:v1',
+                        );
+                        // Best-effort: clear any other local keys this app uses (won't touch other sites).
+                        try {
+                          for (let i = window.localStorage.length - 1; i >= 0; i--) {
+                            const k = window.localStorage.key(i);
+                            if (k && k.startsWith('hebrew-gregorian-calendar:')) window.localStorage.removeItem(k);
+                          }
+                        } catch {
+                          // ignore
                         }
                       } catch {
                         // ignore
                       }
-                    } catch {
-                      // ignore
-                    }
-                    window.location.reload();
-                  }}
-                  className="text-sm px-3 py-2 rounded-md border border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100"
-                  title="מחיקת כל ההגדרות/פריסטים המקומיים בדפדפן זה"
-                >
-                  איפוס מקומי
-                </button>
+                      window.location.reload();
+                    }}
+                    className="text-sm px-3 py-2 rounded-md border border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100"
+                    title="מחיקת כל ההגדרות/פריסטים המקומיים בדפדפן זה"
+                  >
+                    איפוס מקומי
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={async () => {
