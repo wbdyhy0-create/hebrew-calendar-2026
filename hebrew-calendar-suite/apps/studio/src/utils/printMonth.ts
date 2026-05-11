@@ -59,19 +59,28 @@ export function buildPrintableMonthHtml(
   _opts?: { location?: 'Jerusalem' | 'TelAviv' },
 ) {
   const weeks = getMonthGridWeeks(viewDate);
-  // Auto-fit PDF: when enabled, compute a cell height that fills the page vertically.
   const weekCount = Math.max(5, Math.min(6, weeks.length || 6));
   const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96);
-  const approxHeaderH = Math.max(0, Number(effectiveSettings.headerBarHeightPx) || 0) + Math.max(0, Number(effectiveSettings.tableOffsetYPx) || 0);
-  const approxDowH = settings.gridWeekdayHeaderHeightPx + settings.gridWeekdayHeaderRowOffsetYPx;
-  const approxCanvasPad = settings.canvasPaddingTopPx + settings.canvasPaddingPx * 2;
-  const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8;
-  const availForCells = Math.max(220, pagePxH - approxHeaderH - approxDowH - approxCanvasPad - approxBorders);
-  const autoCellH = Math.round(availForCells / weekCount);
-  // Chrome print-to-PDF can paginate inside CSS grids. In 6-week months, this may push the last row
-  // to the next page (leaving a blank gap). Ensure the printable HTML uses a cell height that fits
-  // a full month into a single page.
-  const fittedCellH = Math.min(140, Math.max(90, autoCellH));
+
+  // Compute the vertical space consumed before the grid starts.
+  const headerH =
+    Math.max(0, Number(settings.headerBarHeightPx) || 0) +
+    Math.max(0, Number(settings.headerBarMarginBottomPx) || 0);
+  const tableOffset = Number(settings.tableOffsetYPx) || 0;
+  const canvasPadTop = Math.max(0, Number(settings.canvasPaddingTopPx) || 0);
+  const canvasPadBot = Math.max(0, Number(settings.canvasPaddingPx) || 0);
+  const canvasBorderH = (Math.max(0, Number(settings.canvasBorderWidthPx) || 0)) * 2;
+  const gridBorderH = (Math.max(0, Number(settings.gridBorderWidthPx) || 0)) * 2;
+
+  // Target height of the full grid (DOW row + cell rows) so it fills the canvas.
+  const gridTargetH = Math.max(
+    300,
+    pagePxH - canvasPadTop - canvasPadBot - canvasBorderH - tableOffset - headerH - gridBorderH,
+  );
+  const dowH = Math.max(20, Number(settings.gridWeekdayHeaderHeightPx) || 34);
+  // Cell height that fills the grid vertically (no clamping — let the page dictate the size).
+  const fittedCellH = Math.max(70, Math.floor((gridTargetH - dowH) / weekCount));
+
   const effectiveSettings =
     weekCount >= 6 || settings.layoutAutoFitToCanvas
       ? { ...settings, pdfExportCellHeightPx: fittedCellH }
@@ -359,7 +368,8 @@ export function buildPrintableMonthHtml(
       return `<div class="dow" style="background:${esc(effectiveSettings.gridWeekdayHeaderBg)};color:${esc(effectiveSettings.gridWeekdayHeaderTextColor)};height:${Number(effectiveSettings.gridWeekdayHeaderHeightPx) || 34}px;min-height:${Number(effectiveSettings.gridWeekdayHeaderHeightPx) || 34}px;font-size:${Number(effectiveSettings.gridWeekdayHeaderFontPx) || 13}px;font-weight:${effectiveSettings.gridWeekdayHeaderFontWeight};border-bottom:${Number(effectiveSettings.gridWeekdayHeaderBorderBottomWidthPx) || 0}px solid ${esc(effectiveSettings.gridWeekdayHeaderBorderBottomColor)};display:flex;align-items:center;justify-content:center;padding:0 8px;box-sizing:border-box;line-height:1;text-align:center;">${content}</div>`;
     })
     .join('');
-  const gridHtml = `<div class="grid">${gridDowRow}${cells.join('')}</div>`;
+  const gridTemplateRows = `${dowH}px repeat(${weekCount}, ${fittedCellH}px)`;
+  const gridHtml = `<div class="grid" style="height:${gridTargetH}px;grid-template-rows:${gridTemplateRows};">${gridDowRow}${cells.join('')}</div>`;
 
   const zoomPct = resolveCalendarLayoutZoomPercent(effectiveSettings);
   const chromeHtml = buildPrintMonthChromeHtml(effectiveSettings, effectiveSettings.headerLayoutStyle, esc, {
