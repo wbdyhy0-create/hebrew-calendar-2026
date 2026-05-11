@@ -91,12 +91,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         deviceScaleFactor: 2,
       },
       executablePath,
-      headless: chromium.headless,
+      headless: (chromium as any).headless ?? true,
     })
 
     try {
       const page = await browser.newPage()
-      await page.setContent(html, { waitUntil: ['load', 'domcontentloaded', 'networkidle0'] })
+      await page.setContent(html, { waitUntil: ['load', 'domcontentloaded'] })
 
       await page.evaluate(async () => {
         if (!document.fonts) return
