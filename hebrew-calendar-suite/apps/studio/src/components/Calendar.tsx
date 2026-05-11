@@ -397,21 +397,16 @@ export function Calendar() {
   const [tenantEditorOpen, setTenantEditorOpen] = useState(false);
   const [tenantDraftId, setTenantDraftId] = useState('');
   const [tenantDraftName, setTenantDraftName] = useState('');
+  // This app is built only from `hebrew-calendar-2026`: hide cloud publish, tenants, etc. on every domain
+  // (custom domains / localhost do not match hostname heuristics). Opt back in for dev via VITE_CALENDAR_2026_FULL_STUDIO=1.
   const isCalendar2026Host = useMemo(() => {
-    if (typeof window === 'undefined') return false;
     try {
-      const v = String((import.meta as any)?.env?.VITE_PUBLIC_CALENDAR_2026 ?? '').trim();
-      if (v === '1' || v.toLowerCase() === 'true' || v.toLowerCase() === 'yes') return true;
+      const full = String((import.meta as any)?.env?.VITE_CALENDAR_2026_FULL_STUDIO ?? '').trim();
+      if (full === '1' || full.toLowerCase() === 'true' || full.toLowerCase() === 'yes') return false;
     } catch {
       // ignore
     }
-    const host = (window.location.hostname || '').toLowerCase();
-    // Production + preview URLs on Vercel for this product; optional explicit env for custom domains.
-    return (
-      host === 'hebrew-calendar-2026.vercel.app' ||
-      host.endsWith('.hebrew-calendar-2026.vercel.app') ||
-      host.includes('hebrew-calendar-2026')
-    );
+    return true;
   }, []);
   const [publishIncludeUserPresets, setPublishIncludeUserPresets] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
