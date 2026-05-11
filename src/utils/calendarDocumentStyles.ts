@@ -438,10 +438,6 @@ export function buildPrintMonthStylesheetContent(p: PrintMonthStyleParams): stri
       .nowrap{ white-space:nowrap; }
 
       .pdfMode, .pdfMode * { box-sizing: border-box; }
-      /* pdfMode header CSS removed */
-        min-width: 0 !important;
-        overflow: visible !important;
-      }
       .pdfMode .grid{
         display: grid !important;
         grid-template-columns: repeat(7, 1fr) !important;
