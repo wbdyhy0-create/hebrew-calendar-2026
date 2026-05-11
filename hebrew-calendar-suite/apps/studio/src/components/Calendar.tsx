@@ -5566,8 +5566,8 @@ export function Calendar() {
               <input
                 className="mt-2 w-full"
                 type="range"
-                    min={-40}
-                max={40}
+                    min={-200}
+                max={200}
                     value={settings.headerBarOffsetYPx}
                 onChange={(e) =>
                       setSettings((s) => ({ ...s, headerBarOffsetYPx: Number(e.target.value) }))
@@ -5678,7 +5678,7 @@ export function Calendar() {
             </label>
             <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox1OffsetYPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                  <input className="mt-2 w-full" type="range" min={-80} max={200} step={1}
                     value={settings.headerBox1OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox1OffsetYPx: Number(e.target.value) }))} />
             </label>
@@ -5728,7 +5728,7 @@ export function Calendar() {
             </label>
             <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox2OffsetYPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                  <input className="mt-2 w-full" type="range" min={-80} max={200} step={1}
                     value={settings.headerBox2OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox2OffsetYPx: Number(e.target.value) }))} />
             </label>
@@ -5778,7 +5778,7 @@ export function Calendar() {
             </label>
             <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox3OffsetYPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                  <input className="mt-2 w-full" type="range" min={-80} max={200} step={1}
                     value={settings.headerBox3OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox3OffsetYPx: Number(e.target.value) }))} />
             </label>
@@ -5834,7 +5834,7 @@ export function Calendar() {
             </label>
             <label className="text-sm text-slate-700">
                   הזזה למעלה ← למטה ({settings.headerBox4OffsetYPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={200} step={1}
+                  <input className="mt-2 w-full" type="range" min={-80} max={200} step={1}
                     value={settings.headerBox4OffsetYPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox4OffsetYPx: Number(e.target.value) }))} />
             </label>

@@ -41,7 +41,7 @@ function HeaderBarNew({
         background: settings.headerBarBg,
         border: `${settings.headerBarBorderWidthPx}px solid ${settings.headerBarBorderColor}`,
         borderRadius: settings.headerBarRadiusPx,
-        overflow: 'hidden',
+        overflow: 'visible',
         marginBottom: settings.headerBarMarginBottomPx,
         transform: `translateY(${settings.headerBarOffsetYPx}px)`,
         maxWidth: settings.headerBarMaxWidthPx > 0 ? settings.headerBarMaxWidthPx : undefined,
@@ -241,7 +241,7 @@ export function CalendarMonthChrome({
             justifyContent: 'stretch',
             padding: 0,
             boxSizing: 'border-box',
-            overflow: 'hidden',
+            overflow: 'visible',
             position: 'relative',
           }}
         >
