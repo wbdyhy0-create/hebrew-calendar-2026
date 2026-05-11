@@ -62,7 +62,7 @@ export function buildPrintableMonthHtml(
   // Auto-fit PDF: when enabled, compute a cell height that fills the page vertically.
   const weekCount = Math.max(5, Math.min(6, weeks.length || 6));
   const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96);
-  const approxHeaderH = 0;
+  const approxHeaderH = settings.headerBarHeightPx + (Number(settings.headerBarMarginBottomPx) || 0) + Math.max(0, Number(settings.headerBarOffsetYPx) || 0);
   const approxDowH = settings.gridWeekdayHeaderHeightPx + settings.gridWeekdayHeaderRowOffsetYPx;
   const approxCanvasPad = settings.canvasPaddingTopPx + settings.canvasPaddingPx * 2;
   const approxBorders = settings.canvasBorderWidthPx * 2 + settings.gridBorderWidthPx * 2 + 8;
