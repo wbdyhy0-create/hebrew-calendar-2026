@@ -435,12 +435,13 @@ export default function App() {
   const [paddingLogoScope, setPaddingLogoScope] = useState<'month' | 'global'>('global')
   const [localPaddingLogo, setLocalPaddingLogo] = useState<Record<string, any>>({})
   const [pdfBusy, setPdfBusy] = useState<'idle' | 'month' | 'year'>('idle')
-  /** `capture` = DOM/html2canvas like Studio month download; `printable` = buildPrintableMonthHtml fallback. */
-  const [pdfExportPath, setPdfExportPath] = useState<'capture' | 'printable'>(() => {
-    if (typeof window === 'undefined') return 'capture'
+  /** `server` = Puppeteer (like Studio, default); `capture` = DOM/html2canvas; `printable` = client-side jsPDF fallback. */
+  const [pdfExportPath, setPdfExportPath] = useState<'server' | 'capture' | 'printable'>(() => {
+    if (typeof window === 'undefined') return 'server'
     try {
       const v = window.localStorage.getItem(DISPLAY_PDF_EXPORT_PATH_LS_KEY)
-      return v === 'printable' ? 'printable' : 'capture'
+      if (v === 'capture' || v === 'printable' || v === 'server') return v
+      return 'server'
     } catch {
       return 'capture'
     }
@@ -758,6 +759,38 @@ export default function App() {
       const fittedCellH = monthCellPx ? Math.max(baseCellH, monthCellPx) : baseCellH
       ;(pdfSettings as any).pdfExportCellHeightPx = fittedCellH
       const html = buildPrintableMonthHtml(displayDate, pdfSettings as any, mergedOverridesForPdf as any)
+
+      if (pdfExportPath === 'server') {
+        try {
+          const resp = await fetch('/api/export-month-pdf', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              html,
+              widthMm: pdfSettings.pdfCustomWidthMm,
+              heightMm: pdfSettings.pdfCustomHeightMm,
+            }),
+          })
+          if (resp.ok) {
+            const ab = await resp.arrayBuffer()
+            const serverBlob = new Blob([ab], { type: 'application/pdf' })
+            const isPdf = await (async () => {
+              try {
+                if (serverBlob.size < 5) return false
+                const sig = new TextDecoder('ascii').decode(new Uint8Array(await serverBlob.slice(0, 5).arrayBuffer()))
+                return sig === '%PDF-'
+              } catch { return false }
+            })()
+            if (isPdf) {
+              const y = displayDate.getFullYear()
+              const m = String(displayDate.getMonth() + 1).padStart(2, '0')
+              downloadBlobFile(`calendar-${y}-${m}.pdf`, serverBlob)
+              return
+            }
+          }
+        } catch { /* fall through to client-side */ }
+      }
+
       const blob = await exportPdfBlobFromHtml(html, pdfSettings as any)
       const y = displayDate.getFullYear()
       const m = String(displayDate.getMonth() + 1).padStart(2, '0')
@@ -2491,10 +2524,19 @@ ${pages}
                     <input
                       type="radio"
                       name="display-pdf-month-path"
+                      checked={pdfExportPath === 'server'}
+                      onChange={() => setPdfExportPath('server')}
+                    />
+                    שרת Puppeteer — מדויק ביותר (ברירת מחדל)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                    <input
+                      type="radio"
+                      name="display-pdf-month-path"
                       checked={pdfExportPath === 'capture'}
                       onChange={() => setPdfExportPath('capture')}
                     />
-                    צילום מסך (ברירת מחדל, כמו בסטודיו)
+                    צילום מסך (html2canvas)
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
                     <input
@@ -2503,7 +2545,7 @@ ${pages}
                       checked={pdfExportPath === 'printable'}
                       onChange={() => setPdfExportPath('printable')}
                     />
-                    מהתבנית המודפסת (גיבוי)
+                    תבנית מודפסת (גיבוי)
                   </label>
                   <button
                     type="button"
