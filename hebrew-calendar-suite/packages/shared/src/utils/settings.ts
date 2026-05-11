@@ -290,13 +290,14 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
 
   titleMain: 'לוח שנה עברי‑לועזי',
   titleSub: '',
-  headerLayoutStyle: 'floating',
+  // Month title bar sits flush above the weekday/grid shell (no “floating” gap).
+  headerLayoutStyle: 'grid_integrated',
   headerBarHeightPx: 78,
   headerBarRadiusPx: 16,
   headerBarBg: 'rgba(255,255,255,0.88)',
   headerBarBorderColor: '#E2E8F0',
   headerBarBorderWidthPx: 2,
-  headerBarMarginBottomPx: 12,
+  headerBarMarginBottomPx: 0,
   headerBarOffsetYPx: 0,
   headerBarMaxWidthPx: 0,
   headerBarShowEditButton: true,

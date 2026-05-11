@@ -144,6 +144,11 @@ function HeaderBarNew({
   const sepTopRelToMid = Math.round(Number(sepOffsetY));
   const sepTopPx = Math.round(barMidY + sepTopRelToMid + invShift(sepTopRelToMid));
 
+  const headerIntegrated = settings.headerLayoutStyle === 'grid_integrated';
+  const r = Math.max(0, Math.round(Number(settings.headerBarRadiusPx) || 0));
+  const bw = Math.max(0, Math.round(Number(settings.headerBarBorderWidthPx) || 0));
+  const bc = settings.headerBarBorderColor;
+
   return (
     <div
       dir="ltr"
@@ -157,13 +162,26 @@ function HeaderBarNew({
         minHeight: settings.headerBarHeightPx,
         height: 'auto',
         background: settings.headerBarBg,
-        border: `${settings.headerBarBorderWidthPx}px solid ${settings.headerBarBorderColor}`,
-        borderRadius: settings.headerBarRadiusPx,
+        ...(headerIntegrated
+          ? {
+              borderTopWidth: bw,
+              borderLeftWidth: bw,
+              borderRightWidth: bw,
+              borderBottomWidth: 0,
+              borderStyle: 'solid',
+              borderColor: bc,
+              borderRadius: r > 0 ? `${r}px ${r}px 0 0` : 0,
+              marginBottom: 0,
+            }
+          : {
+              border: `${bw}px solid ${bc}`,
+              borderRadius: settings.headerBarRadiusPx,
+              marginBottom: settings.headerBarMarginBottomPx,
+            }),
         // Keep vertical clipping for neat header bar,
         // but allow horizontal overflow so long Hebrew titles aren't truncated.
         overflowY: 'visible',
         overflowX: 'visible',
-        marginBottom: settings.headerBarMarginBottomPx,
         transform: `translateY(${settings.headerBarOffsetYPx}px)`,
         maxWidth: settings.headerBarMaxWidthPx > 0 ? settings.headerBarMaxWidthPx : undefined,
         marginLeft: 'auto',
@@ -393,7 +411,12 @@ function gridShellProps(
       boxShadow: `0 1px 2px 0 rgba(15, 23, 42, 0.08), inset 0 0 0 ${settings.gridBorderWidthPx}px ${settings.gridBorderColor}`,
       border: `${settings.gridBorderWidthPx}px solid ${settings.gridBorderColor}`,
       background: settings.gridShellBg,
-      borderRadius: resolveDetachedGridBorderRadiusPx(settings),
+      borderRadius: isIntegrated
+        ? (() => {
+            const br = resolveDetachedGridBorderRadiusPx(settings);
+            return `0 0 ${br}px ${br}px`;
+          })()
+        : resolveDetachedGridBorderRadiusPx(settings),
       ...(isIntegrated
         ? {
             gap: gapPx,
