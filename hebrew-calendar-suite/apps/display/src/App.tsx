@@ -435,13 +435,13 @@ export default function App() {
   const [paddingLogoScope, setPaddingLogoScope] = useState<'month' | 'global'>('global')
   const [localPaddingLogo, setLocalPaddingLogo] = useState<Record<string, any>>({})
   const [pdfBusy, setPdfBusy] = useState<'idle' | 'month' | 'year'>('idle')
-  /** `server` = Puppeteer (like Studio, default); `capture` = DOM/html2canvas; `printable` = client-side jsPDF fallback. */
+  /** `capture` = DOM/html2canvas like Studio fallback (default); `server` = Puppeteer; `printable` = HTML template. */
   const [pdfExportPath, setPdfExportPath] = useState<'server' | 'capture' | 'printable'>(() => {
-    if (typeof window === 'undefined') return 'server'
+    if (typeof window === 'undefined') return 'capture'
     try {
       const v = window.localStorage.getItem(DISPLAY_PDF_EXPORT_PATH_LS_KEY)
       if (v === 'capture' || v === 'printable' || v === 'server') return v
-      return 'server'
+      return 'capture'
     } catch {
       return 'capture'
     }
@@ -791,7 +791,17 @@ export default function App() {
               return
             }
           }
-        } catch { /* fall through to client-side */ }
+        } catch { /* fall through to DOM capture */ }
+
+        // Server failed — fall back to DOM capture (same as Studio fallback)
+        const el = pdfCaptureFrameRef.current
+        if (el) {
+          const blob = await exportPdfBlobFromElement(el, settingsForStudioLikePdfExport as any)
+          const y = displayDate.getFullYear()
+          const m = String(displayDate.getMonth() + 1).padStart(2, '0')
+          downloadBlobFile(`calendar-${y}-${m}.pdf`, blob)
+          return
+        }
       }
 
       const blob = await exportPdfBlobFromHtml(html, pdfSettings as any)
@@ -2527,19 +2537,19 @@ ${pages}
                     <input
                       type="radio"
                       name="display-pdf-month-path"
-                      checked={pdfExportPath === 'server'}
-                      onChange={() => setPdfExportPath('server')}
+                      checked={pdfExportPath === 'capture'}
+                      onChange={() => setPdfExportPath('capture')}
                     />
-                    שרת Puppeteer — מדויק ביותר (ברירת מחדל)
+                    צילום מסך — כמו בסטודיו (ברירת מחדל)
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
                     <input
                       type="radio"
                       name="display-pdf-month-path"
-                      checked={pdfExportPath === 'capture'}
-                      onChange={() => setPdfExportPath('capture')}
+                      checked={pdfExportPath === 'server'}
+                      onChange={() => setPdfExportPath('server')}
                     />
-                    צילום מסך (html2canvas)
+                    שרת Puppeteer (איכות גבוהה יותר)
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
                     <input
