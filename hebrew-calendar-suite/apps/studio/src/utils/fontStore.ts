@@ -107,7 +107,8 @@ export async function deleteStoredFontsByFamily(family: string): Promise<void> {
 }
 
 export function cssFontFamilyForUploaded(family: string): string {
-  // Keep same fallbacks as default.
-  return `"${family.replaceAll('"', '')}", "Heebo", "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif`;
+  // Strict: do not append fallbacks here. If the font is missing, the browser will still
+  // fall back to a system default, but we avoid forcing Heebo/Assistant stacks.
+  return `"${family.replaceAll('"', '')}"`;
 }
 

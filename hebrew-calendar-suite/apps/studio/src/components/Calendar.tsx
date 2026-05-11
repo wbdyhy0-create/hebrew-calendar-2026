@@ -616,23 +616,16 @@ export function Calendar() {
   // to avoid tricky event ordering with capture listeners inside scroll/overflow containers.
 
   const FONT_BUILTINS: Array<{ label: string; value: string }> = [
-    { label: 'Heebo (אם מותקן)', value: '"Heebo", system-ui, "Segoe UI", Arial, sans-serif' },
-    {
-      label: 'Assistant (אם מותקן)',
-      value: '"Assistant", system-ui, "Segoe UI", Arial, sans-serif',
-    },
     { label: 'System', value: 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
     { label: 'Serif', value: 'Georgia, "Times New Roman", serif' },
   ];
 
   const fontLabelForValue = (value: string): string => {
-    if (value === DEFAULT_SETTINGS.fontFamily) return 'ברירת מחדל';
+    if (value === DEFAULT_SETTINGS.fontFamily) return 'מערכת';
     const uploadedMatch = uploadedFonts.find((f) => cssFontFamilyForUploaded(f.family) === value);
     if (uploadedMatch) return uploadedMatch.family;
     const builtin = FONT_BUILTINS.find((b) => b.value === value);
     if (builtin) return builtin.label;
-    if (value.includes('Heebo')) return 'Heebo (אם מותקן)';
-    if (value.includes('Assistant')) return 'Assistant (אם מותקן)';
     if (value.startsWith('system-ui')) return 'System';
     if (value.includes('Georgia')) return 'Serif';
     return 'בחירה';
