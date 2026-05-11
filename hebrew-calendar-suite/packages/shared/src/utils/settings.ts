@@ -435,6 +435,26 @@ export const DEFAULT_SETTINGS: CalendarSettings = {
 // Bump cache version to force a clean reset when data gets inconsistent.
 const STORAGE_KEY = 'hebrew-gregorian-calendar:settings:v5';
 
+/** True on public 2026 web (strict hostname or env for custom domains). */
+function shouldMigrate2026PublicDockHeader(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const v = String((import.meta as any)?.env?.VITE_PUBLIC_CALENDAR_2026 ?? '').trim();
+    if (v === '1' || v.toLowerCase() === 'true' || v.toLowerCase() === 'yes') return true;
+  } catch {
+    // ignore
+  }
+  try {
+    const host = String(window.location.hostname || '').toLowerCase();
+    if (host === 'hebrew-calendar-2026.vercel.app' || host.endsWith('.hebrew-calendar-2026.vercel.app')) return true;
+    // Vercel preview URLs: `…-git-…-user.vercel.app` (project name contains hebrew-calendar-2026).
+    if (host.endsWith('.vercel.app') && host.includes('hebrew-calendar-2026')) return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
 export function loadSettings(): CalendarSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -760,6 +780,28 @@ export function loadSettings(): CalendarSettings {
 
     ;(merged as any).showFinanceSidebar = (merged as any).showFinanceSidebar === true
     if (typeof (merged as any).financeRssUrl !== 'string') (merged as any).financeRssUrl = ''
+
+    // Public 2026: older browsers still have `floating` + bottom margin in localStorage,
+    // which overrides new defaults and keeps the header visually “detached”.
+    let dockPersist = false;
+    if (shouldMigrate2026PublicDockHeader()) {
+      if (merged.headerLayoutStyle === 'floating') {
+        merged.headerLayoutStyle = 'grid_integrated';
+        dockPersist = true;
+      }
+      const mb = Number(merged.headerBarMarginBottomPx);
+      if (Number.isFinite(mb) && mb > 0) {
+        merged.headerBarMarginBottomPx = 0;
+        dockPersist = true;
+      }
+    }
+    if (dockPersist) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      } catch {
+        // ignore
+      }
+    }
 
     return merged as CalendarSettings;
   } catch {
