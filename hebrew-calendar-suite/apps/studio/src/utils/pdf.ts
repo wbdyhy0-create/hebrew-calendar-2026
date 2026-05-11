@@ -834,17 +834,9 @@ export async function exportPdfBlobFromCalendarElement(
     throw new Error(`PDF: jsPDF addImage failed after ${failures.length} attempts. ${details}`);
   }
 
-  function fitCanvasToContentBox(canvas: HTMLCanvasElement): { x: number; y: number; w: number; h: number } {
-    // Keep aspect ratio (contain) so we don't stretch fonts/boxes.
-    const cw = Math.max(1, canvas.width);
-    const ch = Math.max(1, canvas.height);
-    const canvasRatio = cw / ch;
-    const boxRatio = contentW / contentH;
-    const w = boxRatio >= canvasRatio ? contentH * canvasRatio : contentW;
-    const h = boxRatio >= canvasRatio ? contentH : contentW / canvasRatio;
-    const x = marginMm + (contentW - w) / 2;
-    const y = marginMm + (contentH - h) / 2;
-    return { x, y, w, h };
+  function fitCanvasToContentBox(_canvas: HTMLCanvasElement): { x: number; y: number; w: number; h: number } {
+    // Stretch to fill the full page — calendar pages should always fill A4.
+    return { x: marginMm, y: marginMm, w: contentW, h: contentH };
   }
 
   const nodes: HTMLElement[] = opts?.multiPage
