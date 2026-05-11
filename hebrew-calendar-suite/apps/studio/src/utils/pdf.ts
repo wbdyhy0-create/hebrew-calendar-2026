@@ -894,27 +894,36 @@ export async function exportPdfBlobFromCalendarElement(
   //      render at layout size rather than visual size — use zoom instead.
   //   3. Tailwind overflow-hidden on the grid wrapper clips the 6th week row.
   const buildCaptureOnClone = (sourceEl: HTMLElement) => {
-    // Pre-measure all relevant dimensions from the live DOM.
+    // Read captureRoot's transform scale from live DOM before the clone is made.
+    // getBoundingClientRect() returns visual (post-transform) pixels, so we need
+    // the scale to convert visual → natural CSS pixels for the clone (which has no scale).
+    const liveCapRoot = sourceEl.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
+    const liveCaptureTransform = liveCapRoot?.style.transform ?? '';
+    const scaleM = /scale\(([\d.]+)\)/.exec(liveCaptureTransform);
+    const captureScale = scaleM ? Math.max(0.05, parseFloat(scaleM[1]!)) : 1;
+
     const liveBgRect = sourceEl.getBoundingClientRect();
     const liveGrid = sourceEl.querySelector<HTMLElement>('[data-inspect="month-grid"]');
     const liveDow = liveGrid?.querySelector<HTMLElement>('[data-inspect="weekdays"]');
-    const liveHeader = sourceEl.querySelector<HTMLElement>('[data-inspect="header"]');
 
-    const dowH = liveDow ? Math.max(30, Math.round(liveDow.getBoundingClientRect().height)) : 40;
+    // getBoundingClientRect returns visual (scaled) px → divide by captureScale for natural px.
+    const dowHVisual = liveDow ? Math.max(20 * captureScale, liveDow.getBoundingClientRect().height) : 40 * captureScale;
+    const dowH = Math.max(30, Math.round(dowHVisual / captureScale));
+
     const liveCells = liveGrid ? Array.from(liveGrid.querySelectorAll('[data-inspect="cell"]')) : [];
     const weekRows = Math.max(5, Math.min(6, Math.round(liveCells.length / 7) || 6));
 
-    // Space above the grid (header + offsets) in live DOM pixels.
     const liveGridRect = liveGrid?.getBoundingClientRect();
-    const spaceAbovePx = liveGridRect
+    // spaceAbove: visual px from bg top to grid top → divide by captureScale for natural px.
+    const spaceAboveVisualPx = liveGridRect
       ? Math.max(0, Math.round(liveGridRect.top - liveBgRect.top))
-      : Math.round((liveHeader?.getBoundingClientRect().height ?? 80) + 8);
+      : 80 * captureScale;
+    const spaceAbovePx = Math.round(spaceAboveVisualPx / captureScale);
 
-    // A4 dimensions in CSS px at 96 dpi (no zoom factor — clone uses zoom on captureRoot).
+    // A4 in natural CSS px at 96 dpi. The clone has no scale/zoom on captureRoot,
+    // so all pixel values are natural CSS pixels.
     const a4HeightPx = Math.round((heightMm / 25.4) * 96);
     const a4WidthPx = Math.round((widthMm / 25.4) * 96);
-
-    // Grid gets whatever remains after the header/offset area.
     const gridHeightPx = Math.max(300, a4HeightPx - spaceAbovePx);
 
     return (clonedDoc: Document) => {
@@ -927,27 +936,24 @@ export async function exportPdfBlobFromCalendarElement(
         bg.style.setProperty('overflow', 'visible', 'important');
       }
 
-      // Fix inner zoom wrapper: convert transform:scale() to zoom.
+      // Remove transform:scale from captureRoot — do NOT apply zoom.
+      // zoom would scale child pixel values (height/width we set below),
+      // making the grid render at gridHeightPx*zoom instead of gridHeightPx.
       const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
       if (captureRoot) {
-        const t = captureRoot.style.transform || '';
-        const m = /scale\(([\d.]+)\)/.exec(t);
-        const s = m ? parseFloat(m[1]!) : NaN;
-        if (Number.isFinite(s) && s > 0) {
-          (captureRoot.style as any).zoom = String(s);
-        }
-        captureRoot.style.transform = 'none';
-        captureRoot.style.transformOrigin = 'unset';
+        captureRoot.style.setProperty('transform', 'none', 'important');
+        captureRoot.style.setProperty('transform-origin', 'unset', 'important');
+        captureRoot.style.setProperty('width', '100%', 'important');
         captureRoot.style.setProperty('overflow', 'visible', 'important');
       }
 
       // Header: remove translateY (visual-only offset that causes grid overlap in clone).
       const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
       if (clonedHeader) {
-        clonedHeader.style.transform = 'none';
+        clonedHeader.style.setProperty('transform', 'none', 'important');
       }
 
-      // Grid: set exact pixel height so it fills A4 below the header.
+      // Grid: fill remaining A4 height below the header (natural CSS pixels, no scale).
       const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
       if (monthGrid) {
         monthGrid.style.setProperty('width', '100%', 'important');
@@ -959,10 +965,9 @@ export async function exportPdfBlobFromCalendarElement(
         monthGrid.style.setProperty('align-content', 'stretch', 'important');
       }
 
-      // Date blocks: pin to top of each cell (neutralise Tailwind top-2 drift).
+      // Date blocks already have inline top:1px; just ensure bottom:auto.
       const scope = bg ?? clonedDoc.body;
       scope.querySelectorAll<HTMLElement>('[data-pdf-date-block="true"]').forEach((n) => {
-        n.style.setProperty('top', '2px', 'important');
         n.style.setProperty('bottom', 'auto', 'important');
       })
 
