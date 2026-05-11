@@ -894,19 +894,36 @@ export async function exportPdfBlobFromCalendarElement(
   //      render at layout size rather than visual size — use zoom instead.
   //   3. Tailwind overflow-hidden on the grid wrapper clips the 6th week row.
   const buildCaptureOnClone = (sourceEl: HTMLElement) => {
-    // Pre-measure from live DOM so the clone callback can use these values.
+    // Pre-measure all relevant dimensions from the live DOM.
+    const liveBgRect = sourceEl.getBoundingClientRect();
     const liveGrid = sourceEl.querySelector<HTMLElement>('[data-inspect="month-grid"]');
     const liveDow = liveGrid?.querySelector<HTMLElement>('[data-inspect="weekdays"]');
+    const liveHeader = sourceEl.querySelector<HTMLElement>('[data-inspect="header"]');
+
     const dowH = liveDow ? Math.max(30, Math.round(liveDow.getBoundingClientRect().height)) : 40;
     const liveCells = liveGrid ? Array.from(liveGrid.querySelectorAll('[data-inspect="cell"]')) : [];
     const weekRows = Math.max(5, Math.min(6, Math.round(liveCells.length / 7) || 6));
 
+    // Space above the grid (header + offsets) in live DOM pixels.
+    const liveGridRect = liveGrid?.getBoundingClientRect();
+    const spaceAbovePx = liveGridRect
+      ? Math.max(0, Math.round(liveGridRect.top - liveBgRect.top))
+      : Math.round((liveHeader?.getBoundingClientRect().height ?? 80) + 8);
+
+    // A4 dimensions in CSS px at 96 dpi (no zoom factor — clone uses zoom on captureRoot).
+    const a4HeightPx = Math.round((heightMm / 25.4) * 96);
+    const a4WidthPx = Math.round((widthMm / 25.4) * 96);
+
+    // Grid gets whatever remains after the header/offset area.
+    const gridHeightPx = Math.max(300, a4HeightPx - spaceAbovePx);
+
     return (clonedDoc: Document) => {
-      // Fix outer canvas: force to exact A4 height so content fills the page.
+      // Fix outer canvas: exact A4 pixel dimensions so html2canvas captures the full page.
       const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
       if (bg) {
-        bg.style.height = `${heightMm}mm`;
-        bg.style.minHeight = `${heightMm}mm`;
+        bg.style.setProperty('width', `${a4WidthPx}px`, 'important');
+        bg.style.setProperty('height', `${a4HeightPx}px`, 'important');
+        bg.style.setProperty('min-height', `${a4HeightPx}px`, 'important');
         bg.style.setProperty('overflow', 'visible', 'important');
       }
 
@@ -922,62 +939,36 @@ export async function exportPdfBlobFromCalendarElement(
         captureRoot.style.transform = 'none';
         captureRoot.style.transformOrigin = 'unset';
         captureRoot.style.setProperty('overflow', 'visible', 'important');
-        // Fill the full bg height — build a flex-column chain down to the grid.
-        captureRoot.style.setProperty('height', '100%', 'important');
-        captureRoot.style.setProperty('min-height', '100%', 'important');
-        captureRoot.style.setProperty('display', 'flex', 'important');
-        captureRoot.style.setProperty('flex-direction', 'column', 'important');
-
-        // Each div between captureRoot and the grid must also be flex-column.
-        // Layer 1: wrapper div (direct child of captureRoot)
-        const wrapperDiv = captureRoot.children[0] as HTMLElement | undefined;
-        if (wrapperDiv instanceof HTMLElement) {
-          wrapperDiv.style.setProperty('flex', '1 1 auto', 'important');
-          wrapperDiv.style.setProperty('min-height', '0', 'important');
-          wrapperDiv.style.setProperty('display', 'flex', 'important');
-          wrapperDiv.style.setProperty('flex-direction', 'column', 'important');
-
-          // Layer 2: CalendarMonthChrome root div (first child of wrapper)
-          const chromeRoot = wrapperDiv.children[0] as HTMLElement | undefined;
-          if (chromeRoot instanceof HTMLElement) {
-            chromeRoot.style.setProperty('flex', '1 1 auto', 'important');
-            chromeRoot.style.setProperty('min-height', '0', 'important');
-            chromeRoot.style.setProperty('display', 'flex', 'important');
-            chromeRoot.style.setProperty('flex-direction', 'column', 'important');
-          }
-        }
       }
 
-      // Header: convert translateY → margin-top so it stays in layout flow
-      // and doesn't visually overlap the grid below it.
+      // Header: remove translateY (visual-only offset that causes grid overlap in clone).
       const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
       if (clonedHeader) {
-        const ht = clonedHeader.style.transform || '';
-        const hm = /translateY\(([-\d.]+)px\)/.exec(ht);
-        const yOffset = hm ? parseFloat(hm[1]!) : 0;
         clonedHeader.style.transform = 'none';
-        if (yOffset !== 0) {
-          const existingMt = parseFloat(clonedHeader.style.marginTop || '0') || 0;
-          clonedHeader.style.marginTop = `${existingMt + yOffset}px`;
-        }
-        clonedHeader.style.setProperty('flex-shrink', '0', 'important');
       }
 
-      // Force the month grid to fill available height with stretched week rows.
+      // Grid: set exact pixel height so it fills A4 below the header.
       const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
       if (monthGrid) {
-        monthGrid.style.setProperty('flex', '1 1 auto', 'important');
-        monthGrid.style.setProperty('min-height', '0', 'important');
+        monthGrid.style.setProperty('width', '100%', 'important');
+        monthGrid.style.setProperty('height', `${gridHeightPx}px`, 'important');
+        monthGrid.style.setProperty('min-height', `${gridHeightPx}px`, 'important');
         monthGrid.style.setProperty('display', 'grid', 'important');
         monthGrid.style.setProperty('grid-template-columns', 'repeat(7, minmax(0, 1fr))', 'important');
         monthGrid.style.setProperty('grid-template-rows', `${dowH}px repeat(${weekRows}, 1fr)`, 'important');
         monthGrid.style.setProperty('align-content', 'stretch', 'important');
       }
 
+      // Date blocks: pin to top of each cell (neutralise Tailwind top-2 drift).
+      const scope = bg ?? clonedDoc.body;
+      scope.querySelectorAll<HTMLElement>('[data-pdf-date-block="true"]').forEach((n) => {
+        n.style.setProperty('top', '2px', 'important');
+        n.style.setProperty('bottom', 'auto', 'important');
+      })
+
       // Remove overflow:hidden from all elements inside the calendar canvas.
       // Tailwind classes (overflow-hidden, overflow-auto) on grid wrappers
       // clip the 6th week row and can hide the English weekday labels.
-      const scope = bg ?? clonedDoc.body;
       scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
         n.style.setProperty('overflow', 'visible', 'important');
       });
