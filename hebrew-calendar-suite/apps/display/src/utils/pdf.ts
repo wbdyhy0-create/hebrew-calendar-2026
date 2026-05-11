@@ -984,8 +984,13 @@ export async function exportPdfBlobFromElement(
   _opts?: { multiPage?: boolean },
 ) {
   const { widthMm, heightMm } = resolvePageMmSafe(settings)
-  const windowWidthPx = Math.max(900, Math.ceil((widthMm / 25.4) * 96))
-  const windowHeightPx = Math.max(600, Math.ceil((heightMm / 25.4) * 96))
+
+  // Capture at the element's natural screen size so layout/fonts match the screen exactly.
+  // Do NOT use PDF mm dimensions as the capture viewport — that would reflow the grid
+  // into a different cell height, making fonts look different from what's on screen.
+  const rect = element.getBoundingClientRect()
+  const windowWidthPx = Math.max(900, Math.ceil(rect.width || (widthMm / 25.4) * 96))
+  const windowHeightPx = Math.max(600, Math.ceil(rect.height || (heightMm / 25.4) * 96))
 
   try {
     await document.fonts.ready
@@ -1043,17 +1048,14 @@ export async function exportPdfBlobFromElement(
   )
 
   const onclone = (clonedDoc: Document) => {
-    // Try to locate a matching node in the clone via id or data attr; fallback to body.
+    // Locate the element in the clone via id; fall back to body scope.
     const root = clonedDoc.getElementById((element as any).id) as HTMLElement | null
     const scope = root ?? clonedDoc.body
 
-    // Force the capture box to match the PDF page size.
+    // Do NOT force PDF dimensions on root — that reflows the layout and changes font sizes.
+    // Only fix overflow so content isn't clipped during capture.
     if (root) {
-      root.style.setProperty('width', `${widthMm}mm`, 'important')
-      root.style.setProperty('height', `${heightMm}mm`, 'important')
-      root.style.setProperty('min-height', `${heightMm}mm`, 'important')
       root.style.setProperty('overflow', 'visible', 'important')
-      root.style.setProperty('background', '#ffffff', 'important')
     }
 
     // Remove CSS effects that can break html2canvas parsing.
@@ -1063,15 +1065,27 @@ export async function exportPdfBlobFromElement(
       if (s?.webkitBackdropFilter) n.style.removeProperty('-webkit-backdrop-filter')
     })
 
-    // Avoid transform scale drift during capture.
-    scope.querySelectorAll<HTMLElement>('[style*=\"--layoutScale\"], .calendarLayoutZoom').forEach((el) => {
+    // Avoid transform scale drift during capture: use zoom so scaled size participates in layout.
+    scope.querySelectorAll<HTMLElement>('[style*="--layoutScale"], .calendarLayoutZoom').forEach((el) => {
       const rawScale = el.style.getPropertyValue('--layoutScale')
       const scaleVal = parseFloat(rawScale) || 1
       el.style.removeProperty('--layoutScale')
       ;(el.style as any).zoom = String(scaleVal)
+      el.style.width = '100%'
       el.style.transform = 'none'
+      el.style.margin = '0'
+      el.style.boxSizing = 'border-box'
+    })
+
+    // Unhide any overflow-hidden elements that could clip cell content.
+    scope.querySelectorAll<HTMLElement>('.midWrap, .midInner').forEach((n) => {
+      n.style.setProperty('overflow', 'visible', 'important')
     })
   }
+
+  // Two rAFs to let layout settle before capture (matches Studio approach).
+  await new Promise<void>((r) => requestAnimationFrame(() => r()))
+  await new Promise<void>((r) => requestAnimationFrame(() => r()))
 
   const canvas = await html2canvas(element, {
     scale,

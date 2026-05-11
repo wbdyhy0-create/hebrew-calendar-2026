@@ -827,40 +827,43 @@ export function Calendar() {
         }
       };
 
-      // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
-      try {
-        const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
-        const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
-          location: 'Jerusalem',
-          renderMode: 'screen',
-        });
-        const resp = await fetch('/api/export-month-pdf', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            html,
-            widthMm,
-            heightMm,
-          }),
-        });
-        if (resp.ok) {
-          const ab = await resp.arrayBuffer();
-          const blob = new Blob([ab], { type: 'application/pdf' });
-          if (blob.size > 0 && (await isPdfBlob(blob))) return { blob, filename, source: 'server' };
-          // eslint-disable-next-line no-console
-          console.warn('export-month-pdf returned non-PDF payload', {
-            size: blob.size,
-            contentType: resp.headers.get('content-type'),
+      // On calendar2026 host, skip server and use DOM capture directly (user preference).
+      if (!isCalendar2026Host) {
+        // Prefer server-side Chromium print-to-PDF for pixel-faithful layout.
+        try {
+          const { widthMm, heightMm } = resolvePdfPageDimensionsMm(settingsForExport);
+          const html = buildPrintableMonthHtml(viewDate, settingsForExport, overrides, {
+            location: 'Jerusalem',
+            renderMode: 'screen',
           });
-        } else {
-          // eslint-disable-next-line no-console
-          console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
+          const resp = await fetch('/api/export-month-pdf', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              html,
+              widthMm,
+              heightMm,
+            }),
+          });
+          if (resp.ok) {
+            const ab = await resp.arrayBuffer();
+            const blob = new Blob([ab], { type: 'application/pdf' });
+            if (blob.size > 0 && (await isPdfBlob(blob))) return { blob, filename, source: 'server' };
+            // eslint-disable-next-line no-console
+            console.warn('export-month-pdf returned non-PDF payload', {
+              size: blob.size,
+              contentType: resp.headers.get('content-type'),
+            });
+          } else {
+            // eslint-disable-next-line no-console
+            console.warn('export-month-pdf failed', resp.status, await resp.text().catch(() => ''));
+          }
+        } catch {
+          // ignore: fall back to client export
         }
-      } catch {
-        // ignore: fall back to client export
       }
 
-      // Fallback: client-side html2canvas capture.
+      // Client-side html2canvas capture (primary path on calendar2026, fallback elsewhere).
       const canvasEl = document.querySelector('[data-inspect="background"]') as HTMLElement | null;
       const target = canvasEl ?? calendarContentRef.current;
       if (!target) throw new Error('לא נמצא לוח לצילום.');
