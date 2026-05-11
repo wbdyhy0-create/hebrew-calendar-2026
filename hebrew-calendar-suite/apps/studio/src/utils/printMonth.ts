@@ -62,23 +62,31 @@ export function buildPrintableMonthHtml(
   const weekCount = Math.max(5, Math.min(6, weeks.length || 6));
   const pagePxH = Math.round((resolvePdfPageDimensionsMm(settings).heightMm / 25.4) * 96);
 
-  // Compute the vertical space consumed before the grid starts.
-  const headerH =
-    Math.max(0, Number(settings.headerBarHeightPx) || 0) +
-    Math.max(0, Number(settings.headerBarMarginBottomPx) || 0);
-  const tableOffset = Number(settings.tableOffsetYPx) || 0;
+  // The calendarLayoutZoom wrapper applies zoom: Z to everything inside it.
+  // Heights must be expressed in natural (pre-zoom) pixels so they fill the canvas
+  // when the zoom is applied: naturalHeight * Z = canvasPixels.
+  const zoomScale = Math.max(0.1, resolveCalendarLayoutZoomPercent(settings) / 100);
+
+  // Canvas height available for content (page minus canvas padding/border).
   const canvasPadTop = Math.max(0, Number(settings.canvasPaddingTopPx) || 0);
   const canvasPadBot = Math.max(0, Number(settings.canvasPaddingPx) || 0);
   const canvasBorderH = (Math.max(0, Number(settings.canvasBorderWidthPx) || 0)) * 2;
+  const canvasH = pagePxH - canvasPadTop - canvasPadBot - canvasBorderH;
+
+  // Natural (un-zoomed) total height that fits inside the canvas.
+  const naturalTotal = canvasH / zoomScale;
+
+  // Space consumed before the grid: tableOffsetWrap margin + header height + header margin-below.
+  const tableOffset = Number(settings.tableOffsetYPx) || 0;
+  const headerH =
+    Math.max(0, Number(settings.headerBarHeightPx) || 0) +
+    Math.max(0, Number(settings.headerBarMarginBottomPx) || 0);
   const gridBorderH = (Math.max(0, Number(settings.gridBorderWidthPx) || 0)) * 2;
 
-  // Target height of the full grid (DOW row + cell rows) so it fills the canvas.
-  const gridTargetH = Math.max(
-    300,
-    pagePxH - canvasPadTop - canvasPadBot - canvasBorderH - tableOffset - headerH - gridBorderH,
-  );
+  // Target height of the full grid (DOW row + cell rows) in natural pixels.
+  const gridTargetH = Math.max(300, naturalTotal - tableOffset - headerH - gridBorderH);
   const dowH = Math.max(20, Number(settings.gridWeekdayHeaderHeightPx) || 34);
-  // Cell height that fills the grid vertically (no clamping — let the page dictate the size).
+  // Cell height that fills the grid vertically.
   const fittedCellH = Math.max(70, Math.floor((gridTargetH - dowH) / weekCount));
 
   const effectiveSettings =
