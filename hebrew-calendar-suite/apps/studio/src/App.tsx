@@ -154,10 +154,11 @@ export default function App() {
           >
             <video
               className="w-full h-full object-cover"
-              src="/splash.webm.mp4"
+              src={`${import.meta.env.BASE_URL}splash.webm.mp4`}
               autoPlay
               muted
               playsInline
+              preload="auto"
             />
           </div>
         ) : null}

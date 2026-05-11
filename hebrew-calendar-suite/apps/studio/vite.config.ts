@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
@@ -8,9 +9,15 @@ import { execSync } from 'node:child_process'
 // (see `App.tsx` imports from `@hc2026-root/...`).
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const hc2026RootSrc = path.resolve(__dirname, '../../../src')
+// Splash video is committed at repo root `public/splash.webm.mp4`, not under `apps/studio/public`.
+const hc2026RootPublic = path.resolve(__dirname, '../../../public')
+const publicDir = fs.existsSync(path.join(hc2026RootPublic, 'splash.webm.mp4'))
+  ? hc2026RootPublic
+  : 'public'
 
 // https://vite.dev/config/
 export default defineConfig({
+  publicDir,
   resolve: {
     alias: {
       '@hc2026-root': hc2026RootSrc,
