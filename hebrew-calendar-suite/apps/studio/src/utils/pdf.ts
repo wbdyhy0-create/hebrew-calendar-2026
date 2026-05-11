@@ -890,13 +890,87 @@ export async function exportPdfBlobFromCalendarElement(
     throw new Error(`Blank canvas (${label}): rendered all-white sample.`);
   }
 
+  // windowWidth must match the calendar's expected layout width so html2canvas
+  // doesn't reflow the grid into a narrower viewport.
+  const windowWidthPx = Math.max(900, Math.ceil((widthMm / 25.4) * 96));
+  const windowHeightPx = Math.max(600, Math.ceil((heightMm / 25.4) * 96));
+
+  // onclone: fix layout in html2canvas's cloned document before capture.
+  // Resolves the three main screen→PDF mismatches:
+  //   1. Fixed-height outer canvas with overflow:auto clips 6-week months.
+  //   2. transform:scale() on the inner zoom wrapper causes html2canvas to
+  //      render at layout size rather than visual size — use zoom instead.
+  //   3. Tailwind overflow-hidden on the grid wrapper clips the 6th week row.
+  const buildCaptureOnClone = (sourceEl: HTMLElement) => (clonedDoc: Document) => {
+    // Fix outer canvas: remove fixed height so full content is rendered.
+    const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
+    if (bg) {
+      bg.style.height = 'auto';
+      bg.style.minHeight = `${heightMm}mm`;
+      bg.style.setProperty('overflow', 'visible', 'important');
+    }
+
+    // Fix inner zoom wrapper: convert transform:scale() to zoom so the
+    // scaled content participates in layout rather than just painting scaled.
+    const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
+    if (captureRoot) {
+      const t = captureRoot.style.transform || '';
+      const m = /scale\(([\d.]+)\)/.exec(t);
+      const s = m ? parseFloat(m[1]!) : NaN;
+      if (Number.isFinite(s) && s > 0) {
+        (captureRoot.style as any).zoom = String(s);
+      }
+      captureRoot.style.transform = 'none';
+      captureRoot.style.transformOrigin = 'unset';
+      captureRoot.style.setProperty('overflow', 'visible', 'important');
+    }
+
+    // Remove overflow:hidden from all elements inside the calendar canvas.
+    // Tailwind classes (overflow-hidden, overflow-auto) on grid wrappers
+    // clip the 6th week row and can hide the English weekday labels.
+    const scope = bg ?? clonedDoc.body;
+    scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
+      n.style.setProperty('overflow', 'visible', 'important');
+    });
+
+    // Also walk computed styles to catch non-Tailwind overflow:hidden rules
+    // (e.g. CSS grid min-h-0 which can clip row content).
+    Array.from(scope.querySelectorAll<HTMLElement>('*')).forEach((n) => {
+      try {
+        const cs = (clonedDoc.defaultView ?? window).getComputedStyle(n);
+        if (
+          cs.overflow === 'hidden' || cs.overflow === 'clip' ||
+          cs.overflowX === 'hidden' || cs.overflowX === 'clip' ||
+          cs.overflowY === 'hidden' || cs.overflowY === 'clip'
+        ) {
+          n.style.setProperty('overflow', 'visible', 'important');
+        }
+      } catch {
+        // ignore — clonedDoc may not expose defaultView in all environments
+      }
+    });
+
+    // Remove backdrop-filter (unsupported by html2canvas in some builds).
+    clonedDoc.querySelectorAll<HTMLElement>('*').forEach((n) => {
+      if ((n.style as any).backdropFilter) n.style.removeProperty('backdrop-filter');
+      if ((n.style as any).webkitBackdropFilter) n.style.removeProperty('-webkit-backdrop-filter');
+    });
+
+    void sourceEl; // keep reference in closure
+  };
+
   async function renderElementToCanvasWithStage(el: HTMLElement, label: string) {
+    const onclone = buildCaptureOnClone(el);
+
     const render = async (target: HTMLElement) =>
       await html2canvas(target, {
         scale,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        windowWidth: windowWidthPx,
+        windowHeight: windowHeightPx,
+        onclone,
       });
 
     // First try direct (fastest; best fidelity when stable).
