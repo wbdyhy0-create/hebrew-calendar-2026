@@ -758,7 +758,10 @@ export default function App() {
       const baseCellH = Number((pdfSettings as any).pdfExportCellHeightPx ?? 110)
       const fittedCellH = monthCellPx ? Math.max(baseCellH, monthCellPx) : baseCellH
       ;(pdfSettings as any).pdfExportCellHeightPx = fittedCellH
-      const html = buildPrintableMonthHtml(displayDate, pdfSettings as any, mergedOverridesForPdf as any)
+      const html = buildPrintableMonthHtml(displayDate, pdfSettings as any, mergedOverridesForPdf as any, {
+        location: 'Jerusalem',
+        renderMode: 'screen',
+      })
 
       if (pdfExportPath === 'server') {
         try {
