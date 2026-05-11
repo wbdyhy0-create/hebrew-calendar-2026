@@ -910,8 +910,7 @@ export async function exportPdfBlobFromCalendarElement(
         bg.style.setProperty('overflow', 'visible', 'important');
       }
 
-      // Fix inner zoom wrapper: convert transform:scale() to zoom so the
-      // scaled content participates in layout rather than just painting scaled.
+      // Fix inner zoom wrapper: convert transform:scale() to zoom.
       const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
       if (captureRoot) {
         const t = captureRoot.style.transform || '';
@@ -923,28 +922,51 @@ export async function exportPdfBlobFromCalendarElement(
         captureRoot.style.transform = 'none';
         captureRoot.style.transformOrigin = 'unset';
         captureRoot.style.setProperty('overflow', 'visible', 'important');
-        // Fill the full bg height so the grid can stretch to fill A4.
+        // Fill the full bg height — build a flex-column chain down to the grid.
         captureRoot.style.setProperty('height', '100%', 'important');
         captureRoot.style.setProperty('min-height', '100%', 'important');
         captureRoot.style.setProperty('display', 'flex', 'important');
         captureRoot.style.setProperty('flex-direction', 'column', 'important');
-        // Force immediate children to fill remaining height.
-        Array.from(captureRoot.children).forEach((child) => {
-          if (child instanceof HTMLElement) {
-            child.style.setProperty('flex', '1 1 auto', 'important');
-            child.style.setProperty('height', '100%', 'important');
-            child.style.setProperty('min-height', '0', 'important');
-            child.style.setProperty('display', 'flex', 'important');
-            child.style.setProperty('flex-direction', 'column', 'important');
+
+        // Each div between captureRoot and the grid must also be flex-column.
+        // Layer 1: wrapper div (direct child of captureRoot)
+        const wrapperDiv = captureRoot.children[0] as HTMLElement | undefined;
+        if (wrapperDiv instanceof HTMLElement) {
+          wrapperDiv.style.setProperty('flex', '1 1 auto', 'important');
+          wrapperDiv.style.setProperty('min-height', '0', 'important');
+          wrapperDiv.style.setProperty('display', 'flex', 'important');
+          wrapperDiv.style.setProperty('flex-direction', 'column', 'important');
+
+          // Layer 2: CalendarMonthChrome root div (first child of wrapper)
+          const chromeRoot = wrapperDiv.children[0] as HTMLElement | undefined;
+          if (chromeRoot instanceof HTMLElement) {
+            chromeRoot.style.setProperty('flex', '1 1 auto', 'important');
+            chromeRoot.style.setProperty('min-height', '0', 'important');
+            chromeRoot.style.setProperty('display', 'flex', 'important');
+            chromeRoot.style.setProperty('flex-direction', 'column', 'important');
           }
-        })
+        }
+      }
+
+      // Header: convert translateY → margin-top so it stays in layout flow
+      // and doesn't visually overlap the grid below it.
+      const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
+      if (clonedHeader) {
+        const ht = clonedHeader.style.transform || '';
+        const hm = /translateY\(([-\d.]+)px\)/.exec(ht);
+        const yOffset = hm ? parseFloat(hm[1]!) : 0;
+        clonedHeader.style.transform = 'none';
+        if (yOffset !== 0) {
+          const existingMt = parseFloat(clonedHeader.style.marginTop || '0') || 0;
+          clonedHeader.style.marginTop = `${existingMt + yOffset}px`;
+        }
+        clonedHeader.style.setProperty('flex-shrink', '0', 'important');
       }
 
       // Force the month grid to fill available height with stretched week rows.
       const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
       if (monthGrid) {
         monthGrid.style.setProperty('flex', '1 1 auto', 'important');
-        monthGrid.style.setProperty('height', '100%', 'important');
         monthGrid.style.setProperty('min-height', '0', 'important');
         monthGrid.style.setProperty('display', 'grid', 'important');
         monthGrid.style.setProperty('grid-template-columns', 'repeat(7, minmax(0, 1fr))', 'important');
