@@ -2,13 +2,16 @@
   "name": "hebrew-calendar-suite",
   "private": true,
   "version": "0.0.1",
+  "engines": {
+    "node": ">=20.10.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
     "dev:studio": "npm --workspace apps/studio run dev",
-    "build:studio": "npm --workspace apps/studio run build",
+    "build:studio": "node scripts/verify-2026-layout.cjs && npm --workspace apps/studio run build",
     "dev:display": "npm --workspace apps/display run dev",
     "build:display": "npm --workspace apps/display run build",
     "dev:admin": "npm --workspace apps/admin run dev",

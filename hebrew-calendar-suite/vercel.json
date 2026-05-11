@@ -1,5 +1,5 @@
 {
+  "installCommand": "ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci",
   "buildCommand": "npm run build:studio",
-  "outputDirectory": "apps/studio/dist",
-  "installCommand": "npm install"
+  "outputDirectory": "apps/studio/dist"
 }
