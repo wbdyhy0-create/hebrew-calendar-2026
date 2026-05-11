@@ -893,62 +893,97 @@ export async function exportPdfBlobFromCalendarElement(
   //   2. transform:scale() on the inner zoom wrapper causes html2canvas to
   //      render at layout size rather than visual size — use zoom instead.
   //   3. Tailwind overflow-hidden on the grid wrapper clips the 6th week row.
-  const buildCaptureOnClone = (sourceEl: HTMLElement) => (clonedDoc: Document) => {
-    // Fix outer canvas: remove fixed height so full content is rendered.
-    const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
-    if (bg) {
-      bg.style.height = 'auto';
-      bg.style.minHeight = `${heightMm}mm`;
-      bg.style.setProperty('overflow', 'visible', 'important');
-    }
+  const buildCaptureOnClone = (sourceEl: HTMLElement) => {
+    // Pre-measure from live DOM so the clone callback can use these values.
+    const liveGrid = sourceEl.querySelector<HTMLElement>('[data-inspect="month-grid"]');
+    const liveDow = liveGrid?.querySelector<HTMLElement>('[data-inspect="weekdays"]');
+    const dowH = liveDow ? Math.max(30, Math.round(liveDow.getBoundingClientRect().height)) : 40;
+    const liveCells = liveGrid ? Array.from(liveGrid.querySelectorAll('[data-inspect="cell"]')) : [];
+    const weekRows = Math.max(5, Math.min(6, Math.round(liveCells.length / 7) || 6));
 
-    // Fix inner zoom wrapper: convert transform:scale() to zoom so the
-    // scaled content participates in layout rather than just painting scaled.
-    const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
-    if (captureRoot) {
-      const t = captureRoot.style.transform || '';
-      const m = /scale\(([\d.]+)\)/.exec(t);
-      const s = m ? parseFloat(m[1]!) : NaN;
-      if (Number.isFinite(s) && s > 0) {
-        (captureRoot.style as any).zoom = String(s);
+    return (clonedDoc: Document) => {
+      // Fix outer canvas: force to exact A4 height so content fills the page.
+      const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
+      if (bg) {
+        bg.style.height = `${heightMm}mm`;
+        bg.style.minHeight = `${heightMm}mm`;
+        bg.style.setProperty('overflow', 'visible', 'important');
       }
-      captureRoot.style.transform = 'none';
-      captureRoot.style.transformOrigin = 'unset';
-      captureRoot.style.setProperty('overflow', 'visible', 'important');
-    }
 
-    // Remove overflow:hidden from all elements inside the calendar canvas.
-    // Tailwind classes (overflow-hidden, overflow-auto) on grid wrappers
-    // clip the 6th week row and can hide the English weekday labels.
-    const scope = bg ?? clonedDoc.body;
-    scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
-      n.style.setProperty('overflow', 'visible', 'important');
-    });
-
-    // Also walk computed styles to catch non-Tailwind overflow:hidden rules
-    // (e.g. CSS grid min-h-0 which can clip row content).
-    Array.from(scope.querySelectorAll<HTMLElement>('*')).forEach((n) => {
-      try {
-        const cs = (clonedDoc.defaultView ?? window).getComputedStyle(n);
-        if (
-          cs.overflow === 'hidden' || cs.overflow === 'clip' ||
-          cs.overflowX === 'hidden' || cs.overflowX === 'clip' ||
-          cs.overflowY === 'hidden' || cs.overflowY === 'clip'
-        ) {
-          n.style.setProperty('overflow', 'visible', 'important');
+      // Fix inner zoom wrapper: convert transform:scale() to zoom so the
+      // scaled content participates in layout rather than just painting scaled.
+      const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
+      if (captureRoot) {
+        const t = captureRoot.style.transform || '';
+        const m = /scale\(([\d.]+)\)/.exec(t);
+        const s = m ? parseFloat(m[1]!) : NaN;
+        if (Number.isFinite(s) && s > 0) {
+          (captureRoot.style as any).zoom = String(s);
         }
-      } catch {
-        // ignore — clonedDoc may not expose defaultView in all environments
+        captureRoot.style.transform = 'none';
+        captureRoot.style.transformOrigin = 'unset';
+        captureRoot.style.setProperty('overflow', 'visible', 'important');
+        // Fill the full bg height so the grid can stretch to fill A4.
+        captureRoot.style.setProperty('height', '100%', 'important');
+        captureRoot.style.setProperty('min-height', '100%', 'important');
+        captureRoot.style.setProperty('display', 'flex', 'important');
+        captureRoot.style.setProperty('flex-direction', 'column', 'important');
+        // Force immediate children to fill remaining height.
+        Array.from(captureRoot.children).forEach((child) => {
+          if (child instanceof HTMLElement) {
+            child.style.setProperty('flex', '1 1 auto', 'important');
+            child.style.setProperty('height', '100%', 'important');
+            child.style.setProperty('min-height', '0', 'important');
+            child.style.setProperty('display', 'flex', 'important');
+            child.style.setProperty('flex-direction', 'column', 'important');
+          }
+        })
       }
-    });
 
-    // Remove backdrop-filter (unsupported by html2canvas in some builds).
-    clonedDoc.querySelectorAll<HTMLElement>('*').forEach((n) => {
-      if ((n.style as any).backdropFilter) n.style.removeProperty('backdrop-filter');
-      if ((n.style as any).webkitBackdropFilter) n.style.removeProperty('-webkit-backdrop-filter');
-    });
+      // Force the month grid to fill available height with stretched week rows.
+      const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
+      if (monthGrid) {
+        monthGrid.style.setProperty('flex', '1 1 auto', 'important');
+        monthGrid.style.setProperty('height', '100%', 'important');
+        monthGrid.style.setProperty('min-height', '0', 'important');
+        monthGrid.style.setProperty('display', 'grid', 'important');
+        monthGrid.style.setProperty('grid-template-columns', 'repeat(7, minmax(0, 1fr))', 'important');
+        monthGrid.style.setProperty('grid-template-rows', `${dowH}px repeat(${weekRows}, 1fr)`, 'important');
+        monthGrid.style.setProperty('align-content', 'stretch', 'important');
+      }
 
-    void sourceEl; // keep reference in closure
+      // Remove overflow:hidden from all elements inside the calendar canvas.
+      // Tailwind classes (overflow-hidden, overflow-auto) on grid wrappers
+      // clip the 6th week row and can hide the English weekday labels.
+      const scope = bg ?? clonedDoc.body;
+      scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
+        n.style.setProperty('overflow', 'visible', 'important');
+      });
+
+      // Also walk computed styles to catch non-Tailwind overflow:hidden rules.
+      Array.from(scope.querySelectorAll<HTMLElement>('*')).forEach((n) => {
+        try {
+          const cs = (clonedDoc.defaultView ?? window).getComputedStyle(n);
+          if (
+            cs.overflow === 'hidden' || cs.overflow === 'clip' ||
+            cs.overflowX === 'hidden' || cs.overflowX === 'clip' ||
+            cs.overflowY === 'hidden' || cs.overflowY === 'clip'
+          ) {
+            n.style.setProperty('overflow', 'visible', 'important');
+          }
+        } catch {
+          // ignore
+        }
+      });
+
+      // Remove backdrop-filter (unsupported by html2canvas in some builds).
+      clonedDoc.querySelectorAll<HTMLElement>('*').forEach((n) => {
+        if ((n.style as any).backdropFilter) n.style.removeProperty('backdrop-filter');
+        if ((n.style as any).webkitBackdropFilter) n.style.removeProperty('-webkit-backdrop-filter');
+      });
+
+      void sourceEl;
+    };
   };
 
   async function renderElementToCanvasWithStage(el: HTMLElement, label: string) {
