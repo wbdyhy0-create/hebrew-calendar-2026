@@ -3391,7 +3391,43 @@ export function Calendar() {
         >
           <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/90 bg-white/95 backdrop-blur-sm">
             <div className="flex w-full flex-col items-end gap-2 px-3 py-2.5 sm:px-4">
-              <div className="w-full text-right font-normal text-slate-900">עיצוב</div>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex flex-row-reverse gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const fonts = await exportTransferFonts();
+                      const json = JSON.stringify({ settings, overrides, fonts }, null, 2);
+                      setExportStyleJson(json);
+                      setExportStyleCopied(null);
+                      setExportStyleOpen(true);
+                      try {
+                        await navigator.clipboard.writeText(json);
+                        setExportStyleCopied('הועתק ללוח');
+                        window.setTimeout(() => setExportStyleCopied(null), 1400);
+                      } catch {
+                        // ignore — user can copy manually from the modal
+                      }
+                    }}
+                    className="text-xs px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+                    title="העתקת סגנון כ‑JSON לשיתוף עם התצוגה"
+                  >
+                    ייצוא סגנון (JSON)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImportStyleJson('');
+                      setImportStyleOpen(true);
+                    }}
+                    className="text-xs px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+                    title="ייבוא settings/overrides מג׳סון ששמרת"
+                  >
+                    ייבוא סגנון (JSON)
+                  </button>
+                </div>
+                <div className="text-right font-normal text-slate-900">עיצוב</div>
+              </div>
               <div className="flex w-full flex-row-reverse flex-wrap items-center justify-start gap-2">
                 {saveFlash ? (
                   <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md">
@@ -3465,38 +3501,6 @@ export function Calendar() {
                     איפוס מקומי
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const fonts = await exportTransferFonts();
-                    const json = JSON.stringify({ settings, overrides, fonts }, null, 2);
-                    setExportStyleJson(json);
-                    setExportStyleCopied(null);
-                    setExportStyleOpen(true);
-                    try {
-                      await navigator.clipboard.writeText(json);
-                      setExportStyleCopied('הועתק ללוח');
-                      window.setTimeout(() => setExportStyleCopied(null), 1400);
-                    } catch {
-                      // ignore — user can copy manually from the modal
-                    }
-                  }}
-                  className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                  title="העתקת סגנון כ‑JSON לשיתוף עם התצוגה"
-                >
-                  ייצוא סגנון (JSON)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImportStyleJson('');
-                    setImportStyleOpen(true);
-                  }}
-                  className="text-sm px-3 py-2 rounded-md border border-slate-200 bg-white hover:bg-slate-50"
-                  title="ייבוא settings/overrides מג׳סון ששמרת"
-                >
-                  ייבוא סגנון (JSON)
-                </button>
                 {!isCalendar2026Host && (
                   <button
                     type="button"
