@@ -15,6 +15,21 @@ export default defineConfig({
     alias: {
       '@hc2026-root': hc2026RootSrc,
     },
+    // Files under @hc2026-root live outside the workspace root. Rolldown
+    // resolves their bare-specifier imports by traversing up from that path,
+    // which misses the workspace node_modules. dedupe forces every one of
+    // these packages to be resolved once from the studio's own node_modules.
+    dedupe: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      '@hebcal/core',
+      'hebcal',
+      'date-fns',
+      'html2canvas',
+      'jspdf',
+      'dompurify',
+    ],
   },
   plugins: [
     react(),
