@@ -521,7 +521,11 @@ export default function App() {
   // ResizeObserver probe: position:fixed inset:0 div reports actual viewport width
   // regardless of page-content zoom. Used for mobileWrapScale.
   const vpProbeRef = useRef<HTMLDivElement>(null)
-  const [realVpW, setRealVpW] = useState(0)
+  // Initialize from screen.width so the correct zoom is applied on the very first render,
+  // avoiding a flash where the calendar is 1120px wide before ResizeObserver fires.
+  const [realVpW, setRealVpW] = useState(() => {
+    try { return window.screen?.width || 0 } catch { return 0 }
+  })
 
   const REMINDERS_KEY = 'hebrew-gregorian-calendar:display:reminders:v1'
   const REMINDER_SHOWN_PREFIX = 'hebrew-gregorian-calendar:display:reminders:shown:'
