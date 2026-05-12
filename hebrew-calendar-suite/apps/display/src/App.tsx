@@ -513,6 +513,7 @@ export default function App() {
   })
   const isNarrow = viewport.w > 0 ? viewport.w <= 640 : false
   const isPortrait = viewport.w > 0 && viewport.h > 0 ? viewport.h >= viewport.w : false
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const REMINDERS_KEY = 'hebrew-gregorian-calendar:display:reminders:v1'
   const REMINDER_SHOWN_PREFIX = 'hebrew-gregorian-calendar:display:reminders:shown:'
@@ -4002,6 +4003,7 @@ ${pages}
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            gap: 8,
                             marginBottom: 12,
                           }}
                         >
@@ -4027,8 +4029,26 @@ ${pages}
                           >
                             {clock}
                           </div>
+                          {isNarrow ? (
+                            <button
+                              type="button"
+                              className="chip"
+                              onClick={() => setIsMobileMenuOpen(true)}
+                              aria-label="תפריט"
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 12,
+                                fontWeight: 900,
+                                fontSize: 20,
+                                lineHeight: 1,
+                                border: '1px solid rgba(148,163,184,0.35)',
+                              }}
+                            >
+                              ☰
+                            </button>
+                          ) : null}
                         </div>
-                        <QuickNotesSidebar storageKey={quickNotesStorageKey} />
+                        {isNarrow ? null : <QuickNotesSidebar storageKey={quickNotesStorageKey} />}
                       </div>
                     </div>
                   )
@@ -4038,6 +4058,153 @@ ${pages}
           </ErrorBoundary>
         )}
       </main>
+
+      {isMobileMenuOpen && isNarrow ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          dir="rtl"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 120,
+            background: 'rgba(2,6,23,0.55)',
+            display: 'flex',
+            alignItems: 'stretch',
+            justifyContent: 'flex-end',
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setIsMobileMenuOpen(false)
+          }}
+        >
+          <div
+            style={{
+              width: 'min(320px, 92vw)',
+              background: 'rgba(255,255,255,0.97)',
+              color: '#0f172a',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'auto',
+              boxShadow: '-4px 0 24px rgba(2,6,23,0.22)',
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {/* Header row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid rgba(148,163,184,0.2)' }}>
+              <span style={{ fontWeight: 900, fontSize: 15 }}>תפריט</span>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ padding: '6px 10px', borderRadius: 10, fontWeight: 900, fontSize: 16 }}
+                aria-label="סגור"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Sidebar content */}
+            <div style={{ padding: '12px 14px', display: 'grid', gap: 10 }}>
+              <details open>
+                <summary className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900, cursor: 'pointer', listStyle: 'none' }}>
+                  הורדות
+                </summary>
+                <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, opacity: 0.85, lineHeight: 1.35 }}>ייצוא חודש PDF</div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                    <input type="radio" name="display-pdf-month-path-mobile" checked={pdfExportPath === 'capture'} onChange={() => setPdfExportPath('capture')} />
+                    צילום מסך — כמו בסטודיו (ברירת מחדל)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                    <input type="radio" name="display-pdf-month-path-mobile" checked={pdfExportPath === 'server'} onChange={() => setPdfExportPath('server')} />
+                    שרת Puppeteer (איכות גבוהה יותר)
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+                    <input type="radio" name="display-pdf-month-path-mobile" checked={pdfExportPath === 'printable'} onChange={() => setPdfExportPath('printable')} />
+                    תבנית מודפסת (גיבוי)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => { downloadMonthPdf(); setIsMobileMenuOpen(false) }}
+                    className="chip"
+                    style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}
+                    disabled={pdfBusy !== 'idle'}
+                  >
+                    {pdfBusy === 'month' ? 'מכין…' : 'הורד חודש'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const y = displayDate.getFullYear()
+                      setYearRangeFromYm(`${y}-01`)
+                      setYearRangeToYm(`${y}-12`)
+                      setYearRangeTab('heb')
+                      setYearRangeOpen(true)
+                      setIsMobileMenuOpen(false)
+                    }}
+                    className="chip"
+                    style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}
+                    disabled={pdfBusy !== 'idle'}
+                  >
+                    {pdfBusy === 'year' ? 'מכין…' : 'הורד שנה'}
+                  </button>
+                </div>
+              </details>
+
+              <details open>
+                <summary className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900, cursor: 'pointer', listStyle: 'none' }}>
+                  תצוגה
+                </summary>
+                <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                  <button type="button" onClick={() => { toggleFullscreen(); setIsMobileMenuOpen(false) }} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}>
+                    מסך מלא
+                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <button type="button" onClick={() => { setViewMode('day'); setIsMobileMenuOpen(false) }} className={['chip', viewMode === 'day' ? 'chip-active' : ''].join(' ')} style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}>יום</button>
+                    <button type="button" onClick={() => { setViewMode('month'); setIsMobileMenuOpen(false) }} className={['chip', viewMode === 'month' ? 'chip-active' : ''].join(' ')} style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}>חודש</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <button type="button" onClick={() => shiftMonth(-1)} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 800 }}>חודש ◀</button>
+                    <button type="button" onClick={() => shiftMonth(1)} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 800 }}>▶ חודש</button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAccessibilityLowBrightnessMode((v) => !v)}
+                    className={['chip', accessibilityLowBrightnessMode ? 'chip-active' : ''].join(' ')}
+                    style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}
+                    aria-pressed={accessibilityLowBrightnessMode}
+                  >
+                    ניגודיות
+                  </button>
+                </div>
+              </details>
+
+              <details>
+                <summary className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900, cursor: 'pointer', listStyle: 'none' }}>
+                  סגנון (ענן)
+                </summary>
+                <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+                  <select value={selectedCloudColorId} onChange={(e) => { setCloudSelectionOrigin('local'); setSelectedCloudColorId(String(e.target.value || 'default')) }} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 800, cursor: 'pointer', width: '100%' }}>
+                    <option value="default">ערכת צבע: ברירת מחדל</option>
+                    {visibleCloudCatalog.filter((x) => x.kind === 'color').map((x) => <option key={x.id} value={x.id}>{`ערכת צבע: ${x.nameHe}`}</option>)}
+                  </select>
+                  <select value={selectedCloudStyleId} onChange={(e) => { setCloudSelectionOrigin('local'); setSelectedCloudStyleId(String(e.target.value || 'default')) }} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 800, cursor: 'pointer', width: '100%' }}>
+                    <option value="default">ערכת סגנון: ברירת מחדל</option>
+                    {visibleCloudCatalog.filter((x) => x.kind === 'style').map((x) => <option key={x.id} value={x.id}>{`ערכת סגנון: ${x.nameHe}`}</option>)}
+                  </select>
+                  <button type="button" onClick={() => setManageCatalogOpen(true)} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}>ניהול ערכות</button>
+                  <button type="button" onClick={() => setImportOpen(true)} className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}>ייבוא JSON</button>
+                </div>
+              </details>
+            </div>
+
+            {/* Quick notes */}
+            <div style={{ padding: '0 14px 14px', flex: 1, minHeight: 0 }}>
+              <QuickNotesSidebar storageKey={quickNotesStorageKey} />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {manageCatalogOpen ? (
         <div
