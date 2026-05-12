@@ -3248,10 +3248,9 @@ ${pages}
                   // Use realVpW (ResizeObserver probe, init from screen.width) for reliable detection.
                   const effectiveVpW = realVpW > 0 ? realVpW : viewport.w
                   const effectiveVpH = viewport.h > 0 ? viewport.h : (window.screen?.height || 0)
-                  const isMobileScaled = surface.widthPx > 0 && effectiveVpW > 0 && (
-                    effectiveVpW < surface.widthPx - 32 ||
-                    (surface.heightPx > 0 && effectiveVpH > 0 && effectiveVpH < surface.heightPx + 80)
-                  )
+                  // Only width determines mobile-scaled mode — height alone must NOT trigger zoom
+                  // (desktop browsers with short windows would get zoom applied and break PDF export).
+                  const isMobileScaled = surface.widthPx > 0 && effectiveVpW > 0 && effectiveVpW < surface.widthPx - 32
                   // On narrow/mobile: use scale=1 so layoutScalePx is not double-applied.
                   const safeScale = (isNarrow || isMobileScaled) ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
                   // Scale calendar to fit both viewport width AND height (landscape = height-constrained).
