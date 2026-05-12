@@ -518,6 +518,10 @@ export default function App() {
   const isNarrow = viewport.w > 0 ? viewport.w <= 640 : false
   const isPortrait = viewport.w > 0 && viewport.h > 0 ? viewport.h >= viewport.w : false
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  // ResizeObserver probe: position:fixed inset:0 div reports actual viewport width
+  // regardless of page-content zoom. Used for mobileWrapScale.
+  const vpProbeRef = useRef<HTMLDivElement>(null)
+  const [realVpW, setRealVpW] = useState(0)
 
   const REMINDERS_KEY = 'hebrew-gregorian-calendar:display:reminders:v1'
   const REMINDER_SHOWN_PREFIX = 'hebrew-gregorian-calendar:display:reminders:shown:'
@@ -1731,6 +1735,17 @@ ${pages}
   }, [])
 
   useEffect(() => {
+    const el = vpProbeRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.round(entries[0].contentRect.width)
+      if (w > 0) setRealVpW(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
     const tick = () => {
       const next = new Date()
       setNow(next)
@@ -2103,6 +2118,10 @@ ${pages}
         letterSpacing: 0,
       }}
     >
+      {/* Viewport-width probe: position:fixed stretches to actual viewport width,
+          ResizeObserver reports it reliably regardless of page-content zoom. */}
+      <div ref={vpProbeRef} style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 0, pointerEvents: 'none', zIndex: -1 }} />
+
       {debug && debugLayoutProbe ? (
         <div
           className="display-debug-chip"
@@ -2189,6 +2208,10 @@ ${pages}
               .display-hamburger-btn { display: inline-flex !important; align-items: center; justify-content: center; }
               .display-fixed-sidebar { display: none !important; }
               .display-quicknotes-desktop { display: none !important; }
+              /* Stack clock above calendar instead of beside it */
+              [data-display-calendar-host] { flex-direction: column !important; align-items: center !important; }
+              /* Clock row comes first (order:-1), calendar second */
+              [data-display-calendar-host] > [data-export-exclude="1"] { order: -1 !important; width: 100% !important; flex: none !important; box-sizing: border-box !important; }
             }
           `}</style>
         )
@@ -3214,14 +3237,15 @@ ${pages}
                   const scale =
                     (((allowAutoFit ? autoFitScale : 1) * (resolveCalendarLayoutZoomPercent(settings as any) / 100)) as any) ||
                     1
-                  // Mobile browsers (esp. iOS) don't reliably support CSS `zoom`, which causes cell/text mismatch.
-                  // On narrow screens we prefer natural layout + horizontal scroll rather than scaling.
-                  const safeScale = isNarrow ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
-                  // On narrow screens: scale the entire calendar column to fit viewport width.
-                  // Uses a two-div wrapper (outer=visual size, inner=natural size+transform)
-                  // so horizontal scroll is eliminated without touching layoutScalePx/monthCellPx.
-                  const mobileWrapScale = isNarrow && surface.widthPx > 0
-                    ? Math.min(1, Math.max(0.08, (viewport.w - (isFullscreen ? 0 : 32)) / surface.widthPx))
+                  // Use realVpW (ResizeObserver probe) for reliable mobile detection.
+                  // Falls back to viewport.w if probe hasn't fired yet.
+                  const effectiveVpW = realVpW > 0 ? realVpW : viewport.w
+                  const isMobileScaled = surface.widthPx > 0 && effectiveVpW > 0 && effectiveVpW < surface.widthPx - 32
+                  // On narrow/mobile: use scale=1 so layoutScalePx is not double-applied.
+                  const safeScale = (isNarrow || isMobileScaled) ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
+                  // Scale the entire calendar to fit the actual viewport width.
+                  const mobileWrapScale = isMobileScaled
+                    ? Math.min(1, Math.max(0.08, (effectiveVpW - (isFullscreen ? 0 : 16)) / surface.widthPx))
                     : 1
                   /** Match Studio `cellScaledPx`: undo CSS `scale(s)` so nominal px match settings. */
                   const layoutScalePx = (px: number) => {
@@ -3241,7 +3265,7 @@ ${pages}
                         alignItems: 'flex-start',
                         justifyContent: 'center',
                         flexWrap: 'nowrap',
-                        overflowX: isNarrow ? 'hidden' : 'auto',
+                        overflowX: mobileWrapScale < 1 ? 'hidden' : 'auto',
                         paddingBottom: 8,
                       }}
                     >
@@ -3249,8 +3273,8 @@ ${pages}
                           inner holds natural calendar width with transform:scale for fit. */}
                       <div
                         style={{
-                          flex: `0 0 ${isNarrow && mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
-                          width: `${isNarrow && mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
+                          flex: `0 0 ${mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
+                          width: `${mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
                           overflow: 'hidden',
                           boxSizing: 'border-box',
                         }}
@@ -3258,7 +3282,7 @@ ${pages}
                       <div
                         style={{
                           width: `${surface.widthPx}px`,
-                          transform: isNarrow && mobileWrapScale < 1 ? `scale(${mobileWrapScale})` : undefined,
+                          transform: mobileWrapScale < 1 ? `scale(${mobileWrapScale})` : undefined,
                           transformOrigin: 'top left',
                           position: 'relative',
                         }}
@@ -4013,11 +4037,12 @@ ${pages}
                       <div style={{ flex: '0 0 auto' }} data-export-exclude="1">
                         <div
                           className="display-floating-clock"
+                          dir="ltr"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 8,
+                            position: 'relative',
                             marginBottom: 12,
                           }}
                         >
@@ -4043,12 +4068,15 @@ ${pages}
                           >
                             {clock}
                           </div>
+                          {/* Hamburger: absolutely positioned on the right so clock stays centered */}
                           <button
                             type="button"
                             className="chip display-hamburger-btn"
                             onClick={() => setIsMobileMenuOpen(true)}
                             aria-label="תפריט"
                             style={{
+                              position: 'absolute',
+                              right: 0,
                               padding: '8px 12px',
                               borderRadius: 12,
                               fontWeight: 900,
