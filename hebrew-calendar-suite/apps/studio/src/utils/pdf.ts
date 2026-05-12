@@ -753,6 +753,102 @@ export async function exportPdfBlobFromHtml(
   }
 }
 
+function buildCaptureOnClone(
+  sourceEl: HTMLElement,
+  opts: { widthMm: number; heightMm: number },
+): (clonedDoc: Document) => void {
+  const { widthMm, heightMm } = opts;
+  const liveCapRoot = sourceEl.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
+  const liveCaptureTransform = liveCapRoot?.style.transform ?? '';
+  const scaleM = /scale\(([\d.]+)\)/.exec(liveCaptureTransform);
+  const captureScale = scaleM ? Math.max(0.05, parseFloat(scaleM[1]!)) : 1;
+
+  const liveBgRect = sourceEl.getBoundingClientRect();
+  const liveGrid = sourceEl.querySelector<HTMLElement>('[data-inspect="month-grid"]');
+  const liveDow = liveGrid?.querySelector<HTMLElement>('[data-inspect="weekdays"]');
+
+  const dowHVisual = liveDow ? Math.max(20 * captureScale, liveDow.getBoundingClientRect().height) : 40 * captureScale;
+  const dowH = Math.max(30, Math.round(dowHVisual / captureScale));
+
+  const liveCells = liveGrid ? Array.from(liveGrid.querySelectorAll('[data-inspect="cell"]')) : [];
+  const weekRows = Math.max(5, Math.min(6, Math.round(liveCells.length / 7) || 6));
+
+  const liveGridRect = liveGrid?.getBoundingClientRect();
+  const spaceAboveVisualPx = liveGridRect
+    ? Math.max(0, Math.round(liveGridRect.top - liveBgRect.top))
+    : 80 * captureScale;
+  const spaceAbovePx = Math.round(spaceAboveVisualPx / captureScale);
+
+  const a4HeightPx = Math.round((heightMm / 25.4) * 96);
+  const a4WidthPx = Math.round((widthMm / 25.4) * 96);
+  const gridHeightPx = Math.max(300, a4HeightPx - spaceAbovePx);
+
+  return (clonedDoc: Document) => {
+    const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
+    if (bg) {
+      bg.style.setProperty('width', `${a4WidthPx}px`, 'important');
+      bg.style.setProperty('height', `${a4HeightPx}px`, 'important');
+      bg.style.setProperty('min-height', `${a4HeightPx}px`, 'important');
+      bg.style.setProperty('overflow', 'visible', 'important');
+    }
+
+    const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
+    if (captureRoot) {
+      captureRoot.style.setProperty('transform', 'none', 'important');
+      captureRoot.style.setProperty('transform-origin', 'unset', 'important');
+      captureRoot.style.setProperty('width', '100%', 'important');
+      captureRoot.style.setProperty('overflow', 'visible', 'important');
+    }
+
+    const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
+    if (clonedHeader) {
+      clonedHeader.style.setProperty('transform', 'none', 'important');
+    }
+
+    const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
+    if (monthGrid) {
+      monthGrid.style.setProperty('width', '100%', 'important');
+      monthGrid.style.setProperty('height', `${gridHeightPx}px`, 'important');
+      monthGrid.style.setProperty('min-height', `${gridHeightPx}px`, 'important');
+      monthGrid.style.setProperty('display', 'grid', 'important');
+      monthGrid.style.setProperty('grid-template-columns', 'repeat(7, minmax(0, 1fr))', 'important');
+      monthGrid.style.setProperty('grid-template-rows', `${dowH}px repeat(${weekRows}, 1fr)`, 'important');
+      monthGrid.style.setProperty('align-content', 'stretch', 'important');
+    }
+
+    const scope = bg ?? clonedDoc.body;
+    scope.querySelectorAll<HTMLElement>('[data-pdf-date-block="true"]').forEach((n) => {
+      n.style.setProperty('bottom', 'auto', 'important');
+    });
+
+    scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
+      n.style.setProperty('overflow', 'visible', 'important');
+    });
+
+    Array.from(scope.querySelectorAll<HTMLElement>('*')).forEach((n) => {
+      try {
+        const cs = (clonedDoc.defaultView ?? window).getComputedStyle(n);
+        if (
+          cs.overflow === 'hidden' || cs.overflow === 'clip' ||
+          cs.overflowX === 'hidden' || cs.overflowX === 'clip' ||
+          cs.overflowY === 'hidden' || cs.overflowY === 'clip'
+        ) {
+          n.style.setProperty('overflow', 'visible', 'important');
+        }
+      } catch {
+        // ignore
+      }
+    });
+
+    clonedDoc.querySelectorAll<HTMLElement>('*').forEach((n) => {
+      if ((n.style as any).backdropFilter) n.style.removeProperty('backdrop-filter');
+      if ((n.style as any).webkitBackdropFilter) n.style.removeProperty('-webkit-backdrop-filter');
+    });
+
+    void sourceEl;
+  };
+}
+
 export async function exportPdfBlobFromCalendarElement(
   calendarElement: HTMLElement,
   settings: CalendarSettings,
@@ -887,125 +983,8 @@ export async function exportPdfBlobFromCalendarElement(
   const windowWidthPx = Math.max(900, Math.ceil((widthMm / 25.4) * 96));
   const windowHeightPx = Math.max(600, Math.ceil((heightMm / 25.4) * 96));
 
-  // onclone: fix layout in html2canvas's cloned document before capture.
-  // Resolves the three main screen→PDF mismatches:
-  //   1. Fixed-height outer canvas with overflow:auto clips 6-week months.
-  //   2. transform:scale() on the inner zoom wrapper causes html2canvas to
-  //      render at layout size rather than visual size — use zoom instead.
-  //   3. Tailwind overflow-hidden on the grid wrapper clips the 6th week row.
-  const buildCaptureOnClone = (sourceEl: HTMLElement) => {
-    // Read captureRoot's transform scale from live DOM before the clone is made.
-    // getBoundingClientRect() returns visual (post-transform) pixels, so we need
-    // the scale to convert visual → natural CSS pixels for the clone (which has no scale).
-    const liveCapRoot = sourceEl.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
-    const liveCaptureTransform = liveCapRoot?.style.transform ?? '';
-    const scaleM = /scale\(([\d.]+)\)/.exec(liveCaptureTransform);
-    const captureScale = scaleM ? Math.max(0.05, parseFloat(scaleM[1]!)) : 1;
-
-    const liveBgRect = sourceEl.getBoundingClientRect();
-    const liveGrid = sourceEl.querySelector<HTMLElement>('[data-inspect="month-grid"]');
-    const liveDow = liveGrid?.querySelector<HTMLElement>('[data-inspect="weekdays"]');
-
-    // getBoundingClientRect returns visual (scaled) px → divide by captureScale for natural px.
-    const dowHVisual = liveDow ? Math.max(20 * captureScale, liveDow.getBoundingClientRect().height) : 40 * captureScale;
-    const dowH = Math.max(30, Math.round(dowHVisual / captureScale));
-
-    const liveCells = liveGrid ? Array.from(liveGrid.querySelectorAll('[data-inspect="cell"]')) : [];
-    const weekRows = Math.max(5, Math.min(6, Math.round(liveCells.length / 7) || 6));
-
-    const liveGridRect = liveGrid?.getBoundingClientRect();
-    // spaceAbove: visual px from bg top to grid top → divide by captureScale for natural px.
-    const spaceAboveVisualPx = liveGridRect
-      ? Math.max(0, Math.round(liveGridRect.top - liveBgRect.top))
-      : 80 * captureScale;
-    const spaceAbovePx = Math.round(spaceAboveVisualPx / captureScale);
-
-    // A4 in natural CSS px at 96 dpi. The clone has no scale/zoom on captureRoot,
-    // so all pixel values are natural CSS pixels.
-    const a4HeightPx = Math.round((heightMm / 25.4) * 96);
-    const a4WidthPx = Math.round((widthMm / 25.4) * 96);
-    const gridHeightPx = Math.max(300, a4HeightPx - spaceAbovePx);
-
-    return (clonedDoc: Document) => {
-      // Fix outer canvas: exact A4 pixel dimensions so html2canvas captures the full page.
-      const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
-      if (bg) {
-        bg.style.setProperty('width', `${a4WidthPx}px`, 'important');
-        bg.style.setProperty('height', `${a4HeightPx}px`, 'important');
-        bg.style.setProperty('min-height', `${a4HeightPx}px`, 'important');
-        bg.style.setProperty('overflow', 'visible', 'important');
-      }
-
-      // Remove transform:scale from captureRoot — do NOT apply zoom.
-      // zoom would scale child pixel values (height/width we set below),
-      // making the grid render at gridHeightPx*zoom instead of gridHeightPx.
-      const captureRoot = clonedDoc.querySelector<HTMLElement>('[data-pdf-capture-root="true"]');
-      if (captureRoot) {
-        captureRoot.style.setProperty('transform', 'none', 'important');
-        captureRoot.style.setProperty('transform-origin', 'unset', 'important');
-        captureRoot.style.setProperty('width', '100%', 'important');
-        captureRoot.style.setProperty('overflow', 'visible', 'important');
-      }
-
-      // Header: remove translateY (visual-only offset that causes grid overlap in clone).
-      const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
-      if (clonedHeader) {
-        clonedHeader.style.setProperty('transform', 'none', 'important');
-      }
-
-      // Grid: fill remaining A4 height below the header (natural CSS pixels, no scale).
-      const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
-      if (monthGrid) {
-        monthGrid.style.setProperty('width', '100%', 'important');
-        monthGrid.style.setProperty('height', `${gridHeightPx}px`, 'important');
-        monthGrid.style.setProperty('min-height', `${gridHeightPx}px`, 'important');
-        monthGrid.style.setProperty('display', 'grid', 'important');
-        monthGrid.style.setProperty('grid-template-columns', 'repeat(7, minmax(0, 1fr))', 'important');
-        monthGrid.style.setProperty('grid-template-rows', `${dowH}px repeat(${weekRows}, 1fr)`, 'important');
-        monthGrid.style.setProperty('align-content', 'stretch', 'important');
-      }
-
-      // Date blocks already have inline top:1px; just ensure bottom:auto.
-      const scope = bg ?? clonedDoc.body;
-      scope.querySelectorAll<HTMLElement>('[data-pdf-date-block="true"]').forEach((n) => {
-        n.style.setProperty('bottom', 'auto', 'important');
-      })
-
-      // Remove overflow:hidden from all elements inside the calendar canvas.
-      // Tailwind classes (overflow-hidden, overflow-auto) on grid wrappers
-      // clip the 6th week row and can hide the English weekday labels.
-      scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
-        n.style.setProperty('overflow', 'visible', 'important');
-      });
-
-      // Also walk computed styles to catch non-Tailwind overflow:hidden rules.
-      Array.from(scope.querySelectorAll<HTMLElement>('*')).forEach((n) => {
-        try {
-          const cs = (clonedDoc.defaultView ?? window).getComputedStyle(n);
-          if (
-            cs.overflow === 'hidden' || cs.overflow === 'clip' ||
-            cs.overflowX === 'hidden' || cs.overflowX === 'clip' ||
-            cs.overflowY === 'hidden' || cs.overflowY === 'clip'
-          ) {
-            n.style.setProperty('overflow', 'visible', 'important');
-          }
-        } catch {
-          // ignore
-        }
-      });
-
-      // Remove backdrop-filter (unsupported by html2canvas in some builds).
-      clonedDoc.querySelectorAll<HTMLElement>('*').forEach((n) => {
-        if ((n.style as any).backdropFilter) n.style.removeProperty('backdrop-filter');
-        if ((n.style as any).webkitBackdropFilter) n.style.removeProperty('-webkit-backdrop-filter');
-      });
-
-      void sourceEl;
-    };
-  };
-
   async function renderElementToCanvasWithStage(el: HTMLElement, label: string) {
-    const onclone = buildCaptureOnClone(el);
+    const onclone = buildCaptureOnClone(el, { widthMm, heightMm });
 
     const render = async (target: HTMLElement) =>
       await html2canvas(target, {
@@ -1151,6 +1130,8 @@ export async function exportYearPdfBlobFromCalendarCapture(opts: {
   })
 
   const scale = Math.min(3, Math.max(1, Math.round(Number(settings.pdfHtml2CanvasScale) || 2)))
+  const windowWidthPx = Math.max(900, Math.ceil((widthMm / 25.4) * 96))
+  const windowHeightPx = Math.max(600, Math.ceil((heightMm / 25.4) * 96))
 
   function assertCanvasNotBlank(canvas: HTMLCanvasElement, label: string) {
     const w = canvas.width
@@ -1165,8 +1146,6 @@ export async function exportYearPdfBlobFromCalendarCapture(opts: {
       return
     }
     const data = img.data
-    // Use a denser grid of samples with a small tolerance. A calendar page can be mostly white,
-    // and sparse sampling can false-positive as blank (especially on months with large white areas).
     const tol = 3
     const cols = 10
     const rows = 6
@@ -1179,7 +1158,6 @@ export async function exportYearPdfBlobFromCalendarCapture(opts: {
         const g = data[i + 1]!
         const b = data[i + 2]!
         const a = data[i + 3]!
-        // Treat fully transparent or any non-white-ish pixel as non-blank.
         if (a !== 255) return
         if (Math.abs(r - 255) > tol || Math.abs(g - 255) > tol || Math.abs(b - 255) > tol) return
       }
@@ -1188,8 +1166,19 @@ export async function exportYearPdfBlobFromCalendarCapture(opts: {
   }
 
   async function renderWithStageFallback(el: HTMLElement, label: string) {
+    const onclone = buildCaptureOnClone(el, { widthMm, heightMm })
+
     const render = async (target: HTMLElement) =>
-      await captureElementWithoutTransform(target, { scale, widthMm, heightMm, label })
+      await html2canvas(target, {
+        scale,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: windowWidthPx,
+        windowHeight: windowHeightPx,
+        onclone,
+      })
 
     // Fast path: direct capture
     try {
