@@ -506,7 +506,11 @@ export default function App() {
   const [autoFitScale, setAutoFitScale] = useState(1)
   const [viewport, setViewport] = useState(() => {
     try {
-      return { w: window.innerWidth || 0, h: window.innerHeight || 0 }
+      // Use min(screen.width, innerWidth) — screen.width is the device's CSS-pixel width,
+      // unaffected by browser zoom-out caused by wide page content on mobile.
+      const sw = window.screen?.width || Infinity
+      const iw = window.innerWidth || 0
+      return { w: Math.min(sw, iw) || iw, h: window.innerHeight || 0 }
     } catch {
       return { w: 0, h: 0 }
     }
@@ -1712,7 +1716,11 @@ ${pages}
   }, [updateSnoozeStorageKey])
 
   useEffect(() => {
-    const onResize = () => setViewport({ w: window.innerWidth || 0, h: window.innerHeight || 0 })
+    const onResize = () => {
+      const sw = window.screen?.width || Infinity
+      const iw = window.innerWidth || 0
+      setViewport({ w: Math.min(sw, iw) || iw, h: window.innerHeight || 0 })
+    }
     onResize()
     window.addEventListener('resize', onResize)
     window.addEventListener('orientationchange', onResize as any)
