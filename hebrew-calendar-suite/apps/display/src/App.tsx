@@ -3245,15 +3245,24 @@ ${pages}
                   const scale =
                     (((allowAutoFit ? autoFitScale : 1) * (resolveCalendarLayoutZoomPercent(settings as any) / 100)) as any) ||
                     1
-                  // Use realVpW (ResizeObserver probe) for reliable mobile detection.
-                  // Falls back to viewport.w if probe hasn't fired yet.
+                  // Use realVpW (ResizeObserver probe, init from screen.width) for reliable detection.
                   const effectiveVpW = realVpW > 0 ? realVpW : viewport.w
-                  const isMobileScaled = surface.widthPx > 0 && effectiveVpW > 0 && effectiveVpW < surface.widthPx - 32
+                  const effectiveVpH = viewport.h > 0 ? viewport.h : (window.screen?.height || 0)
+                  const isMobileScaled = surface.widthPx > 0 && effectiveVpW > 0 && (
+                    effectiveVpW < surface.widthPx - 32 ||
+                    (surface.heightPx > 0 && effectiveVpH > 0 && effectiveVpH < surface.heightPx + 80)
+                  )
                   // On narrow/mobile: use scale=1 so layoutScalePx is not double-applied.
                   const safeScale = (isNarrow || isMobileScaled) ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
-                  // Scale the entire calendar to fit the actual viewport width.
+                  // Scale calendar to fit both viewport width AND height (landscape = height-constrained).
+                  // Reserve ~80px for the clock row above the calendar.
+                  const CLOCK_H = 80
+                  const widthScale = effectiveVpW > 0 ? (effectiveVpW - (isFullscreen ? 0 : 16)) / surface.widthPx : 1
+                  const heightScale = surface.heightPx > 0 && effectiveVpH > CLOCK_H
+                    ? (effectiveVpH - CLOCK_H) / surface.heightPx
+                    : 1
                   const mobileWrapScale = isMobileScaled
-                    ? Math.min(1, Math.max(0.08, (effectiveVpW - (isFullscreen ? 0 : 16)) / surface.widthPx))
+                    ? Math.min(1, Math.max(0.08, Math.min(widthScale, heightScale)))
                     : 1
                   /** Match Studio `cellScaledPx`: undo CSS `scale(s)` so nominal px match settings. */
                   const layoutScalePx = (px: number) => {
