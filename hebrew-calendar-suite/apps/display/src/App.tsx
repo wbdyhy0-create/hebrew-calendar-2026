@@ -2209,9 +2209,11 @@ ${pages}
               .display-fixed-sidebar { display: none !important; }
               .display-quicknotes-desktop { display: none !important; }
               /* Stack clock above calendar instead of beside it */
-              [data-display-calendar-host] { flex-direction: column !important; align-items: center !important; }
+              [data-display-calendar-host] { flex-direction: column !important; align-items: center !important; overflow-x: visible !important; }
               /* Clock row comes first (order:-1), calendar second */
               [data-display-calendar-host] > [data-export-exclude="1"] { order: -1 !important; width: 100% !important; flex: none !important; box-sizing: border-box !important; }
+              /* Remove JS-set paddingRight that was hiding the calendar */
+              main { padding-right: 16px !important; }
             }
           `}</style>
         )
@@ -3267,25 +3269,22 @@ ${pages}
                         alignItems: 'flex-start',
                         justifyContent: 'center',
                         flexWrap: 'nowrap',
-                        overflowX: mobileWrapScale < 1 ? 'hidden' : 'auto',
+                        overflowX: mobileWrapScale < 1 ? 'visible' : 'auto',
                         paddingBottom: 8,
                       }}
                     >
-                      {/* Mobile two-div wrapper: outer reports visual size to flex parent,
-                          inner holds natural calendar width with transform:scale for fit. */}
+                      {/* Mobile zoom wrapper: CSS zoom scales both layout and visual together,
+                          so the calendar occupies exactly the right screen space with no clipping. */}
                       <div
                         style={{
-                          flex: `0 0 ${mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
-                          width: `${mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
-                          overflow: 'hidden',
-                          boxSizing: 'border-box',
+                          zoom: mobileWrapScale < 1 ? mobileWrapScale : undefined,
+                          width: `${surface.widthPx}px`,
+                          flexShrink: 0,
                         }}
                       >
                       <div
                         style={{
                           width: `${surface.widthPx}px`,
-                          transform: mobileWrapScale < 1 ? `scale(${mobileWrapScale})` : undefined,
-                          transformOrigin: 'top left',
                           position: 'relative',
                         }}
                       >
@@ -4033,8 +4032,8 @@ ${pages}
                         )
                       })()}
                       </div>
-                      </div>{/* transform-wrapper */}
-                      </div>{/* vw-wrapper */}
+                      </div>{/* inner-wrapper */}
+                      </div>{/* zoom-wrapper */}
 
                       <div style={{ flex: '0 0 auto' }} data-export-exclude="1">
                         <div
