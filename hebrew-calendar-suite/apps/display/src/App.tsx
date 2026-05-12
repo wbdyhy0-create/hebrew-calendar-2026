@@ -36,7 +36,7 @@ import {
 import { getTenantFromUrlSearch } from './tenants'
 import { sanitizeTenantQueryIdFromSearch } from './sanitizeTenantQueryId'
 import { type StylePreset } from './stylePresets'
-import { buildPrintableMonthHtml, buildPrintableYearPdfHtml } from '@hebrew-calendar/shared'
+import { buildPrintableMonthHtml, buildPrintableYearPdfHtml, buildPrintableMonthSvg } from '@hebrew-calendar/shared'
 import { exportPdfBlobFromElement, exportPdfBlobFromHtml } from './utils/pdf'
 import { downloadBlobFile } from './utils/download'
 
@@ -767,13 +767,13 @@ export default function App() {
         pdfCustomWidthMm: 297,
         pdfCustomHeightMm: 210,
         pdfOrientation: 'landscape',
+        // Force layout zoom to 100% so renderMode:'pdf' auto-fit fills A4 without
+        // CSS zoom shrinking the calendar and making events appear tiny.
+        calendarLayoutZoomPercent: 100,
       } as any
-      const baseCellH = Number((pdfSettings as any).pdfExportCellHeightPx ?? 110)
-      const fittedCellH = monthCellPx ? Math.max(baseCellH, monthCellPx) : baseCellH
-      ;(pdfSettings as any).pdfExportCellHeightPx = fittedCellH
       const html = buildPrintableMonthHtml(displayDate, pdfSettings as any, mergedOverridesForPdf as any, {
         location: 'Jerusalem',
-        renderMode: 'screen',
+        renderMode: 'pdf',
       })
 
       if (pdfExportPath === 'server') {
@@ -864,10 +864,8 @@ export default function App() {
         pdfCustomWidthMm: 297,
         pdfCustomHeightMm: 210,
         pdfOrientation: 'landscape',
+        calendarLayoutZoomPercent: 100,
       } as any
-      const baseCellH = Number((pdfSettings as any).pdfExportCellHeightPx ?? 110)
-      const fittedCellH = monthCellPx ? Math.max(baseCellH, monthCellPx) : baseCellH
-      ;(pdfSettings as any).pdfExportCellHeightPx = fittedCellH
 
       const html = buildPrintableYearPdfHtml(year, pdfSettings as any, mergedOverridesForPdf as any)
       const blob = await exportPdfBlobFromHtml(html, pdfSettings as any, { multiPage: true })
@@ -876,6 +874,27 @@ export default function App() {
       window.alert(`שגיאה בהורדת PDF: ${String(e?.message ?? e)}`)
     } finally {
       setPdfBusy('idle')
+    }
+  }
+
+  const downloadMonthSvg = () => {
+    try {
+      const mergedOverrides = (() => {
+        const base = (overrides ?? {}) as any
+        const out: any = { ...base }
+        for (const [k, v] of Object.entries(localCellImages ?? {})) {
+          if (!v) continue
+          out[k] = { ...(out[k] ?? {}), ...(v as any) }
+        }
+        return out
+      })()
+      const svgStr = buildPrintableMonthSvg(displayDate, brandSettings as any, mergedOverrides as any)
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
+      const y = displayDate.getFullYear()
+      const m = String(displayDate.getMonth() + 1).padStart(2, '0')
+      downloadBlobFile(`calendar-${y}-${m}.svg`, blob)
+    } catch (e: any) {
+      window.alert(`שגיאה בהורדת SVG: ${String(e?.message ?? e)}`)
     }
   }
 
@@ -2628,6 +2647,15 @@ ${pages}
                   </button>
                   <button
                     type="button"
+                    onClick={downloadMonthSvg}
+                    className="chip"
+                    style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}
+                    title="הורד חודש SVG — וקטורי לאינדיזיין / אילוסטרייטור"
+                  >
+                    הורד SVG
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => {
                       const y = displayDate.getFullYear()
                       setYearRangeFromYm(`${y}-01`)
@@ -3288,6 +3316,7 @@ ${pages}
                       {/* Mobile zoom wrapper: CSS zoom scales both layout and visual together,
                           so the calendar occupies exactly the right screen space with no clipping. */}
                       <div
+                        data-mobile-zoom-wrapper={mobileWrapScale < 1 ? 'true' : undefined}
                         style={{
                           zoom: mobileWrapScale < 1 ? mobileWrapScale : undefined,
                           width: `${surface.widthPx}px`,
@@ -4186,6 +4215,15 @@ ${pages}
                     disabled={pdfBusy !== 'idle'}
                   >
                     {pdfBusy === 'month' ? 'מכין…' : 'הורד חודש'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { downloadMonthSvg(); setIsMobileMenuOpen(false) }}
+                    className="chip"
+                    style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900 }}
+                    title="הורד SVG לאינדיזיין"
+                  >
+                    הורד SVG
                   </button>
                   <button
                     type="button"

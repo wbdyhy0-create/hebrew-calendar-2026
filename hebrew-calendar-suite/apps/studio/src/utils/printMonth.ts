@@ -127,7 +127,7 @@ export function buildPrintableMonthHtml(
 
   const headerHd = getHebrewHeaderForGregorianMonth(viewDate);
   const gregTitle = formatGregorianMonthYearHebrew(viewDate);
-  const hebTitle = formatHebrewHeaderText(headerHd);
+  const hebTitle = formatHebrewHeaderText(headerHd).replace(/״/g, '');
   const monthTitle = `${gregTitle} / ${hebTitle}`;
 
   const bgUrl = getBackgroundImageForMonth(effectiveSettings, viewDate.getMonth());
@@ -219,7 +219,8 @@ export function buildPrintableMonthHtml(
       const cellRadius = Math.max(0, Math.round(Number(settings.cellCornerRadiusPx) || 0));
       const radiusStyle = cellRadius ? `border-radius: ${cellRadius}px;` : '';
 
-      const hebDay = getHebrewDayGematriya(g);
+      const hebDayRaw = getHebrewDayGematriya(g);
+      const hebDay = hebDayRaw.replace(/״/g, '');
       const hebMonth = getHebrewDayAndMonth(g).month;
       const { day: gDay, month: gMonth } = getGregorianDayMonthJerusalem(g);
 
@@ -336,7 +337,7 @@ export function buildPrintableMonthHtml(
               : `<div class="topRight">
             <span class="greg">${gDay}${gDay === 1 ? `<span class="mini">/${gMonth}</span>` : ''}</span>
             <span class="heb">${esc(hebDay)}${
-              hebDay === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
+              hebDayRaw === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
             }</span>
           </div>${dstLabel ? `<div class="dstBanner">${esc(dstLabel)}</div>` : ''}`
           }

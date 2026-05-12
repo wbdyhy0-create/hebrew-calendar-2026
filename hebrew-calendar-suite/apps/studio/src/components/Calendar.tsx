@@ -26,6 +26,7 @@ import {
   isSheviShelPesachGregorian,
   isRoshHashanaHolidayTitleHe as isRoshHashanaDay,
   isYomKippurHolidayTitleHe as isYomKippurDay,
+  buildPrintableMonthSvg,
 } from '@hebrew-calendar/shared';
 import { buildCalendarDayMetas } from '../utils/monthViewModel';
 import {
@@ -3075,6 +3076,27 @@ export function Calendar() {
                     }}
                   >
                     הורד PDF (חודש)
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full text-right px-4 py-3 text-sm hover:bg-slate-50 border-t border-slate-100"
+                    onClick={() => {
+                      setDownloadMenuOpen(false);
+                      try {
+                        const svgStr = buildPrintableMonthSvg(viewDate, settings, overrides);
+                        const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+                        const filename = `calendar-${format(viewDate, 'yyyy-MM')}.svg`;
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = filename;
+                        a.click();
+                        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+                      } catch (e: any) {
+                        window.alert(`שגיאה בהורדת SVG: ${String(e?.message ?? e)}`);
+                      }
+                    }}
+                  >
+                    הורד SVG (חודש) — לאינדיזיין / אילוסטרייטור
                   </button>
                   <button
                     type="button"

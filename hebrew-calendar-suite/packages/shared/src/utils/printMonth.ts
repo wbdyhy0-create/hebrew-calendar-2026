@@ -126,7 +126,9 @@ export function buildPrintableMonthHtml(
 
   const headerHd = getHebrewHeaderForGregorianMonth(viewDate)
   const gregTitle = formatGregorianMonthYearHebrew(viewDate)
-  const hebTitle = formatHebrewHeaderText(headerHd)
+  // Strip gershayim (U+05F4 ״) from the Hebrew year — e.g. "תשפ״ו" → "תשפו" — to prevent
+  // it rendering as a wide space in Puppeteer/Linux font fallbacks.
+  const hebTitle = formatHebrewHeaderText(headerHd).replace(/״/g, '')
   const monthTitle = `${gregTitle} / ${hebTitle}`
 
   const bgUrl = getBackgroundImageForMonth(effectiveSettings, viewDate.getMonth())
@@ -217,13 +219,16 @@ export function buildPrintableMonthHtml(
           : `border-left: ${effectiveSettings.cellBorderWidthPx}px ${effectiveSettings.cellBorderStyle || 'solid'} ${effectiveSettings.cellBorderColor}; border-bottom: ${effectiveSettings.cellBorderWidthPx}px ${effectiveSettings.cellBorderStyle || 'solid'} ${effectiveSettings.cellBorderColor};`
         : 'border: none;'
 
-      const hebDay = getHebrewDayGematriya(g)
+      // Strip gershayim (U+05F4 ״) — it renders as a wide space in some Puppeteer/Linux font
+      // fallbacks. Keep geresh (U+05F3 ׳) so the א׳ first-of-month check still works.
+      const hebDayRaw = getHebrewDayGematriya(g)
+      const hebDay = hebDayRaw.replace(/״/g, '')
       const hebMonth = getHebrewDayAndMonth(g).month
       const { day: gDay, month: gMonth } = getGregorianDayMonthJerusalem(g)
 
       const gregSpan = `<span class="greg">${gDay}${gDay === 1 ? `<span class="mini">/${gMonth}</span>` : ''}</span>`
       const hebSpan = `<span class="heb">${esc(hebDay)}${
-        hebDay === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
+        hebDayRaw === 'א׳' && hebMonth ? ` <span class="mini">${esc(hebMonth)}</span>` : ''
       }</span>`
       const dateHtml =
         settings.cellDateOrder === 'heb_first' ? `${hebSpan}${gregSpan}` : `${gregSpan}${hebSpan}`
@@ -347,7 +352,8 @@ export function buildPrintableMonthHtml(
       if (
         (isPesachI || isSheviShelPesach || isRoshHashanaDay(titles) || isYomKippurDay(titles)) &&
         !isShabbat &&
-        evJer?.havdalah
+        evJer?.havdalah &&
+        !evJer?.candleLighting
       ) {
         const taHav = evTA?.havdalah
         times.push(

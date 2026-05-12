@@ -985,12 +985,12 @@ export async function exportPdfBlobFromElement(
 ) {
   const { widthMm, heightMm } = resolvePageMmSafe(settings)
 
-  // Capture at the element's natural screen size so layout/fonts match the screen exactly.
-  // Do NOT use PDF mm dimensions as the capture viewport — that would reflow the grid
-  // into a different cell height, making fonts look different from what's on screen.
-  const rect = element.getBoundingClientRect()
-  const windowWidthPx = Math.max(900, Math.ceil(rect.width || (widthMm / 25.4) * 96))
-  const windowHeightPx = Math.max(600, Math.ceil(rect.height || (heightMm / 25.4) * 96))
+  // Use PDF page dimensions as the capture viewport. getBoundingClientRect() returns
+  // visual/screen dimensions which are reduced when a parent has CSS zoom applied
+  // (mobile fit-to-screen), leading to a narrower-than-expected canvas that gets
+  // stretched when fitted to the A4 page. PDF mm dimensions give the correct viewport.
+  const windowWidthPx = Math.max(900, Math.round((widthMm / 25.4) * 96))
+  const windowHeightPx = Math.max(600, Math.round((heightMm / 25.4) * 96))
 
   try {
     await document.fonts.ready
@@ -1021,9 +1021,17 @@ export async function exportPdfBlobFromElement(
   const contentW = Math.max(1, pageW - marginMm * 2)
   const contentH = Math.max(1, pageH - marginMm * 2)
 
-  function fitCanvasToContentBox(_canvas: HTMLCanvasElement): { x: number; y: number; w: number; h: number } {
-    // Stretch to fill the full page — calendar pages should always fill A4.
-    return { x: marginMm, y: marginMm, w: contentW, h: contentH }
+  function fitCanvasToContentBox(canvas: HTMLCanvasElement): { x: number; y: number; w: number; h: number } {
+    // Contain (letterbox) — preserve canvas aspect ratio so cells are never distorted.
+    const cw = Math.max(1, canvas.width)
+    const ch = Math.max(1, canvas.height)
+    const canvasRatio = cw / ch
+    const boxRatio = contentW / contentH
+    const w = boxRatio >= canvasRatio ? contentH * canvasRatio : contentW
+    const h = boxRatio >= canvasRatio ? contentH : contentW / canvasRatio
+    const x = marginMm + (contentW - w) / 2
+    const y = marginMm + (contentH - h) / 2
+    return { x, y, w, h }
   }
 
   const doc = new jsPDF({
@@ -1049,6 +1057,12 @@ export async function exportPdfBlobFromElement(
     if (root) {
       root.style.setProperty('overflow', 'visible', 'important')
     }
+
+    // Remove mobile fit-to-screen zoom so the calendar captures at its full natural size.
+    // Without this, a zoomed wrapper makes the canvas narrower than A4, causing stretching.
+    clonedDoc.querySelectorAll<HTMLElement>('[data-mobile-zoom-wrapper]').forEach((el) => {
+      el.style.removeProperty('zoom')
+    })
 
     // Remove CSS effects that can break html2canvas parsing.
     scope.querySelectorAll<HTMLElement>('*').forEach((n) => {

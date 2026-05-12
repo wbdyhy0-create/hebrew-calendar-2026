@@ -7,6 +7,7 @@ export * from './utils/zmanimConstants';
 export * from './utils/calendarDocumentStyles';
 export * from './utils/printMonth';
 export * from './utils/printYearPdf';
+export * from './utils/buildMonthSvg';
 export * from './utils/pdfPage';
 export * from './color';
 export * from './components/Calendar';

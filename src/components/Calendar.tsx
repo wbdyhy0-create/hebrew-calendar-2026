@@ -55,6 +55,7 @@ import {
 } from '../utils/pdfPage';
 import { buildPrintableMonthHtml } from '../utils/printMonth';
 import { buildPrintableYearPdfHtml } from '../utils/printYearPdf';
+import { buildPrintableMonthSvg } from '@hebrew-calendar/shared';
 import {
   DEFAULT_SETTINGS,
   loadSettings,
@@ -2450,6 +2451,46 @@ export function Calendar() {
                     className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
                   >
                     הורד חודש HTML
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setDownloadMenuOpen(false);
+                      if (!ensureDownloadsWork()) return;
+                      try {
+                        const svgStr = buildPrintableMonthSvg(viewDate, settings, overrides as any);
+                        const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+                        const suggested = `calendar-${format(viewDate, 'yyyy-MM')}.svg`;
+                        requestSaveHandle(suggested, {
+                          mime: 'image/svg+xml',
+                          description: 'SVG',
+                          extensions: ['.svg'],
+                        })
+                          .then(async (handle) => {
+                            if (handle) {
+                              await saveBlobToHandle(handle, blob);
+                              setSaveFlash('ה‑SVG נשמר');
+                            } else {
+                              downloadBlobFile(suggested, blob);
+                              setSaveFlash('ה‑SVG נשלח להורדה');
+                            }
+                            window.setTimeout(() => setSaveFlash(null), 1400);
+                          })
+                          .catch((e) => {
+                            const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                            setSaveFlash(`שגיאה בהורדת SVG: ${msg}`);
+                            window.setTimeout(() => setSaveFlash(null), 3500);
+                          });
+                      } catch (e) {
+                        const msg = e instanceof Error ? e.message : 'שגיאה לא ידועה';
+                        setSaveFlash(`שגיאה בהורדת SVG: ${msg}`);
+                        window.setTimeout(() => setSaveFlash(null), 3500);
+                      }
+                    }}
+                    className="text-right px-3 py-2 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  >
+                    הורד חודש SVG — לאינדיזיין / אילוסטרייטור
                   </button>
                 </div>
 
