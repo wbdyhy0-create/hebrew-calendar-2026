@@ -2169,6 +2169,11 @@ ${pages}
               .display-topbar-row { flex-wrap: wrap !important; overflow-x: visible !important; justify-content: center !important; width: 100% !important; }
               .display-topbar-clock { position: static !important; min-width: 0 !important; }
             }
+            @media (max-width: 480px) {
+              .display-topbar { padding-inline: 6px !important; padding-block: 6px !important; gap: 6px !important; }
+              .display-topbar .chip { font-size: 12px !important; padding: 6px 8px !important; border-radius: 9px !important; }
+              .display-topbar-row { gap: 5px !important; }
+            }
           `}</style>
         )
       })()}
@@ -2508,6 +2513,7 @@ ${pages}
               className="display-fixed-sidebar"
               dir="rtl"
               style={{
+                display: isNarrow ? 'none' : undefined,
                 position: 'fixed',
                 top: 12,
                 right: 12,
@@ -3196,6 +3202,12 @@ ${pages}
                   // Mobile browsers (esp. iOS) don't reliably support CSS `zoom`, which causes cell/text mismatch.
                   // On narrow screens we prefer natural layout + horizontal scroll rather than scaling.
                   const safeScale = isNarrow ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
+                  // On narrow screens: scale the entire calendar column to fit viewport width.
+                  // Uses a two-div wrapper (outer=visual size, inner=natural size+transform)
+                  // so horizontal scroll is eliminated without touching layoutScalePx/monthCellPx.
+                  const mobileWrapScale = isNarrow && surface.widthPx > 0
+                    ? Math.min(1, Math.max(0.08, (viewport.w - (isFullscreen ? 0 : 32)) / surface.widthPx))
+                    : 1
                   /** Match Studio `cellScaledPx`: undo CSS `scale(s)` so nominal px match settings. */
                   const layoutScalePx = (px: number) => {
                     const n = Number(px)
@@ -3214,22 +3226,26 @@ ${pages}
                         alignItems: 'flex-start',
                         justifyContent: 'center',
                         flexWrap: 'nowrap',
-                        overflowX: 'auto',
+                        overflowX: isNarrow ? 'hidden' : 'auto',
                         paddingBottom: 8,
                       }}
                     >
+                      {/* Mobile two-div wrapper: outer reports visual size to flex parent,
+                          inner holds natural calendar width with transform:scale for fit. */}
                       <div
                         style={{
-                          // This wrapper is the reference width for the month header's absolute positioning.
-                          // Do not allow shrinking: shrinking triggers auto-fit scaling and makes
-                          // large configured fonts (e.g. gregDayFontPx) appear tiny.
-                          // Prefer horizontal scroll to keep Studio parity.
-                          flex: `0 0 ${surface.widthPx}px`,
-                          width: `${surface.widthPx}px`,
-                          maxWidth: `${surface.widthPx}px`,
-                          position: 'relative',
-                          overflow: 'visible',
+                          flex: `0 0 ${isNarrow && mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
+                          width: `${isNarrow && mobileWrapScale < 1 ? Math.round(surface.widthPx * mobileWrapScale) : surface.widthPx}px`,
+                          overflow: 'hidden',
                           boxSizing: 'border-box',
+                        }}
+                      >
+                      <div
+                        style={{
+                          width: `${surface.widthPx}px`,
+                          transform: isNarrow && mobileWrapScale < 1 ? `scale(${mobileWrapScale})` : undefined,
+                          transformOrigin: 'top left',
+                          position: 'relative',
                         }}
                       >
                       <div
@@ -3976,7 +3992,8 @@ ${pages}
                         )
                       })()}
                       </div>
-                      </div>
+                      </div>{/* transform-wrapper */}
+                      </div>{/* vw-wrapper */}
 
                       <div style={{ flex: '0 0 auto' }} data-export-exclude="1">
                         <div
