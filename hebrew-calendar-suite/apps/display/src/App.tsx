@@ -2183,6 +2183,13 @@ ${pages}
               .display-topbar .chip { font-size: 12px !important; padding: 6px 8px !important; border-radius: 9px !important; }
               .display-topbar-row { gap: 5px !important; }
             }
+            /* Hamburger button: hidden on wide screens, visible on mobile */
+            .display-hamburger-btn { display: none !important; }
+            @media (max-width: 900px) {
+              .display-hamburger-btn { display: inline-flex !important; align-items: center; justify-content: center; }
+              .display-fixed-sidebar { display: none !important; }
+              .display-quicknotes-desktop { display: none !important; }
+            }
           `}</style>
         )
       })()}
@@ -2522,7 +2529,6 @@ ${pages}
               className="display-fixed-sidebar"
               dir="rtl"
               style={{
-                display: isNarrow ? 'none' : undefined,
                 position: 'fixed',
                 top: 12,
                 right: 12,
@@ -4037,26 +4043,26 @@ ${pages}
                           >
                             {clock}
                           </div>
-                          {isNarrow ? (
-                            <button
-                              type="button"
-                              className="chip"
-                              onClick={() => setIsMobileMenuOpen(true)}
-                              aria-label="תפריט"
-                              style={{
-                                padding: '8px 12px',
-                                borderRadius: 12,
-                                fontWeight: 900,
-                                fontSize: 20,
-                                lineHeight: 1,
-                                border: '1px solid rgba(148,163,184,0.35)',
-                              }}
-                            >
-                              ☰
-                            </button>
-                          ) : null}
+                          <button
+                            type="button"
+                            className="chip display-hamburger-btn"
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            aria-label="תפריט"
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: 12,
+                              fontWeight: 900,
+                              fontSize: 20,
+                              lineHeight: 1,
+                              border: '1px solid rgba(148,163,184,0.35)',
+                            }}
+                          >
+                            ☰
+                          </button>
                         </div>
-                        {isNarrow ? null : <QuickNotesSidebar storageKey={quickNotesStorageKey} />}
+                        <div className="display-quicknotes-desktop">
+                          <QuickNotesSidebar storageKey={quickNotesStorageKey} />
+                        </div>
                       </div>
                     </div>
                   )
@@ -4067,7 +4073,7 @@ ${pages}
         )}
       </main>
 
-      {isMobileMenuOpen && isNarrow ? (
+      {isMobileMenuOpen ? (
         <div
           role="dialog"
           aria-modal="true"
