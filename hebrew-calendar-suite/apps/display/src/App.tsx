@@ -2225,7 +2225,9 @@ ${pages}
             isFullscreen
               ? 0
               : // Reserve space for the fixed right controls column.
-                16 + (isNarrow ? 0 : 280 + 12),
+                // Use realVpW (ResizeObserver) for reliable mobile detection — isNarrow (JS) can be
+                // wrong on Android when the browser zooms out a wide page.
+                16 + ((isNarrow || (realVpW > 0 && realVpW <= 900)) ? 0 : 280 + 12),
         }}
       >
         {yearRangeOpen ? (
