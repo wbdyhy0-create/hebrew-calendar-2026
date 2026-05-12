@@ -129,7 +129,7 @@ export function buildPrintableMonthSvg(
   const gridShellBg = settings.gridShellBg || '#ffffff'
 
   // ── Font sizes ──────────────────────────────────────────────────────────────
-  // Settings store px values authored against the reference canvas — scale up for A4 SVG
+  // Header-area fonts scale with SVG canvas size; cell content fonts use settings values directly.
   const scalePx = (px: number) => Math.max(1, Math.round(Number(px) * scaleFactor))
 
   const dowFontPx = scalePx(Number(settings.gridWeekdayHeaderFontPx) || 11)
@@ -137,22 +137,20 @@ export function buildPrintableMonthSvg(
   const dowColor = settings.weekdayHeaderColor || '#ffffff'
   const dowBg = settings.weekdayHeaderBg || '#1e4d2b'
 
-  const hebDayFontPx = scalePx(Number(settings.hebDayFontPx) || 14)
-  const gregDayFontPx = scalePx(Number(settings.gregDayFontPx) || 11)
+  // Cell content — use settings px values directly (matches the HTML CSS which uses them at 1:1)
+  const hebDayFontPx = Math.max(1, Math.round(Number(settings.hebDayFontPx) || 14))
+  const gregDayFontPx = Math.max(1, Math.round(Number(settings.gregDayFontPx) || 11))
   const hebDayFontWeight = Number((settings as any).hebDayFontWeight) || 600
   const gregDayFontWeight = Number((settings as any).gregDayFontWeight) || 600
   const hebDayColor = String((settings as any).hebDayTextColor || '#0f172a')
   const gregDayColor = String((settings as any).gregDayTextColor || '#334155')
 
-  const eventFontPx = scalePx(Number((settings as any).eventTitleFontPx) || 10)
+  const eventFontPx = Math.max(1, Math.round(Number((settings as any).eventTitleFontPx) || 10))
   const eventTitleColor = String((settings as any).eventTitleTextColor || '#1e293b')
 
-  const parshaFontPx = scalePx(Number((settings as any).parshaTitleFontPx) || 9)
+  const parshaFontPx = Math.max(1, Math.round(Number((settings as any).parshaTitleFontPx) || 9))
 
-  // Zmanim: shabbatTimesFontPx is in em units × fontSizePx
-  const baseEmPx = Math.max(1, Number(settings.fontSizePx) || 5)
-  const shabbatTimesEmFactor = (Number(settings.shabbatTimesFontPx) || 5) / 10
-  const timesFontPx = Math.max(7, Math.round(scaleFactor * shabbatTimesEmFactor * Math.max(baseEmPx, 10)))
+  const timesFontPx = Math.max(5, Math.round(Number(settings.shabbatTimesFontPx) || 8))
   const timesColor = String((settings as any).shabbatTimesTextColor || '#1e293b')
 
   // ── Calendar data ───────────────────────────────────────────────────────────
@@ -331,28 +329,30 @@ export function buildPrintableMonthSvg(
       const { day: gDay, month: gMonth } = getGregorianDayMonthJerusalem(g)
       const hebMonthData = getHebrewDayAndMonth(g)
 
-      // Date offset applied per settings
+      // Date offsets
       const hebOffX = Math.round(Number((settings as any).hebDayOffsetXPx) || 0)
       const hebOffY = Math.round(Number((settings as any).hebDayOffsetYPx) || 0)
-
-      // Hebrew date (top-right): text-anchor='end' places right edge at x; Unicode Bidi handles RTL
-      const dateRightX = cellX + cellW - 4 + hebOffX
-      const dateTopY = cellY + 4 + hebDayFontPx + hebOffY
-      els.push(svgText({ x: dateRightX, y: dateTopY, text: hebDay, fontSize: hebDayFontPx, fontFamily: font, fontWeight: hebDayFontWeight, fill: hebDayColor, textAnchor: 'end', clipId }))
-
-      // First of Hebrew month — show month name as mini text below
-      if (hebDayRaw === 'א׳' && hebMonthData.month) {
-        const miniY = dateTopY + Math.round(hebDayFontPx * 0.75) + 1
-        els.push(svgText({ x: dateRightX, y: miniY, text: hebMonthData.month, fontSize: Math.max(7, Math.round(hebDayFontPx * 0.62)), fontFamily: font, fontWeight: 400, fill: hebDayColor, textAnchor: 'end', clipId }))
-      }
-
-      // Gregorian date (top-left, LTR)
       const gregOffX = Math.round(Number((settings as any).gregDayOffsetXPx) || 0)
       const gregOffY = Math.round(Number((settings as any).gregDayOffsetYPx) || 0)
-      const gregX = cellX + 4 + gregOffX
-      const gregY = cellY + 4 + gregDayFontPx + gregOffY
+
+      // Both dates at top-right, side by side — mirrors .topRight { right:10px; top:8px; display:flex; gap:8px; align-items:center }
+      const dateBaselineY = cellY + 8 + Math.max(hebDayFontPx, gregDayFontPx)
+      const hebDateX = cellX + cellW - 10 + hebOffX
+
+      // Hebrew date (rightmost in RTL flex row)
+      els.push(svgText({ x: hebDateX, y: dateBaselineY + hebOffY, text: hebDay, fontSize: hebDayFontPx, fontFamily: font, fontWeight: hebDayFontWeight, fill: hebDayColor, textAnchor: 'end', clipId }))
+
+      // First of Hebrew month — mini month name below heb date
+      if (hebDayRaw === 'א׳' && hebMonthData.month) {
+        const miniY = dateBaselineY + hebOffY + Math.round(hebDayFontPx * 0.75) + 1
+        els.push(svgText({ x: hebDateX, y: miniY, text: hebMonthData.month, fontSize: Math.max(5, Math.round(hebDayFontPx * 0.62)), fontFamily: font, fontWeight: 400, fill: hebDayColor, textAnchor: 'end', clipId }))
+      }
+
+      // Gregorian date — to the left of Hebrew date, gap:8px (estimate heb gematria width ≈ 1.8em)
+      const hebEstW = Math.round(hebDayFontPx * 1.8)
+      const gregDateX = hebDateX - hebEstW - 8 + gregOffX
       const gregText = String(gDay) + (gDay === 1 ? `/${gMonth}` : '')
-      els.push(svgText({ x: gregX, y: gregY, text: gregText, fontSize: gregDayFontPx, fontFamily: font, fontWeight: gregDayFontWeight, fill: gregDayColor, textAnchor: 'start', clipId }))
+      els.push(svgText({ x: gregDateX, y: dateBaselineY + gregOffY, text: gregText, fontSize: gregDayFontPx, fontFamily: font, fontWeight: gregDayFontWeight, fill: gregDayColor, textAnchor: 'end', clipId }))
 
       // ── Center content (event title / parsha) ──
       const manualLines = manual?.centerLines
@@ -363,22 +363,22 @@ export function buildPrintableMonthSvg(
           ? [abbreviateRoshChodeshHeTitle(primaryTitle)]
           : []
 
-      const datesBandH = Math.ceil(Math.max(hebDayFontPx, gregDayFontPx) * 1.3) + 6
-      const zmBandH = timesFontPx * 3.8 + 8 // reserve space for zmanim at bottom
+      // Mirror .midWrap { padding: 32px 24px 40px 24px; align-items:center; justify-content:center }
+      const midTopY = cellY + 32
+      const midBotY = cellY + dateCellH - 40
+      const availH = midBotY - midTopY
 
       // Parsha on Shabbat
       if (isShabbat && parshaHe && !suppressEventHighlight) {
         const p = formatParshaDisplayHe(parshaHe)
-        const pY = cellY + datesBandH + parshaFontPx + 2
         const pCX = cellX + cellW / 2
-        els.push(svgText({ x: pCX, y: pY, text: p, fontSize: parshaFontPx, fontFamily: font, fontWeight: 600, fill: eventTitleColor, textAnchor: 'middle', clipId }))
+        els.push(svgText({ x: pCX, y: midTopY + parshaFontPx, text: p, fontSize: parshaFontPx, fontFamily: font, fontWeight: 600, fill: eventTitleColor, textAnchor: 'middle', clipId }))
       }
 
       if (contentLines.length > 0 && !suppressEventHighlight) {
-        const availH = dateCellH - datesBandH - zmBandH
         const lineH = eventFontPx * 1.35
         const totalTextH = contentLines.length * lineH
-        const startY = cellY + datesBandH + Math.max(0, (availH - totalTextH) / 2) + eventFontPx
+        const startY = midTopY + Math.max(0, (availH - totalTextH) / 2) + eventFontPx
         const cX = cellX + cellW / 2
         contentLines.forEach((line, li) => {
           els.push(svgText({ x: cX, y: startY + li * lineH, text: abbreviateRoshChodeshHeTitle(line), fontSize: eventFontPx, fontFamily: font, fontWeight: 600, fill: eventTitleColor, textAnchor: 'middle', clipId }))
@@ -414,14 +414,16 @@ export function buildPrintableMonthSvg(
       }
 
       if (times.length > 0) {
-        const lineH = timesFontPx * 1.3
-        const blockH = times.length * lineH * 2 + timesFontPx
-        const zmStartY = cellY + dateCellH - blockH - 4
-        const zmX = cellX + cellW - 4
+        // Mirror .times { bottom:8px; right:10px; line-height:1.2 }
+        const zmLineH = timesFontPx * 1.2
+        const zmEntryH = zmLineH * 2   // each entry = label line + times line
+        const blockH = times.length * zmEntryH
+        const zmStartY = cellY + dateCellH - 8 - blockH
+        const zmX = cellX + cellW - 10
         times.forEach(({ label, jer, ta }, ti) => {
-          const baseY = zmStartY + ti * lineH * 2
+          const baseY = zmStartY + ti * zmEntryH
           els.push(svgText({ x: zmX, y: baseY + timesFontPx, text: `${label}:`, fontSize: timesFontPx, fontFamily: font, fontWeight: 700, fill: timesColor, textAnchor: 'end', clipId }))
-          els.push(svgText({ x: zmX, y: baseY + timesFontPx + lineH, text: `י-ם: ${jer}  ת"א: ${ta}`, fontSize: Math.max(6, Math.round(timesFontPx * 0.92)), fontFamily: font, fontWeight: 400, fill: timesColor, textAnchor: 'end', clipId }))
+          els.push(svgText({ x: zmX, y: baseY + timesFontPx + zmLineH, text: `י-ם: ${jer}  ת"א: ${ta}`, fontSize: Math.max(5, Math.round(timesFontPx * 0.92)), fontFamily: font, fontWeight: 400, fill: timesColor, textAnchor: 'end', clipId }))
         })
       }
     })
