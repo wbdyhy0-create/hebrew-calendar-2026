@@ -794,37 +794,70 @@ function buildCaptureOnClone(
   //      The library evaluates `-50%` against the wrong reference or simply
   //      drops it, so the box "sinks" toward the bottom of the header bar.
   //   2) `display: flex; align-items: center` combined with inline transforms
-  //      (weekday header cells). The text drifts toward the top of the band.
+  //      (weekday header cells). The text drifts toward the bottom of the band.
   //
-  // We measure the live boxes here (positions, sizes) and then in the clone
-  // we replace the broken patterns with pre-computed absolute pixel values
-  // that html2canvas does paint correctly.
+  // Strategy: measure the *final, browser-rendered* pixel positions of every
+  // tricky element live, then in the clone replace the broken positioning
+  // rules with absolute pixel values. This is far more reliable than trying
+  // to patch each transform string individually because it bypasses html2canvas
+  // layout math entirely — the elements are pinned to coordinates the browser
+  // already computed correctly.
   // ────────────────────────────────────────────────────────────────────────────
+  type RectMeta = {
+    index: number;
+    topPx: number;
+    leftPx: number;
+    widthPx: number;
+    heightPx: number;
+  };
+
   const liveHeader = sourceEl.querySelector<HTMLElement>('[data-inspect="header"]');
-  type HeaderBoxMeta = { index: number; height: number; transformRaw: string };
-  const headerBoxesMeta: HeaderBoxMeta[] = [];
-  if (liveHeader) {
+  const headerRect = liveHeader?.getBoundingClientRect();
+  const headerBoxesMeta: RectMeta[] = [];
+  if (liveHeader && headerRect) {
     const liveBoxes = Array.from(liveHeader.children) as HTMLElement[];
     liveBoxes.forEach((box, idx) => {
-      const rect = box.getBoundingClientRect();
+      const r = box.getBoundingClientRect();
       headerBoxesMeta.push({
         index: idx,
-        height: Math.max(0, Math.round(rect.height / captureScale)),
-        transformRaw: box.style.transform || '',
+        topPx: Math.round((r.top - headerRect.top) / captureScale),
+        leftPx: Math.round((r.left - headerRect.left) / captureScale),
+        widthPx: Math.max(0, Math.round(r.width / captureScale)),
+        heightPx: Math.max(0, Math.round(r.height / captureScale)),
       });
     });
   }
 
-  // Cache weekday cell metrics so we can rebuild centering deterministically.
-  const liveWeekdayCells = liveDow
-    ? Array.from(liveDow.parentElement?.querySelectorAll('[data-inspect="weekdays"]') ?? [])
-    : [];
-  const weekdayCellHeightPx = (() => {
-    const first = liveWeekdayCells[0] as HTMLElement | undefined;
-    if (!first) return 0;
-    const r = first.getBoundingClientRect();
-    return Math.max(0, Math.round(r.height / captureScale));
-  })();
+  // Weekday cells + their inner text wrappers — measure both so we can pin
+  // the inner block to absolute coordinates inside the cell in the clone.
+  type WeekdayMeta = {
+    cellIdx: number;
+    cellHeightPx: number;
+    innerTopPx: number;
+    innerLeftPx: number;
+    innerWidthPx: number;
+    innerHeightPx: number;
+  };
+  const weekdayMeta: WeekdayMeta[] = [];
+  if (liveGrid) {
+    const liveWeekdays = Array.from(
+      liveGrid.querySelectorAll('[data-inspect="weekdays"]'),
+    ) as HTMLElement[];
+    liveWeekdays.forEach((cell, idx) => {
+      const cellRect = cell.getBoundingClientRect();
+      const inner = cell.firstElementChild as HTMLElement | null;
+      const innerRect = inner?.getBoundingClientRect();
+      if (!innerRect) return;
+      weekdayMeta.push({
+        cellIdx: idx,
+        cellHeightPx: Math.max(0, Math.round(cellRect.height / captureScale)),
+        innerTopPx: Math.round((innerRect.top - cellRect.top) / captureScale),
+        innerLeftPx: Math.round((innerRect.left - cellRect.left) / captureScale),
+        innerWidthPx: Math.max(0, Math.round(innerRect.width / captureScale)),
+        innerHeightPx: Math.max(0, Math.round(innerRect.height / captureScale)),
+      });
+    });
+  }
 
   return (clonedDoc: Document) => {
     const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
@@ -847,35 +880,56 @@ function buildCaptureOnClone(
     if (clonedHeader) {
       clonedHeader.style.setProperty('transform', 'none', 'important');
 
-      // Bake the `calc(-50% + Ypx)` vertical centering into a concrete pixel value
-      // so html2canvas paints the header boxes at the correct height. Without this
-      // the boxes drop toward the bottom of the bar in the export, forcing users
-      // to overcompensate with negative Y offsets in the live preview.
+      // Pin each header box to the exact pixel coordinates the browser already
+      // computed live (top/left relative to the header element). This bypasses
+      // html2canvas's broken `calc(-50% + Ypx)` math entirely so the title boxes
+      // sit at the correct vertical position regardless of Studio offset values.
       const clonedBoxes = Array.from(clonedHeader.children) as HTMLElement[];
       headerBoxesMeta.forEach((meta) => {
         const cloneBox = clonedBoxes[meta.index];
         if (!cloneBox) return;
-        const tx = meta.transformRaw;
-        // translate(<X>, calc(-50% + <Y>px))  →  translate(<X>, <-height/2 + Y>px)
-        const m = /translate\s*\(\s*([^,]+),\s*calc\(\s*-50%\s*\+\s*(-?\d+(?:\.\d+)?)px\s*\)\s*\)/.exec(tx);
-        if (m) {
-          const xPart = m[1]!.trim();
-          const yOffset = parseFloat(m[2]!);
-          const newY = -meta.height / 2 + yOffset;
-          cloneBox.style.setProperty('transform', `translate(${xPart}, ${newY}px)`, 'important');
-        }
+        cloneBox.style.setProperty('position', 'absolute', 'important');
+        cloneBox.style.setProperty('top', `${meta.topPx}px`, 'important');
+        cloneBox.style.setProperty('left', `${meta.leftPx}px`, 'important');
+        cloneBox.style.setProperty('right', 'auto', 'important');
+        cloneBox.style.setProperty('bottom', 'auto', 'important');
+        cloneBox.style.setProperty('width', `${meta.widthPx}px`, 'important');
+        cloneBox.style.setProperty('height', `${meta.heightPx}px`, 'important');
+        cloneBox.style.setProperty('transform', 'none', 'important');
+        cloneBox.style.setProperty('margin', '0', 'important');
       });
     }
 
-    // Fix weekday header cells: replace flex-center with line-height centering,
-    // which html2canvas paints correctly regardless of transforms on children.
-    if (weekdayCellHeightPx > 0) {
-      clonedDoc.querySelectorAll<HTMLElement>('[data-inspect="weekdays"]').forEach((cell) => {
+    // Pin weekday header text to the exact position the browser placed it live.
+    // The cell stays flex-formatted so the green band keeps its background/borders,
+    // but the inner text wrapper is repositioned absolutely from measured rects —
+    // sidestepping html2canvas's flex-baseline drift completely.
+    if (weekdayMeta.length > 0) {
+      const clonedWeekdayCells = clonedDoc.querySelectorAll<HTMLElement>(
+        '[data-inspect="weekdays"]',
+      );
+      weekdayMeta.forEach((meta) => {
+        const cell = clonedWeekdayCells[meta.cellIdx];
+        if (!cell) return;
+        cell.style.setProperty('position', 'relative', 'important');
         cell.style.setProperty('display', 'block', 'important');
-        cell.style.setProperty('line-height', `${weekdayCellHeightPx}px`, 'important');
         cell.style.setProperty('padding-top', '0', 'important');
         cell.style.setProperty('padding-bottom', '0', 'important');
-        cell.style.setProperty('text-align', 'center', 'important');
+        const inner = cell.firstElementChild as HTMLElement | null;
+        if (inner) {
+          inner.style.setProperty('position', 'absolute', 'important');
+          inner.style.setProperty('top', `${meta.innerTopPx}px`, 'important');
+          inner.style.setProperty('left', `${meta.innerLeftPx}px`, 'important');
+          inner.style.setProperty('right', 'auto', 'important');
+          inner.style.setProperty('bottom', 'auto', 'important');
+          inner.style.setProperty('width', `${meta.innerWidthPx}px`, 'important');
+          inner.style.setProperty('height', `${meta.innerHeightPx}px`, 'important');
+          inner.style.setProperty('transform', 'none', 'important');
+          inner.style.setProperty('margin', '0', 'important');
+          inner.style.setProperty('display', 'flex', 'important');
+          inner.style.setProperty('align-items', 'center', 'important');
+          inner.style.setProperty('justify-content', 'center', 'important');
+        }
       });
     }
 
