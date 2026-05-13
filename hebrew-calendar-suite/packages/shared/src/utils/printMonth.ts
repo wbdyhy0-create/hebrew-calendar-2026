@@ -517,7 +517,9 @@ export function buildPrintableMonthHtml(
         })()
       : ''
 
-  const gridHtml = `${integratedLogoStripe}<div class="grid ${headerLayout === 'grid_integrated' ? 'gridIntegrated' : ''}">${
+  // Hebrew calendar: Sunday is the right-most column. RTL on the grid flips column order so the
+  // Sunday-first arrays (weekday headers + cells) lay out right-to-left, matching the live preview.
+  const gridHtml = `${integratedLogoStripe}<div dir="rtl" class="grid ${headerLayout === 'grid_integrated' ? 'gridIntegrated' : ''}">${
     headerLayout === 'grid_integrated' ? integratedHeaderHtml : ''
   }${gridDowRow}${cells.join('')}</div>`
 

@@ -206,7 +206,7 @@ export function buildPrintableYearHtml(
             : ''
         }
         <div class="monthTitle">${esc(title)}</div>
-        <div class="grid">
+        <div dir="rtl" class="grid">
           ${dowLabels
             .map(
               (d) =>

@@ -443,7 +443,9 @@ export function CalendarMonthChrome({
     <div
       ref={gridRef}
       {...shell}
-      dir="ltr"
+      // Hebrew calendar: Sunday must be the right-most column. RTL on the grid flips column order
+      // so the Sunday-first array we feed (weekday headers and cells) renders right-to-left.
+      dir="rtl"
       data-inspect="month-grid"
       style={{
         ...(shell.style ?? {}),

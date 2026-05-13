@@ -394,7 +394,7 @@ export function buildPrintableMonthHtml(
   const gridInlineExtra = isIntegrated
     ? `gap:${integratedGapPx}px;padding:${integratedPadPx}px;box-sizing:border-box;background:transparent;`
     : '';
-  const gridHtml = `<div class="grid" style="height:${gridTargetH}px;grid-template-rows:${gridTemplateRows};${gridInlineExtra}">${gridDowRow}${cells.join('')}</div>`;
+  const gridHtml = `<div dir="rtl" class="grid" style="height:${gridTargetH}px;grid-template-rows:${gridTemplateRows};${gridInlineExtra}">${gridDowRow}${cells.join('')}</div>`;
 
   const zoomPct = resolveCalendarLayoutZoomPercent(effectiveSettings);
   const chromeHtml = buildPrintMonthChromeHtml(effectiveSettings, effectiveSettings.headerLayoutStyle, esc, {

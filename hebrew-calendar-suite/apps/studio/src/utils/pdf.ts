@@ -378,10 +378,11 @@ export async function exportPdfBlobFromHtml(
     const grids = Array.from(calendarElement.querySelectorAll('.grid')) as HTMLElement[];
     grids.forEach((grid) => {
       // html2canvas renders "screen" media, so enforce the 7-column layout inline.
+      // RTL keeps Sunday on the right, matching the live preview.
       grid.style.display = 'grid';
       grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
       grid.style.width = '100%';
-      grid.style.direction = 'ltr';
+      grid.style.direction = 'rtl';
     });
   }
 
@@ -612,11 +613,12 @@ export async function exportPdfBlobFromHtml(
       });
 
       // Force grid layout and centered headers in the clone before capture.
+      // RTL keeps Sunday on the right, matching the live preview.
       scope.querySelectorAll<HTMLElement>('.grid').forEach((grid) => {
         grid.style.display = 'grid';
         grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
         grid.style.width = '100%';
-        grid.style.direction = 'ltr';
+        grid.style.direction = 'rtl';
         (grid.style as any).alignContent = 'center';
       });
 
