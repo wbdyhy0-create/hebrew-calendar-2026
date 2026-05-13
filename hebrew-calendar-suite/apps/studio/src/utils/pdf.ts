@@ -785,6 +785,47 @@ function buildCaptureOnClone(
   const a4WidthPx = Math.round((widthMm / 25.4) * 96);
   const gridHeightPx = Math.max(300, a4HeightPx - spaceAbovePx);
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // Live measurements for html2canvas compensation.
+  //
+  // html2canvas mis-renders two common patterns:
+  //   1) `transform: translateY(calc(-50% + Ypx))` on absolutely-positioned
+  //      elements (header boxes use this to vertically center on `barMidY`).
+  //      The library evaluates `-50%` against the wrong reference or simply
+  //      drops it, so the box "sinks" toward the bottom of the header bar.
+  //   2) `display: flex; align-items: center` combined with inline transforms
+  //      (weekday header cells). The text drifts toward the top of the band.
+  //
+  // We measure the live boxes here (positions, sizes) and then in the clone
+  // we replace the broken patterns with pre-computed absolute pixel values
+  // that html2canvas does paint correctly.
+  // ────────────────────────────────────────────────────────────────────────────
+  const liveHeader = sourceEl.querySelector<HTMLElement>('[data-inspect="header"]');
+  type HeaderBoxMeta = { index: number; height: number; transformRaw: string };
+  const headerBoxesMeta: HeaderBoxMeta[] = [];
+  if (liveHeader) {
+    const liveBoxes = Array.from(liveHeader.children) as HTMLElement[];
+    liveBoxes.forEach((box, idx) => {
+      const rect = box.getBoundingClientRect();
+      headerBoxesMeta.push({
+        index: idx,
+        height: Math.max(0, Math.round(rect.height / captureScale)),
+        transformRaw: box.style.transform || '',
+      });
+    });
+  }
+
+  // Cache weekday cell metrics so we can rebuild centering deterministically.
+  const liveWeekdayCells = liveDow
+    ? Array.from(liveDow.parentElement?.querySelectorAll('[data-inspect="weekdays"]') ?? [])
+    : [];
+  const weekdayCellHeightPx = (() => {
+    const first = liveWeekdayCells[0] as HTMLElement | undefined;
+    if (!first) return 0;
+    const r = first.getBoundingClientRect();
+    return Math.max(0, Math.round(r.height / captureScale));
+  })();
+
   return (clonedDoc: Document) => {
     const bg = clonedDoc.querySelector<HTMLElement>('[data-pdf-target="true"]');
     if (bg) {
@@ -805,6 +846,37 @@ function buildCaptureOnClone(
     const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
     if (clonedHeader) {
       clonedHeader.style.setProperty('transform', 'none', 'important');
+
+      // Bake the `calc(-50% + Ypx)` vertical centering into a concrete pixel value
+      // so html2canvas paints the header boxes at the correct height. Without this
+      // the boxes drop toward the bottom of the bar in the export, forcing users
+      // to overcompensate with negative Y offsets in the live preview.
+      const clonedBoxes = Array.from(clonedHeader.children) as HTMLElement[];
+      headerBoxesMeta.forEach((meta) => {
+        const cloneBox = clonedBoxes[meta.index];
+        if (!cloneBox) return;
+        const tx = meta.transformRaw;
+        // translate(<X>, calc(-50% + <Y>px))  →  translate(<X>, <-height/2 + Y>px)
+        const m = /translate\s*\(\s*([^,]+),\s*calc\(\s*-50%\s*\+\s*(-?\d+(?:\.\d+)?)px\s*\)\s*\)/.exec(tx);
+        if (m) {
+          const xPart = m[1]!.trim();
+          const yOffset = parseFloat(m[2]!);
+          const newY = -meta.height / 2 + yOffset;
+          cloneBox.style.setProperty('transform', `translate(${xPart}, ${newY}px)`, 'important');
+        }
+      });
+    }
+
+    // Fix weekday header cells: replace flex-center with line-height centering,
+    // which html2canvas paints correctly regardless of transforms on children.
+    if (weekdayCellHeightPx > 0) {
+      clonedDoc.querySelectorAll<HTMLElement>('[data-inspect="weekdays"]').forEach((cell) => {
+        cell.style.setProperty('display', 'block', 'important');
+        cell.style.setProperty('line-height', `${weekdayCellHeightPx}px`, 'important');
+        cell.style.setProperty('padding-top', '0', 'important');
+        cell.style.setProperty('padding-bottom', '0', 'important');
+        cell.style.setProperty('text-align', 'center', 'important');
+      });
     }
 
     const monthGrid = clonedDoc.querySelector<HTMLElement>('[data-inspect="month-grid"]');
@@ -838,6 +910,22 @@ function buildCaptureOnClone(
       // identical to baseline alignment, so the Hebrew date sits flush with the bottom of the
       // Gregorian digits — matching the Studio's live preview.
       n.style.setProperty('align-items', 'flex-end', 'important');
+
+      // Hebrew font metrics report a slightly higher visual bottom than Latin digits in the
+      // same point size, so `align-items: flex-end` leaves the Hebrew letter sitting a couple
+      // pixels above the baseline of the Gregorian number. Append a small downward translate
+      // to the Hebrew span (`.font-medium`) so it visually rests on the same baseline.
+      n.querySelectorAll<HTMLElement>('span.font-medium').forEach((hebSpan) => {
+        const existing = hebSpan.style.transform || '';
+        if (!existing.includes('__pdfHebShift')) {
+          // Mark the appended transform so we don't double-apply if onclone runs twice.
+          hebSpan.style.setProperty(
+            'transform',
+            `${existing} translateY(3px) /* __pdfHebShift */`,
+            'important',
+          );
+        }
+      });
     });
 
     scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
