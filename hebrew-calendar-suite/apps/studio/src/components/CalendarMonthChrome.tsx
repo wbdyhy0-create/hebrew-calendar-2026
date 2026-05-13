@@ -126,8 +126,8 @@ function HeaderBarNew({
         {box4Text}
       </div>
 
-      {/* כפתור עריכה */}
-      {settings.headerBarShowEditButton ? (
+      {/* כפתור "ערוך" הוסר מהממשק — העריכה מתבצעת מתפריט ההגדרות. */}
+      {false && settings.headerBarShowEditButton ? (
         <button
           type="button"
           style={{

@@ -348,22 +348,7 @@ function HeaderBarNew({
         <span style={textScaleStyle('right top')}>{gregorianLabel}</span>
       </div>
 
-      {/* כפתור עריכה */}
-      {settings.headerBarShowEditButton ? (
-        <button
-          type="button"
-          style={{
-            position: 'absolute',
-            left: 12,
-            top: 12,
-            zIndex: 10,
-          }}
-          className="rounded-md border border-slate-200 bg-white/90 px-2 py-1 text-xs text-slate-700 hover:bg-white"
-          onClick={onEditHeader}
-        >
-          ערוך
-        </button>
-      ) : null}
+      {/* כפתור "ערוך" הוסר מהממשק — העריכה מתבצעת מתפריט ההגדרות. */}
     </div>
   );
 }

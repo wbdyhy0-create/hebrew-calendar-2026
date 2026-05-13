@@ -5656,16 +5656,6 @@ export function Calendar() {
               />
                   <div className="mt-1 text-xs text-slate-500">0 = רוחב מלא</div>
             </label>
-                <label className="text-sm text-slate-700 flex items-center gap-2 mt-6">
-              <input
-                    type="checkbox"
-                    checked={settings.headerBarShowEditButton}
-                onChange={(e) =>
-                      setSettings((s) => ({ ...s, headerBarShowEditButton: e.target.checked }))
-                }
-              />
-                  הצג כפתור “ערוך” בפס
-            </label>
               </div>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
