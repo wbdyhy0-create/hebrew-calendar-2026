@@ -831,6 +831,13 @@ function buildCaptureOnClone(
       n.style.setProperty('bottom', 'auto', 'important');
       n.style.setProperty('padding-top', '0', 'important');
       n.style.setProperty('margin-top', '0', 'important');
+      // html2canvas does not honor `align-items: baseline` correctly for inline-block flex items
+      // that carry transforms — it falls back to top-alignment, which makes the smaller Hebrew
+      // letter "float" above the larger Gregorian number. Force bottom-alignment in the clone:
+      // for short text without descenders (numerals + Hebrew letters), `flex-end` is visually
+      // identical to baseline alignment, so the Hebrew date sits flush with the bottom of the
+      // Gregorian digits — matching the Studio's live preview.
+      n.style.setProperty('align-items', 'flex-end', 'important');
     });
 
     scope.querySelectorAll<HTMLElement>('.overflow-hidden, .overflow-auto, .overflow-scroll, .overflow-clip').forEach((n) => {
