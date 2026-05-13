@@ -790,53 +790,58 @@ function buildCaptureOnClone(
   //
   // html2canvas mis-renders two common patterns:
   //   1) `transform: translateY(calc(-50% + Ypx))` on absolutely-positioned
-  //      elements (header boxes use this to vertically center on `barMidY`).
-  //      The library evaluates `-50%` against the wrong reference or simply
-  //      drops it, so the box "sinks" toward the bottom of the header bar.
-  //   2) `display: flex; align-items: center` combined with inline transforms
-  //      (weekday header cells). The text drifts toward the bottom of the band.
+  //      header boxes. The library can't resolve `-50%` correctly against the
+  //      box height, so the title appears to "drop" toward the bottom of the
+  //      bar in the PDF.
+  //   2) `display: flex; align-items: center` with inline transforms on the
+  //      weekday header cells. The text drifts toward the bottom of the green
+  //      band, even though the cell is asked to center its content.
   //
-  // Strategy: measure the *final, browser-rendered* pixel positions of every
-  // tricky element live, then in the clone replace the broken positioning
-  // rules with absolute pixel values. This is far more reliable than trying
-  // to patch each transform string individually because it bypasses html2canvas
-  // layout math entirely — the elements are pinned to coordinates the browser
-  // already computed correctly.
+  // Strategy: measure each tricky element's final, browser-rendered geometry
+  // live (before the clone). Then in the clone, REPLACE the calc()/flex centering
+  // with simple, html2canvas-friendly CSS that mathematically reproduces the
+  // same visual position — but uses only properties html2canvas reliably handles
+  // (pixel `top`, padding, `align-items: flex-start`). The user's slider Y
+  // offsets are naturally preserved because they were already baked into the
+  // measured rect.
   // ────────────────────────────────────────────────────────────────────────────
-  type RectMeta = {
+
+  /**
+   * Pre-computed absolute pixel coordinates for each header box, replacing
+   * the `top: barMidY + transform: translate(Xpx, calc(-50% + Ypx))` recipe
+   * with plain `top`/`left` values html2canvas can render without arithmetic.
+   */
+  type HeaderBoxMeta = {
     index: number;
-    topPx: number;
-    leftPx: number;
+    bakedTopPx: number;
+    bakedLeftPx: number;
     widthPx: number;
-    heightPx: number;
   };
 
   const liveHeader = sourceEl.querySelector<HTMLElement>('[data-inspect="header"]');
   const headerRect = liveHeader?.getBoundingClientRect();
-  const headerBoxesMeta: RectMeta[] = [];
+  const headerBoxesMeta: HeaderBoxMeta[] = [];
   if (liveHeader && headerRect) {
     const liveBoxes = Array.from(liveHeader.children) as HTMLElement[];
     liveBoxes.forEach((box, idx) => {
+      if (box.style.position !== 'absolute') return;
       const r = box.getBoundingClientRect();
-      headerBoxesMeta.push({
-        index: idx,
-        topPx: Math.round((r.top - headerRect.top) / captureScale),
-        leftPx: Math.round((r.left - headerRect.left) / captureScale),
-        widthPx: Math.max(0, Math.round(r.width / captureScale)),
-        heightPx: Math.max(0, Math.round(r.height / captureScale)),
-      });
+      const bakedTopPx = Math.round((r.top - headerRect.top) / captureScale);
+      const bakedLeftPx = Math.round((r.left - headerRect.left) / captureScale);
+      const widthPx = Math.max(0, Math.round(r.width / captureScale));
+      headerBoxesMeta.push({ index: idx, bakedTopPx, bakedLeftPx, widthPx });
     });
   }
 
-  // Weekday cells + their inner text wrappers — measure both so we can pin
-  // the inner block to absolute coordinates inside the cell in the clone.
+  /**
+   * Pre-computed padding values for each weekday cell so html2canvas can
+   * vertically center the day name without relying on `align-items: center`.
+   * Uses the live-measured offset of the inner text wrapper.
+   */
   type WeekdayMeta = {
     cellIdx: number;
-    cellHeightPx: number;
-    innerTopPx: number;
-    innerLeftPx: number;
-    innerWidthPx: number;
-    innerHeightPx: number;
+    paddingTopPx: number;
+    paddingBottomPx: number;
   };
   const weekdayMeta: WeekdayMeta[] = [];
   if (liveGrid) {
@@ -848,13 +853,12 @@ function buildCaptureOnClone(
       const inner = cell.firstElementChild as HTMLElement | null;
       const innerRect = inner?.getBoundingClientRect();
       if (!innerRect) return;
+      const innerTopPx = (innerRect.top - cellRect.top) / captureScale;
+      const innerBottomPx = (cellRect.bottom - innerRect.bottom) / captureScale;
       weekdayMeta.push({
         cellIdx: idx,
-        cellHeightPx: Math.max(0, Math.round(cellRect.height / captureScale)),
-        innerTopPx: Math.round((innerRect.top - cellRect.top) / captureScale),
-        innerLeftPx: Math.round((innerRect.left - cellRect.left) / captureScale),
-        innerWidthPx: Math.max(0, Math.round(innerRect.width / captureScale)),
-        innerHeightPx: Math.max(0, Math.round(innerRect.height / captureScale)),
+        paddingTopPx: Math.max(0, Math.round(innerTopPx)),
+        paddingBottomPx: Math.max(0, Math.round(innerBottomPx)),
       });
     });
   }
@@ -878,32 +882,27 @@ function buildCaptureOnClone(
 
     const clonedHeader = clonedDoc.querySelector<HTMLElement>('[data-inspect="header"]');
     if (clonedHeader) {
-      clonedHeader.style.setProperty('transform', 'none', 'important');
-
-      // Pin each header box to the exact pixel coordinates the browser already
-      // computed live (top/left relative to the header element). This bypasses
-      // html2canvas's broken `calc(-50% + Ypx)` math entirely so the title boxes
-      // sit at the correct vertical position regardless of Studio offset values.
+      // Replace each header box's `top + right + transform(translateX, calc(-50%+Y))`
+      // recipe with a single pair of `top/left` absolute coordinates. html2canvas
+      // mis-evaluates `calc(-50% + Ypx)` (drops the half-height term) so the box
+      // sinks toward the bottom of the bar; using pre-baked pixel coordinates
+      // sidesteps that math entirely. The user's Y slider is preserved because
+      // the live `getBoundingClientRect` already incorporated it.
       const clonedBoxes = Array.from(clonedHeader.children) as HTMLElement[];
       headerBoxesMeta.forEach((meta) => {
         const cloneBox = clonedBoxes[meta.index];
         if (!cloneBox) return;
-        cloneBox.style.setProperty('position', 'absolute', 'important');
-        cloneBox.style.setProperty('top', `${meta.topPx}px`, 'important');
-        cloneBox.style.setProperty('left', `${meta.leftPx}px`, 'important');
+        cloneBox.style.setProperty('top', `${meta.bakedTopPx}px`, 'important');
+        cloneBox.style.setProperty('left', `${meta.bakedLeftPx}px`, 'important');
         cloneBox.style.setProperty('right', 'auto', 'important');
         cloneBox.style.setProperty('bottom', 'auto', 'important');
-        cloneBox.style.setProperty('width', `${meta.widthPx}px`, 'important');
-        cloneBox.style.setProperty('height', `${meta.heightPx}px`, 'important');
         cloneBox.style.setProperty('transform', 'none', 'important');
-        cloneBox.style.setProperty('margin', '0', 'important');
       });
     }
 
-    // Pin weekday header text to the exact position the browser placed it live.
-    // The cell stays flex-formatted so the green band keeps its background/borders,
-    // but the inner text wrapper is repositioned absolutely from measured rects —
-    // sidestepping html2canvas's flex-baseline drift completely.
+    // Center the weekday header text using padding instead of `align-items: center`.
+    // html2canvas reliably honors padding + `align-items: flex-start`, but its
+    // flex-center implementation drops the text toward the bottom of the green band.
     if (weekdayMeta.length > 0) {
       const clonedWeekdayCells = clonedDoc.querySelectorAll<HTMLElement>(
         '[data-inspect="weekdays"]',
@@ -911,25 +910,10 @@ function buildCaptureOnClone(
       weekdayMeta.forEach((meta) => {
         const cell = clonedWeekdayCells[meta.cellIdx];
         if (!cell) return;
-        cell.style.setProperty('position', 'relative', 'important');
-        cell.style.setProperty('display', 'block', 'important');
-        cell.style.setProperty('padding-top', '0', 'important');
-        cell.style.setProperty('padding-bottom', '0', 'important');
-        const inner = cell.firstElementChild as HTMLElement | null;
-        if (inner) {
-          inner.style.setProperty('position', 'absolute', 'important');
-          inner.style.setProperty('top', `${meta.innerTopPx}px`, 'important');
-          inner.style.setProperty('left', `${meta.innerLeftPx}px`, 'important');
-          inner.style.setProperty('right', 'auto', 'important');
-          inner.style.setProperty('bottom', 'auto', 'important');
-          inner.style.setProperty('width', `${meta.innerWidthPx}px`, 'important');
-          inner.style.setProperty('height', `${meta.innerHeightPx}px`, 'important');
-          inner.style.setProperty('transform', 'none', 'important');
-          inner.style.setProperty('margin', '0', 'important');
-          inner.style.setProperty('display', 'flex', 'important');
-          inner.style.setProperty('align-items', 'center', 'important');
-          inner.style.setProperty('justify-content', 'center', 'important');
-        }
+        cell.style.setProperty('align-items', 'flex-start', 'important');
+        cell.style.setProperty('padding-top', `${meta.paddingTopPx}px`, 'important');
+        cell.style.setProperty('padding-bottom', `${meta.paddingBottomPx}px`, 'important');
+        cell.style.setProperty('box-sizing', 'border-box', 'important');
       });
     }
 
