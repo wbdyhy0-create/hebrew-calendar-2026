@@ -794,6 +794,15 @@ export function loadSettings(): CalendarSettings {
         merged.headerBarMarginBottomPx = 0;
         dockPersist = true;
       }
+      // Older saved configs left `headerBarMaxWidthPx` at a non-zero value (e.g. 932), which
+      // centers a narrow bar inside the wide canvas; subsequently the horizontal offset sliders
+      // appear to "start from the middle of the page" instead of the right edge. Force full-width
+      // so the right edge of the bar coincides with the right edge of the calendar canvas.
+      const cap = Number(merged.headerBarMaxWidthPx);
+      if (Number.isFinite(cap) && cap > 0) {
+        merged.headerBarMaxWidthPx = 0;
+        dockPersist = true;
+      }
     }
     if (dockPersist) {
       try {
