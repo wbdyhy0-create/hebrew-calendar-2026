@@ -819,14 +819,15 @@ function buildCaptureOnClone(
     }
 
     const scope = bg ?? clonedDoc.body;
-    // html2canvas renders absolutely-positioned children of a padded box ~8-10px LOWER than the live
-    // browser does. The legacy printMonth path compensates with `.pdfMode .topRight { top: -2px }`
+    // html2canvas renders absolutely-positioned children of a padded box noticeably LOWER than the
+    // live browser does. The legacy printMonth path compensates with `.pdfMode .topRight { top: -2px }`
     // (overriding the live `top: 8`). Studio cells use `data-pdf-date-block` (live `top: 1`) and need
-    // the same compensation so the exported date sits at the cell roof — not floating mid-cell.
-    // We push the date block up by ~10px in the clone (1px live → -9px in clone), matching the legacy
-    // visual delta.
+    // an even larger compensation so the exported date sits at the cell roof — not floating mid-cell.
+    // Empirically, the delta is ~15px for studio cell typography; push the clone date block up to
+    // `top: -14px` (1px live → -14px in clone) so the printed dates kiss the cell roof, matching the
+    // on-screen preview as closely as html2canvas allows.
     scope.querySelectorAll<HTMLElement>('[data-pdf-date-block="true"]').forEach((n) => {
-      n.style.setProperty('top', '-9px', 'important');
+      n.style.setProperty('top', '-14px', 'important');
       n.style.setProperty('bottom', 'auto', 'important');
       n.style.setProperty('padding-top', '0', 'important');
       n.style.setProperty('margin-top', '0', 'important');
