@@ -1015,6 +1015,10 @@ export function Calendar() {
 
     setYearPdfDialogOpen(false);
     setSaveFlash('מכין PDF של שנה…');
+    // WYSIWYG mode: cells already render without overflow-hidden and the event wrapper renders without
+    // max-h. The isExporting flag is kept for future hooks/observability, but no longer toggles rendering.
+    setIsExporting(true);
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
     pdfDebug('year export (dialog): started', {
       mode: yearPdfDialogCalendarMode,
       year: yearPdfDialogCalendarMode === 'gregorian' ? yearPdfDialogYear : yearPdfHebrewYear,
@@ -1081,6 +1085,9 @@ export function Calendar() {
       window.setTimeout(() => setSaveFlash(null), 3500);
       // eslint-disable-next-line no-console
       console.error(e);
+    } finally {
+      // Always restore the live preview to its non-export rendering (cells clip again, events truncate).
+      setIsExporting(false);
     }
   };
 
@@ -6755,7 +6762,10 @@ export function Calendar() {
           return (
             <div
               key={m.gKey}
-              className={`group relative min-h-24 min-w-0 sm:min-h-28 p-2 ${isExporting ? '' : 'overflow-hidden'}`}
+              // WYSIWYG: cells must NEVER clip — the live preview now matches the PDF capture exactly.
+              // (The PDF onclone path forces overflow:visible anyway; mirroring it on screen avoids the
+              // "date kisses the roof on screen but floats above it in the PDF" discrepancy.)
+              className="group relative min-h-24 min-w-0 sm:min-h-28 p-2"
               data-inspect="cell"
               data-pdf-cell="true"
               style={{
@@ -7146,7 +7156,9 @@ export function Calendar() {
                   >
                     <div
                       data-pdf-event-wrap="true"
-                      className={`w-full max-w-full shrink-0 break-words ${isExporting ? '' : 'max-h-16 sm:max-h-20'}`}
+                      // WYSIWYG: live preview no longer truncates the events block. It now matches the
+                      // PDF capture, where `max-h-*` is dropped during export.
+                      className="w-full max-w-full shrink-0 break-words"
                       style={{
                         transform: `translate(${offX}px, ${offY}px)`,
                         overflow: 'visible',
