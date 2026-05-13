@@ -87,11 +87,9 @@ export const HEADER_BAR_LAYOUT_REFERENCE_WIDTH_PX = 932
 export function computeHeaderBoxRightPx(offsetFromRightPx: number, barWidthPx: number): number {
   const w = Math.max(1, Math.round(Number(barWidthPx) || HEADER_BAR_LAYOUT_REFERENCE_WIDTH_PX))
   const off = Math.round(Number(offsetFromRightPx) || 0)
-  if (off > HEADER_BAR_LAYOUT_REFERENCE_WIDTH_PX / 2) {
-    const distFromLeft = HEADER_BAR_LAYOUT_REFERENCE_WIDTH_PX - off
-    return Math.max(0, Math.round(w - distFromLeft))
-  }
-  return Math.max(0, off)
+  // Linear mapping: 0 = right edge, increases move the text leftward.
+  // Clamp to bar width so the text never leaves the bar.
+  return Math.max(0, Math.min(off, Math.max(0, w - 1)))
 }
 
 /** Pivot for `headerBox4OffsetXPx` when box4 is laid out as centered + translateX nudge (≈ half of reference canvas). */

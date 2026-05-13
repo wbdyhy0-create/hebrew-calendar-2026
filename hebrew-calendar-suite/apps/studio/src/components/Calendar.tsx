@@ -5694,7 +5694,7 @@ export function Calendar() {
                 </label>
             <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox1OffsetXPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                  <input className="mt-2 w-full" type="range" min={0} max={1400} step={1}
                     value={settings.headerBox1OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox1OffsetXPx: Number(e.target.value) }))} />
             </label>
@@ -5744,7 +5744,7 @@ export function Calendar() {
                 </div>
             <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox2OffsetXPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={1000} step={1}
+                  <input className="mt-2 w-full" type="range" min={0} max={1400} step={1}
                     value={settings.headerBox2OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox2OffsetXPx: Number(e.target.value) }))} />
             </label>
@@ -5794,7 +5794,7 @@ export function Calendar() {
                 </label>
                 <label className="text-sm text-slate-700">
                   הזזה ימין ← שמאל ({settings.headerBox3OffsetXPx}px)
-                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                  <input className="mt-2 w-full" type="range" min={0} max={1400} step={1}
                     value={settings.headerBox3OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox3OffsetXPx: Number(e.target.value) }))} />
             </label>
