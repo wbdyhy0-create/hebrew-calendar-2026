@@ -51,7 +51,6 @@ import {
 import { buildPrintableMonthHtml } from '../utils/printMonth';
 import {
   DEFAULT_SETTINGS,
-  HEADER_BOX4_CENTER_OFFSET_X_PX,
   loadSettings,
   saveSettings,
   type CalendarSettings,
@@ -5849,8 +5848,8 @@ export function Calendar() {
                   </div>
                 </label>
             <label className="text-sm text-slate-700">
-                  הזזה אופקית סביב מרכז הפס — {settings.headerBox4OffsetXPx}px ({HEADER_BOX4_CENTER_OFFSET_X_PX} ≈ מרכז)
-                  <input className="mt-2 w-full" type="range" min={0} max={800} step={1}
+                  הזזה ימין ← שמאל ({settings.headerBox4OffsetXPx}px)
+                  <input className="mt-2 w-full" type="range" min={0} max={1400} step={1}
                     value={settings.headerBox4OffsetXPx}
                     onChange={e => setSettings(s => ({ ...s, headerBox4OffsetXPx: Number(e.target.value) }))} />
             </label>

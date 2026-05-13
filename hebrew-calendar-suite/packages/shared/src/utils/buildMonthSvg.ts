@@ -223,10 +223,10 @@ export function buildPrintableMonthSvg(
   const b2Y = headerY + Math.round(Number(settings.headerBox2OffsetYPx) || 0) + box2FontPx
   els.push(svgText({ x: b2X, y: b2Y, text: box2Text, fontSize: box2FontPx, fontFamily: font, fontWeight: settings.headerBox2FontWeight, fill: settings.headerBox2Color || '#ffffff', textAnchor: 'end' }))
 
-  // Box 4: Gregorian label — centered in header (LTR)
-  const b4CenterX = headerX + headerW / 2 + Math.round((Number(settings.headerBox4OffsetXPx) || 466) - hBarRef / 2) * (headerW / hBarRef)
+  // Box 4: Gregorian label — right-anchored (matches CalendarMonthChrome live preview)
+  const b4X = remapRight(Number(settings.headerBox4OffsetXPx) || 0)
   const b4Y = headerY + Math.round(Number(settings.headerBox4OffsetYPx) || 0) + box4FontPx
-  els.push(svgText({ x: b4CenterX, y: b4Y, text: box4Text, fontSize: box4FontPx, fontFamily: font, fontWeight: settings.headerBox4FontWeight, fill: settings.headerBox4Color || '#ffffff', textAnchor: 'middle' }))
+  els.push(svgText({ x: b4X, y: b4Y, text: box4Text, fontSize: box4FontPx, fontFamily: font, fontWeight: settings.headerBox4FontWeight, fill: settings.headerBox4Color || '#ffffff', textAnchor: 'end' }))
 
   // ── Grid shell ───────────────────────────────────────────────────────────────
   const gBorder = gridBorderW > 0 ? ` stroke="${esc(gridBorderColor)}" stroke-width="${gridBorderW}"` : ''

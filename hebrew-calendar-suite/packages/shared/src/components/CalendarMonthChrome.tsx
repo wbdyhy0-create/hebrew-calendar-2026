@@ -5,7 +5,6 @@ import type { CalendarSettings, HeaderLayoutStyle } from '../utils/settings';
 import { HEADER_DATE_SEPARATOR_BASELINE_Y_PX } from '../utils/settings';
 import {
   resolveDetachedGridBorderRadiusPx,
-  computeHeaderBox4CenterNudgeXPx,
   computeHeaderDatePairHorizontalLayoutPx,
   computeHeaderBoxRightPx,
 } from '../utils/calendarDocumentStyles';
@@ -60,7 +59,6 @@ function HeaderBarNew({
   // Font px are counter-scaled via `layoutInvScale`, but offsets must be counter-scaled too,
   // otherwise the screen preview drifts from the printable/PDF coordinate system.
   const invShift = (layoutPx: number) => (inv === 1 ? 0 : Math.round(Number(layoutPx) * (inv - 1)));
-  const box4NudgePx = computeHeaderBox4CenterNudgeXPx(settings.headerBox4OffsetXPx, w);
   const sxPct = Number((settings as any).headerTextScaleXPercent ?? 100);
   const syPct = Number((settings as any).headerTextScaleYPercent ?? 100);
   const sx = Number.isFinite(sxPct) && sxPct > 0 ? sxPct / 100 : 1;
@@ -331,9 +329,9 @@ function HeaderBarNew({
       <div
         style={{
           position: 'absolute',
-          left: '50%',
-          transform: `translateX(calc(-50% + ${Math.round(box4NudgePx * inv)}px)) translateY(calc(-50% + ${settings.headerBox4OffsetYPx + invShift(settings.headerBox4OffsetYPx)}px))`,
+          right: rightPx(settings.headerBox4OffsetXPx),
           top: barMidY,
+          transform: `translate(${-invShift(rightPx(settings.headerBox4OffsetXPx))}px, calc(-50% + ${settings.headerBox4OffsetYPx + invShift(settings.headerBox4OffsetYPx)}px))`,
           paddingTop: 2,
           paddingBottom: 2,
           fontSize: hfs(settings.headerBox4FontPx),
@@ -342,16 +340,12 @@ function HeaderBarNew({
           whiteSpace: 'nowrap',
           lineHeight: 1.2,
           direction: 'ltr',
-          textAlign: 'center',
-          // Do not clip: users can stretch the header text horizontally, and the bar already
-          // allows horizontal overflow (overflowX: visible).
-          maxWidth: '100%',
           overflow: 'visible',
           pointerEvents: 'none',
           userSelect: 'none',
         }}
       >
-        <span style={textScaleStyle('center top')}>{gregorianLabel}</span>
+        <span style={textScaleStyle('right top')}>{gregorianLabel}</span>
       </div>
 
       {/* כפתור עריכה */}

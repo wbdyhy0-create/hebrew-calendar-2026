@@ -85,11 +85,11 @@ export function resolveMinimalHeaderMarginBottomPx(_settings: CalendarSettings):
 export const HEADER_BAR_LAYOUT_REFERENCE_WIDTH_PX = 932
 
 export function computeHeaderBoxRightPx(offsetFromRightPx: number, barWidthPx: number): number {
-  const w = Math.max(1, Math.round(Number(barWidthPx) || HEADER_BAR_LAYOUT_REFERENCE_WIDTH_PX))
-  const off = Math.round(Number(offsetFromRightPx) || 0)
+  void barWidthPx
   // Linear mapping: 0 = right edge, increases move the text leftward.
-  // Clamp to bar width so the text never leaves the bar.
-  return Math.max(0, Math.min(off, Math.max(0, w - 1)))
+  // No upper clamp — bar uses `overflowX: visible`, so users can place text wherever they like.
+  const off = Math.round(Number(offsetFromRightPx) || 0)
+  return Math.max(0, off)
 }
 
 /** Pivot for `headerBox4OffsetXPx` when box4 is laid out as centered + translateX nudge (≈ half of reference canvas). */
@@ -128,10 +128,10 @@ export function computeHeaderDatePairHorizontalLayoutPx(opts: {
   const layoutGap = opts.separatorEnabled ? Math.max(8, sepW + 2 * sidePad) : 8
 
   const insetHeb = computeHeaderBoxRightPx(opts.headerBox3OffsetXPx, w)
-  const n4 = computeHeaderBox4CenterNudgeXPx(opts.headerBox4OffsetXPx, w)
+  const insetGreg = computeHeaderBoxRightPx(opts.headerBox4OffsetXPx, w)
 
   let hLeft = w - insetHeb - hw
-  let gLeft = w / 2 + n4 - gw / 2
+  let gLeft = w - insetGreg - gw
 
   const clampIntoBar = () => {
     gLeft = Math.max(0, Math.min(gLeft, w - gw))
