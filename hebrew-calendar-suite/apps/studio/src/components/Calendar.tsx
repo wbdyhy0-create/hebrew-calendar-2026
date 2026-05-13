@@ -34,6 +34,7 @@ import {
   exportYearPdfBlobFromCalendarCapture,
 } from '../utils/pdf';
 import {
+  downloadBlobFile,
   downloadBlobViaPopup,
   isEmbeddedFrame,
   openDownloadPopup,
@@ -1052,13 +1053,21 @@ export function Calendar() {
         return;
       }
 
+      // Year export takes many seconds, so the original click gesture is expired by now.
+      // `showSaveFilePicker` and `window.open` both require a fresh user gesture and will silently
+      // return null here. Fall back to a plain `<a download>` so the file always reaches the user.
       const handle = await requestSaveHandle(suggested, { mime: 'application/pdf', description: 'PDF', extensions: ['.pdf'] });
       if (handle) {
         await saveBlobToHandle(handle, blob);
         setSaveFlash('ה‑PDF נשמר');
       } else {
         const popup = openDownloadPopup();
-        if (popup) downloadBlobViaPopup(popup, suggested, blob);
+        if (popup) {
+          downloadBlobViaPopup(popup, suggested, blob);
+        } else {
+          // No gesture → no popup. Use anchor-download as the universal fallback.
+          downloadBlobFile(suggested, blob);
+        }
         setSaveFlash('ה‑PDF נשלח להורדה');
       }
       window.setTimeout(() => setSaveFlash(null), 2200);
@@ -3065,7 +3074,11 @@ export function Calendar() {
                           await saveBlobToHandle(handle, blob);
                           setSaveFlash('ה‑PDF נשמר');
                         } else {
-                          if (popup) downloadBlobViaPopup(popup, filename, blob);
+                          if (popup) {
+                            downloadBlobViaPopup(popup, filename, blob);
+                          } else {
+                            downloadBlobFile(filename, blob);
+                          }
                           setSaveFlash('ה‑PDF נשלח להורדה');
                         }
                         window.setTimeout(() => setSaveFlash(null), 1800);
