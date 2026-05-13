@@ -1027,7 +1027,10 @@ export function Calendar() {
     const prevViewDate = new Date(viewDate);
     try {
       const blob = await exportYearPdfBlobFromCalendarCapture({
-        getElement: () => calendarContentRef.current,
+        // Capture the same outer page box as single-month export so fonts/positions match the screen exactly.
+        getElement: () =>
+          (document.querySelector('[data-inspect="background"]') as HTMLElement | null) ??
+          calendarContentRef.current,
         setMonth: (m, y) => setViewDate(new Date(y ?? yearPdfDialogYear, m, 1)),
         settings: settingsForExport,
         monthIndices: monthIndices ?? undefined,

@@ -1165,6 +1165,12 @@ export async function exportYearPdfBlobFromCalendarCapture(opts: {
     throw new Error(`PDF שנה: קנבס ריק (${label}) — כל הדגימות לבנות`)
   }
 
+  // Same dynamic offset used by single-month export so the staged-clone fallback aligns events identically.
+  const gregPx = Number(settings.gregDayFontPx) || 12
+  const hebPx = Number(settings.hebDayFontPx) || 12
+  const datesBandPx = Math.ceil(Math.max(gregPx, hebPx) * 1.32)
+  const midWrapTopPx = 6 + datesBandPx + 4
+
   async function renderWithStageFallback(el: HTMLElement, label: string) {
     const onclone = buildCaptureOnClone(el, { widthMm, heightMm })
 
@@ -1180,30 +1186,83 @@ export async function exportYearPdfBlobFromCalendarCapture(opts: {
         onclone,
       })
 
-    // Fast path: direct capture
+    // Fast path: direct capture (matches single-month export's primary strategy).
     try {
       const direct = await render(el)
       assertCanvasNotBlank(direct, `${label}[direct]`)
       return direct
     } catch {
-      // Retry once after a paint tick (layout/assets can still settle between months).
-      await new Promise<void>((r) => requestAnimationFrame(() => r()))
-      const retry = await render(el)
-      assertCanvasNotBlank(retry, `${label}[retry]`)
-      return retry
+      // Fallback: clone into a fixed stage at (0,0) — identical to the single-month export pipeline,
+      // so the year capture produces the same visual result as a per-month capture.
+      const stage = document.createElement('div')
+      stage.style.position = 'fixed'
+      stage.style.left = '0'
+      stage.style.top = '0'
+      stage.style.width = `${widthMm}mm`
+      stage.style.height = `${heightMm}mm`
+      stage.style.minHeight = `${heightMm}mm`
+      stage.style.background = '#ffffff'
+      stage.style.pointerEvents = 'none'
+      stage.style.opacity = '0'
+      stage.style.zIndex = '-1'
+      stage.style.overflow = 'visible'
+
+      const clone = el.cloneNode(true) as HTMLElement
+      clone.style.position = 'static'
+      clone.style.left = 'auto'
+      clone.style.top = 'auto'
+      clone.style.transform = 'none'
+      clone.style.margin = '0'
+      clone.style.width = '100%'
+      clone.style.boxSizing = 'border-box'
+
+      // Align event text within cells the same way single-month export does.
+      clone.querySelectorAll<HTMLElement>('.midWrap').forEach((mw) => {
+        mw.style.position = 'absolute'
+        mw.style.top = `${midWrapTopPx}px`
+        mw.style.left = '4px'
+        mw.style.right = '4px'
+        mw.style.bottom = '56px'
+        mw.style.padding = '0'
+        mw.style.display = 'block'
+        mw.style.justifyContent = 'flex-start'
+        mw.style.alignItems = 'stretch'
+        mw.style.overflow = 'hidden'
+        mw.style.transform = 'none'
+        ;(mw.style as any).direction = 'rtl'
+        ;(mw.style as any).textAlign = 'right'
+      })
+      clone.querySelectorAll<HTMLElement>('.midInner').forEach((mi) => {
+        mi.style.display = 'block'
+        mi.style.maxHeight = 'none'
+        mi.style.overflow = 'visible'
+      })
+      clone.querySelectorAll<HTMLElement>('.mid').forEach((m) => {
+        m.style.lineHeight = '1.15'
+        m.style.marginTop = '0'
+      })
+
+      stage.appendChild(clone)
+      document.body.appendChild(stage)
+      try {
+        const staged = await render(stage)
+        assertCanvasNotBlank(staged, `${label}[staged]`)
+        return staged
+      } finally {
+        try {
+          stage.remove()
+        } catch {
+          // ignore
+        }
+      }
     }
   }
 
-  function fitCanvasToContentBox(canvas: HTMLCanvasElement): { x: number; y: number; w: number; h: number } {
-    const cw = Math.max(1, canvas.width)
-    const ch = Math.max(1, canvas.height)
-    const canvasRatio = cw / ch
-    const boxRatio = contentW / contentH
-    const w = boxRatio >= canvasRatio ? contentH * canvasRatio : contentW
-    const h = boxRatio >= canvasRatio ? contentH : contentW / canvasRatio
-    const x = marginMm + (contentW - w) / 2
-    const y = marginMm + (contentH - h) / 2
-    return { x, y, w, h }
+  function fitCanvasToContentBox(_canvas: HTMLCanvasElement): { x: number; y: number; w: number; h: number } {
+    // Stretch to fill the full page — identical to single-month export so fonts/positions match the
+    // screen exactly. The captured element is `[data-inspect="background"]`, which already has the
+    // PDF page aspect ratio, so stretching cannot distort it.
+    return { x: marginMm, y: marginMm, w: contentW, h: contentH }
   }
 
   function addImageToPdfSafe(canvas: HTMLCanvasElement, x: number, y: number, w: number, h: number, pageIndex: number) {
