@@ -309,13 +309,9 @@ function HeaderBarNew({
       <div
         style={{
           position: 'absolute',
-          left: pairX?.hLeft,
-          ...(pairX == null ? { right: rightPx(settings.headerBox3OffsetXPx) } : null),
+          right: rightPx(settings.headerBox3OffsetXPx),
           top: barMidY,
-          transform:
-            pairX != null
-              ? `translate(${invShift(pairX.hLeft)}px, calc(-50% + ${settings.headerBox3OffsetYPx + invShift(settings.headerBox3OffsetYPx)}px))`
-              : `translate(${-invShift(rightPx(settings.headerBox3OffsetXPx))}px, calc(-50% + ${settings.headerBox3OffsetYPx + invShift(settings.headerBox3OffsetYPx)}px))`,
+          transform: `translate(${-invShift(rightPx(settings.headerBox3OffsetXPx))}px, calc(-50% + ${settings.headerBox3OffsetYPx + invShift(settings.headerBox3OffsetYPx)}px))`,
           paddingTop: 2,
           paddingBottom: 2,
           fontSize: hfs(settings.headerBox3FontPx),
@@ -335,15 +331,8 @@ function HeaderBarNew({
       <div
         style={{
           position: 'absolute',
-          ...(pairX == null
-            ? {
-                left: '50%',
-                transform: `translateX(calc(-50% + ${Math.round(box4NudgePx * inv)}px)) translateY(calc(-50% + ${settings.headerBox4OffsetYPx + invShift(settings.headerBox4OffsetYPx)}px))`,
-              }
-            : {
-                left: pairX.gLeft,
-                transform: `translate(${invShift(pairX.gLeft)}px, calc(-50% + ${settings.headerBox4OffsetYPx + invShift(settings.headerBox4OffsetYPx)}px))`,
-              }),
+          left: '50%',
+          transform: `translateX(calc(-50% + ${Math.round(box4NudgePx * inv)}px)) translateY(calc(-50% + ${settings.headerBox4OffsetYPx + invShift(settings.headerBox4OffsetYPx)}px))`,
           top: barMidY,
           paddingTop: 2,
           paddingBottom: 2,
