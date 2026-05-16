@@ -518,6 +518,7 @@ export default function App() {
   const isNarrow = viewport.w > 0 ? viewport.w <= 640 : false
   const isPortrait = viewport.w > 0 && viewport.h > 0 ? viewport.h >= viewport.w : false
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobileNotesOpen, setIsMobileNotesOpen] = useState(false)
   // ResizeObserver probe: position:fixed inset:0 div reports actual viewport width
   // regardless of page-content zoom. Used for mobileWrapScale.
   const vpProbeRef = useRef<HTMLDivElement>(null)
@@ -2227,13 +2228,17 @@ ${pages}
             }
             /* Hamburger button: hidden on wide screens, visible on mobile */
             .display-hamburger-btn { display: none !important; }
+            /* Mobile top-bar: hidden on wide screens */
+            .display-mobile-topbar { display: none !important; }
             @media (max-width: 900px) {
               .display-hamburger-btn { display: inline-flex !important; align-items: center; justify-content: center; }
               .display-fixed-sidebar { display: none !important; }
-              /* Remove all padding on mobile — calendar fills full screen */
-              main { padding: 0 !important; }
-              /* Calendar fills full width on mobile; no overflow */
-              [data-display-calendar-host] { justify-content: center !important; overflow: hidden !important; padding-bottom: 0 !important; }
+              /* Mobile top-bar visible on narrow screens */
+              .display-mobile-topbar { display: flex !important; }
+              /* Push calendar below the fixed top-bar (56px) */
+              main { padding: 0 !important; padding-top: 56px !important; }
+              /* Calendar fills full width on mobile; allow pinch-zoom by not clipping */
+              [data-display-calendar-host] { justify-content: center !important; overflow: visible !important; padding-bottom: 0 !important; }
             }
           `}</style>
         )
@@ -2865,6 +2870,108 @@ ${pages}
                 </div>
               </details>
             </aside>
+
+            {/* ── Fixed mobile top-bar: clock + notes (centered) + hamburger (right) ── */}
+            {/* Hidden on wide screens via CSS; visible on ≤900px */}
+            <div
+              className="display-mobile-topbar"
+              dir="rtl"
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 56,
+                zIndex: 60,
+                background: 'rgba(255,255,255,0.93)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderBottom: '1px solid rgba(148,163,184,0.22)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                padding: '0 10px',
+                boxSizing: 'border-box',
+                // display: flex set by CSS on mobile
+              }}
+            >
+              {/* Notes toggle button (right/start in RTL) */}
+              <button
+                type="button"
+                className="chip"
+                onClick={() => setIsMobileNotesOpen((v) => !v)}
+                style={{
+                  position: 'absolute',
+                  right: 60,
+                  padding: '6px 10px',
+                  borderRadius: 10,
+                  fontWeight: 900,
+                  fontSize: 16,
+                  border: '1px solid rgba(148,163,184,0.35)',
+                  background: isMobileNotesOpen ? 'rgba(59,130,246,0.14)' : undefined,
+                }}
+                aria-label="פתקיות"
+                title="פתקיות"
+              >
+                📝
+              </button>
+
+              {/* Clock — centered */}
+              <div
+                dir="ltr"
+                style={{
+                  fontVariantNumeric: 'tabular-nums',
+                  fontWeight: 950,
+                  fontSize: 22,
+                  letterSpacing: 0.7,
+                  direction: 'ltr',
+                  textAlign: 'center',
+                  fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                  color: '#0f172a',
+                }}
+              >
+                {clock}
+              </div>
+
+              {/* Hamburger — left side of screen (right in physical LTR terms, left in RTL layout) */}
+              <button
+                type="button"
+                className="chip"
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="תפריט"
+                style={{
+                  position: 'absolute',
+                  left: 10,
+                  padding: '8px 12px',
+                  borderRadius: 12,
+                  fontWeight: 900,
+                  fontSize: 20,
+                  lineHeight: 1,
+                  border: '1px solid rgba(148,163,184,0.35)',
+                }}
+              >
+                ☰
+              </button>
+            </div>
+
+            {/* Floating notes panel below the top-bar */}
+            {isMobileNotesOpen ? (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 56,
+                  left: 0,
+                  right: 0,
+                  zIndex: 55,
+                  background: 'rgba(255,255,255,0.97)',
+                  borderBottom: '1px solid rgba(148,163,184,0.22)',
+                  padding: '10px 14px',
+                  boxShadow: '0 4px 16px rgba(2,6,23,0.12)',
+                }}
+              >
+                <QuickNotesSidebar storageKey={quickNotesStorageKey} />
+              </div>
+            ) : null}
           </>
         ) : null}
 
@@ -3322,13 +3429,20 @@ ${pages}
                   // isMobileFill triggers a height-fill mode: sets an explicit unscaled height on the
                   // zoom-wrapper so that after zoom it covers the full viewport height.
                   const isMobileFill = mobileWrapScale < 0.98 && effectiveVpH > 200 && surface.heightPx > 0
-                  // Unscaled height that, after CSS zoom, will equal effectiveVpH.
-                  const mobileFillHeightPx = isMobileFill ? Math.round(effectiveVpH / mobileWrapScale) : 0
-                  /** Match Studio `cellScaledPx`: undo CSS `scale(s)` so nominal px match settings. */
+                  // Fixed mobile top-bar height (clock + notes + hamburger row). Must match CSS padding-top.
+                  const MOBILE_TOPBAR_H = 56
+                  // Unscaled height that, after CSS zoom, will equal the calendar area (viewport minus top-bar).
+                  const mobileFillHeightPx = isMobileFill
+                    ? Math.round((effectiveVpH - MOBILE_TOPBAR_H) / mobileWrapScale)
+                    : 0
+                  // On mobile, counter-scale text so it appears at readable size after the viewport zoom.
+                  // mobileTextScale = 1/mobileWrapScale restores text to its "natural" px → readable on screen.
+                  const mobileTextScale = isMobileFill ? Math.min(3.5, 1 / mobileWrapScale) : 1
+                  /** Match Studio `cellScaledPx`: undo CSS `scale(s)` + apply mobile text boost. */
                   const layoutScalePx = (px: number) => {
                     const n = Number(px)
                     if (!Number.isFinite(n)) return px
-                    return Math.max(0.01, n / safeScale)
+                    return Math.max(0.01, n / safeScale * mobileTextScale)
                   }
                   const chromeLayoutInv =
                     safeScale > 0.001 && Math.abs(safeScale - 1) > 0.0001 ? 1 / safeScale : undefined
@@ -3685,13 +3799,14 @@ ${pages}
                           openReminderEditorForDay(key, m.g)
                         }}
                         style={{
-                                          minHeight: monthCellPx ?? Number((settings as any).pdfExportCellHeightPx ?? 110),
-                                          height: monthCellPx ?? 'auto',
+                                          minHeight: isMobileFill ? 0 : (monthCellPx ?? Number((settings as any).pdfExportCellHeightPx ?? 110)),
+                                          height: isMobileFill ? '100%' : (monthCellPx ?? 'auto'),
                           position: 'relative',
                           padding: 8,
                           boxSizing: 'border-box',
                           // Base for `em` in zmanim blocks — matches Studio `<section style={{ fontSize: fontSizePx }}>`.
-                          fontSize: Number((settings as any).fontSizePx ?? DEFAULT_SETTINGS.fontSizePx),
+                          // On mobile (mobileTextScale>1), boost so em-based child text (Shabbat times etc.) is readable.
+                          fontSize: Number((settings as any).fontSizePx ?? DEFAULT_SETTINGS.fontSizePx) * mobileTextScale,
                           fontWeight: Number((settings as any).fontWeight ?? DEFAULT_SETTINGS.fontWeight),
                           fontFamily: (settings as any).fontFamily ?? DEFAULT_SETTINGS.fontFamily,
                           background: bg,
@@ -4124,28 +4239,6 @@ ${pages}
                       </div>{/* inner-wrapper */}
                       </div>{/* zoom-wrapper */}
 
-                      {/* Hamburger button — only visible on mobile (≤900 px), floats over calendar */}
-                      <button
-                        type="button"
-                        className="chip display-hamburger-btn"
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        aria-label="תפריט"
-                        data-export-exclude="1"
-                        style={{
-                          position: 'fixed',
-                          top: 12,
-                          left: 12,
-                          zIndex: 50,
-                          padding: '8px 12px',
-                          borderRadius: 12,
-                          fontWeight: 900,
-                          fontSize: 20,
-                          lineHeight: 1,
-                          border: '1px solid rgba(148,163,184,0.35)',
-                        }}
-                      >
-                        ☰
-                      </button>
                     </div>
                   )
                 })()}
@@ -4197,30 +4290,6 @@ ${pages}
               >
                 ✕
               </button>
-            </div>
-
-            {/* Clock in mobile menu */}
-            <div dir="ltr" style={{ textAlign: 'center', padding: '10px 14px 0' }}>
-              <div
-                className="chip"
-                style={{
-                  display: 'inline-block',
-                  fontVariantNumeric: 'tabular-nums',
-                  fontWeight: 950,
-                  padding: '7px 12px',
-                  borderRadius: 12,
-                  minWidth: 132,
-                  textAlign: 'center',
-                  direction: 'ltr',
-                  fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-                  fontSize: 20,
-                  letterSpacing: 0.7,
-                  border: '1px solid rgba(148,163,184,0.35)',
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.22), rgba(236,72,153,0.16), rgba(16,185,129,0.16))',
-                }}
-              >
-                {clock}
-              </div>
             </div>
 
             {/* Sidebar content */}
@@ -4327,10 +4396,6 @@ ${pages}
               </details>
             </div>
 
-            {/* Quick notes */}
-            <div style={{ padding: '0 14px 14px', flex: 1, minHeight: 0 }}>
-              <QuickNotesSidebar storageKey={quickNotesStorageKey} />
-            </div>
           </div>
         </div>
       ) : null}
