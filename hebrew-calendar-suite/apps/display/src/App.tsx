@@ -3387,7 +3387,7 @@ ${pages}
                         <BrandHeader settings={brandSettings as any} />
                       </div>
                       <div
-                        id=”display-pdf-capture-root”
+                        id="display-pdf-capture-root"
                         ref={pdfCaptureFrameRef}
                         data-display-canvas-frame
                         style={{
