@@ -2230,13 +2230,10 @@ ${pages}
             @media (max-width: 900px) {
               .display-hamburger-btn { display: inline-flex !important; align-items: center; justify-content: center; }
               .display-fixed-sidebar { display: none !important; }
-              .display-quicknotes-desktop { display: none !important; }
-              /* Stack clock above calendar instead of beside it */
-              [data-display-calendar-host] { flex-direction: column !important; align-items: center !important; overflow-x: visible !important; }
-              /* Clock row comes first (order:-1), calendar second */
-              [data-display-calendar-host] > [data-export-exclude="1"] { order: -1 !important; width: 100% !important; flex: none !important; box-sizing: border-box !important; }
               /* Remove JS-set paddingRight that was hiding the calendar */
-              main { padding-right: 16px !important; }
+              main { padding-right: 16px !important; padding-left: 16px !important; }
+              /* Calendar fills full width on mobile */
+              [data-display-calendar-host] { justify-content: center !important; overflow-x: hidden !important; }
             }
           `}</style>
         )
@@ -2596,6 +2593,36 @@ ${pages}
                 WebkitBackdropFilter: 'blur(10px)',
               }}
             >
+              {/* Clock display at top of sidebar */}
+              <div dir="ltr" style={{ textAlign: 'center', marginBottom: 8 }}>
+                <div
+                  className="chip"
+                  style={{
+                    display: 'inline-block',
+                    fontVariantNumeric: 'tabular-nums',
+                    fontWeight: 950,
+                    padding: '7px 12px',
+                    borderRadius: 12,
+                    minWidth: 132,
+                    textAlign: 'center',
+                    direction: 'ltr',
+                    fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    fontSize: 20,
+                    letterSpacing: 0.7,
+                    border: '1px solid rgba(148,163,184,0.35)',
+                    background: 'linear-gradient(135deg, rgba(59,130,246,0.22), rgba(236,72,153,0.16), rgba(16,185,129,0.16))',
+                  }}
+                  title="שעה"
+                >
+                  {clock}
+                </div>
+              </div>
+
+              {/* Quick notes */}
+              <div style={{ marginBottom: 8 }}>
+                <QuickNotesSidebar storageKey={quickNotesStorageKey} />
+              </div>
+
               <details open>
                 <summary className="chip" style={{ padding: '8px 10px', borderRadius: 10, fontWeight: 900, cursor: 'pointer', listStyle: 'none' }}>
                   הורדות
@@ -3282,11 +3309,10 @@ ${pages}
                   // On narrow/mobile: use scale=1 so layoutScalePx is not double-applied.
                   const safeScale = (isNarrow || isMobileScaled) ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
                   // Scale calendar to fill both viewport width AND height (object-fit: contain behaviour).
-                  // Reserve ~80px for the clock row above the calendar.
-                  const CLOCK_H = 80
+                  // Clock is now in the sidebar (not above the calendar), so no height reservation needed.
                   const widthScale = effectiveVpW > 0 ? effectiveVpW / surface.widthPx : 1
-                  const heightScale = surface.heightPx > 0 && effectiveVpH > CLOCK_H
-                    ? (effectiveVpH - CLOCK_H) / surface.heightPx
+                  const heightScale = surface.heightPx > 0 && effectiveVpH > 0
+                    ? effectiveVpH / surface.heightPx
                     : 1
                   // Always fill the screen — not only when mobile/narrow.
                   const mobileWrapScale = surface.widthPx > 0 && effectiveVpW > 0
@@ -4077,64 +4103,28 @@ ${pages}
                       </div>{/* inner-wrapper */}
                       </div>{/* zoom-wrapper */}
 
-                      <div style={{ flex: '0 0 auto' }} data-export-exclude="1">
-                        <div
-                          className="display-floating-clock"
-                          dir="ltr"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative',
-                            marginBottom: 12,
-                          }}
-                        >
-                          <div
-                            className="chip"
-                            style={{
-                              fontVariantNumeric: 'tabular-nums',
-                              fontWeight: 950,
-                              padding: '8px 12px',
-                              borderRadius: 12,
-                              minWidth: 132,
-                              textAlign: 'center',
-                              direction: 'ltr',
-                              fontFamily:
-                                '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-                              fontSize: 20,
-                              letterSpacing: 0.7,
-                              border: '1px solid rgba(148,163,184,0.35)',
-                              background:
-                                'linear-gradient(135deg, rgba(59,130,246,0.22), rgba(236,72,153,0.16), rgba(16,185,129,0.16))',
-                            }}
-                            title="שעה"
-                          >
-                            {clock}
-                          </div>
-                          {/* Hamburger: absolutely positioned on the right so clock stays centered */}
-                          <button
-                            type="button"
-                            className="chip display-hamburger-btn"
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            aria-label="תפריט"
-                            style={{
-                              position: 'absolute',
-                              right: 0,
-                              padding: '8px 12px',
-                              borderRadius: 12,
-                              fontWeight: 900,
-                              fontSize: 20,
-                              lineHeight: 1,
-                              border: '1px solid rgba(148,163,184,0.35)',
-                            }}
-                          >
-                            ☰
-                          </button>
-                        </div>
-                        <div className="display-quicknotes-desktop">
-                          <QuickNotesSidebar storageKey={quickNotesStorageKey} />
-                        </div>
-                      </div>
+                      {/* Hamburger button — only visible on mobile (≤900 px), floats over calendar */}
+                      <button
+                        type="button"
+                        className="chip display-hamburger-btn"
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        aria-label="תפריט"
+                        data-export-exclude="1"
+                        style={{
+                          position: 'fixed',
+                          top: 12,
+                          left: 12,
+                          zIndex: 50,
+                          padding: '8px 12px',
+                          borderRadius: 12,
+                          fontWeight: 900,
+                          fontSize: 20,
+                          lineHeight: 1,
+                          border: '1px solid rgba(148,163,184,0.35)',
+                        }}
+                      >
+                        ☰
+                      </button>
                     </div>
                   )
                 })()}
@@ -4186,6 +4176,30 @@ ${pages}
               >
                 ✕
               </button>
+            </div>
+
+            {/* Clock in mobile menu */}
+            <div dir="ltr" style={{ textAlign: 'center', padding: '10px 14px 0' }}>
+              <div
+                className="chip"
+                style={{
+                  display: 'inline-block',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontWeight: 950,
+                  padding: '7px 12px',
+                  borderRadius: 12,
+                  minWidth: 132,
+                  textAlign: 'center',
+                  direction: 'ltr',
+                  fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                  fontSize: 20,
+                  letterSpacing: 0.7,
+                  border: '1px solid rgba(148,163,184,0.35)',
+                  background: 'linear-gradient(135deg, rgba(59,130,246,0.22), rgba(236,72,153,0.16), rgba(16,185,129,0.16))',
+                }}
+              >
+                {clock}
+              </div>
             </div>
 
             {/* Sidebar content */}
