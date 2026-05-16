@@ -3252,19 +3252,19 @@ ${pages}
             <div
               ref={fullscreenTargetRef}
               style={{
-                // Create the same "framed" feel as Admin/Studio.
-                padding: isFullscreen ? 0 : 16,
+                // Fill the full viewport — no outer padding (zoom wrapper handles scaling).
+                padding: 0,
                 background: 'transparent',
                 boxSizing: 'border-box',
-                width: isFullscreen ? '100vw' : undefined,
-                height: isFullscreen ? '100vh' : undefined,
+                width: '100vw',
+                overflow: 'hidden',
               }}
             >
               <CalendarContainer
-                // On-screen should be wide and readable (bank clerk). A4 constraints are print-only.
+                // Fill the full viewport width — zoom wrapper handles actual scaling.
                 printOrientation={(settings as any).pdfOrientation === 'portrait' ? 'portrait' : 'landscape'}
-                screenMinWidthVw={DISPLAY_CALENDAR_SCREEN_MIN_WIDTH_VW}
-                screenMaxWidthPx={DISPLAY_CALENDAR_SCREEN_MAX_WIDTH_PX}
+                screenMinWidthVw={100}
+                screenMaxWidthPx={99999}
               >
                 {(() => {
                   const surface = calendarSurfaceDimensionsPx(settings as any)
@@ -3281,15 +3281,16 @@ ${pages}
                   const isMobileScaled = surface.widthPx > 0 && effectiveVpW > 0 && effectiveVpW < surface.widthPx - 32
                   // On narrow/mobile: use scale=1 so layoutScalePx is not double-applied.
                   const safeScale = (isNarrow || isMobileScaled) ? 1 : Math.max(0.01, Number.isFinite(scale) ? scale : 1)
-                  // Scale calendar to fit both viewport width AND height (landscape = height-constrained).
+                  // Scale calendar to fill both viewport width AND height (object-fit: contain behaviour).
                   // Reserve ~80px for the clock row above the calendar.
                   const CLOCK_H = 80
-                  const widthScale = effectiveVpW > 0 ? (effectiveVpW - (isFullscreen ? 0 : 16)) / surface.widthPx : 1
+                  const widthScale = effectiveVpW > 0 ? effectiveVpW / surface.widthPx : 1
                   const heightScale = surface.heightPx > 0 && effectiveVpH > CLOCK_H
                     ? (effectiveVpH - CLOCK_H) / surface.heightPx
                     : 1
-                  const mobileWrapScale = isMobileScaled
-                    ? Math.min(1, Math.max(0.08, Math.min(widthScale, heightScale)))
+                  // Always fill the screen — not only when mobile/narrow.
+                  const mobileWrapScale = surface.widthPx > 0 && effectiveVpW > 0
+                    ? Math.max(0.08, Math.min(widthScale, heightScale))
                     : 1
                   /** Match Studio `cellScaledPx`: undo CSS `scale(s)` so nominal px match settings. */
                   const layoutScalePx = (px: number) => {
@@ -3309,16 +3310,16 @@ ${pages}
                         alignItems: 'flex-start',
                         justifyContent: 'center',
                         flexWrap: 'nowrap',
-                        overflowX: mobileWrapScale < 1 ? 'visible' : 'auto',
+                        overflowX: 'visible',
                         paddingBottom: 8,
                       }}
                     >
                       {/* Mobile zoom wrapper: CSS zoom scales both layout and visual together,
                           so the calendar occupies exactly the right screen space with no clipping. */}
                       <div
-                        data-mobile-zoom-wrapper={mobileWrapScale < 1 ? 'true' : undefined}
+                        data-mobile-zoom-wrapper={Math.abs(mobileWrapScale - 1) > 0.005 ? 'true' : undefined}
                         style={{
-                          zoom: mobileWrapScale < 1 ? mobileWrapScale : undefined,
+                          zoom: Math.abs(mobileWrapScale - 1) > 0.005 ? mobileWrapScale : undefined,
                           width: `${surface.widthPx}px`,
                           flexShrink: 0,
                         }}
