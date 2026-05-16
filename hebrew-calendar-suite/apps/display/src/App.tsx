@@ -2230,10 +2230,10 @@ ${pages}
             @media (max-width: 900px) {
               .display-hamburger-btn { display: inline-flex !important; align-items: center; justify-content: center; }
               .display-fixed-sidebar { display: none !important; }
-              /* Remove JS-set paddingRight that was hiding the calendar */
-              main { padding-right: 16px !important; padding-left: 16px !important; }
-              /* Calendar fills full width on mobile */
-              [data-display-calendar-host] { justify-content: center !important; overflow-x: hidden !important; }
+              /* Remove all padding on mobile — calendar fills full screen */
+              main { padding: 0 !important; }
+              /* Calendar fills full width on mobile; no overflow */
+              [data-display-calendar-host] { justify-content: center !important; overflow: hidden !important; padding-bottom: 0 !important; }
             }
           `}</style>
         )
@@ -3318,6 +3318,12 @@ ${pages}
                   const mobileWrapScale = surface.widthPx > 0 && effectiveVpW > 0
                     ? Math.max(0.08, Math.min(widthScale, heightScale))
                     : 1
+                  // On mobile: the zoom fits the width, but we ALSO want to fill the full screen height.
+                  // isMobileFill triggers a height-fill mode: sets an explicit unscaled height on the
+                  // zoom-wrapper so that after zoom it covers the full viewport height.
+                  const isMobileFill = mobileWrapScale < 0.98 && effectiveVpH > 200 && surface.heightPx > 0
+                  // Unscaled height that, after CSS zoom, will equal effectiveVpH.
+                  const mobileFillHeightPx = isMobileFill ? Math.round(effectiveVpH / mobileWrapScale) : 0
                   /** Match Studio `cellScaledPx`: undo CSS `scale(s)` so nominal px match settings. */
                   const layoutScalePx = (px: number) => {
                     const n = Number(px)
@@ -3341,12 +3347,17 @@ ${pages}
                       }}
                     >
                       {/* Mobile zoom wrapper: CSS zoom scales both layout and visual together,
-                          so the calendar occupies exactly the right screen space with no clipping. */}
+                          so the calendar occupies exactly the right screen space with no clipping.
+                          isMobileFill: sets an explicit unscaled height so the calendar fills the
+                          full viewport height after zoom, then flex-column distributes space between
+                          the brand header and the grid canvas. */}
                       <div
                         data-mobile-zoom-wrapper={Math.abs(mobileWrapScale - 1) > 0.005 ? 'true' : undefined}
                         style={{
                           zoom: Math.abs(mobileWrapScale - 1) > 0.005 ? mobileWrapScale : undefined,
                           width: `${surface.widthPx}px`,
+                          // On mobile: explicit unscaled height so after zoom = viewport height.
+                          height: isMobileFill ? `${mobileFillHeightPx}px` : undefined,
                           flexShrink: 0,
                         }}
                       >
@@ -3354,6 +3365,10 @@ ${pages}
                         style={{
                           width: `${surface.widthPx}px`,
                           position: 'relative',
+                          // On mobile: fill the wrapper and stack brand-header + canvas as flex column.
+                          height: isMobileFill ? '100%' : undefined,
+                          display: isMobileFill ? 'flex' : undefined,
+                          flexDirection: isMobileFill ? 'column' : undefined,
                         }}
                       >
                       <div
@@ -3365,12 +3380,14 @@ ${pages}
                             Number((settings as any).canvasBorderWidthPx ?? 2) +
                             Number((settings as any).canvasPaddingPx ?? 16),
                           boxSizing: 'border-box',
+                          // On mobile: don't let the brand header grow — all extra height goes to the grid.
+                          flexShrink: isMobileFill ? 0 : undefined,
                         }}
                       >
                         <BrandHeader settings={brandSettings as any} />
                       </div>
                       <div
-                        id="display-pdf-capture-root"
+                        id=”display-pdf-capture-root”
                         ref={pdfCaptureFrameRef}
                         data-display-canvas-frame
                         style={{
@@ -3383,7 +3400,10 @@ ${pages}
                           backgroundColor: (settings as any).calendarCanvasFill ?? '#0b1220',
                           ...canvasBgStyle,
                           width: '100%',
-                          height: 'auto',
+                          // On mobile: take all remaining height after the brand header.
+                          height: isMobileFill ? undefined : 'auto',
+                          flex: isMobileFill ? 1 : undefined,
+                          minHeight: isMobileFill ? 0 : undefined,
                           boxSizing: 'border-box',
                           // Keep the visual frame clean, but don't clip popovers/shadows at the wrapper level.
                           overflow: 'hidden',
@@ -3393,8 +3413,9 @@ ${pages}
                       >
                       {(() => {
                         // Match Studio rendering: respect the configured fill-height behavior.
-                        // This is critical for 1:1 text positioning between Studio and Display.
-                        const effectiveFillHeight = Boolean((settings as any).layoutFillHeight === true)
+                        // On mobile (isMobileFill), force fill-height so the grid rows expand
+                        // to fill the screen instead of leaving empty space below.
+                        const effectiveFillHeight = isMobileFill || Boolean((settings as any).layoutFillHeight === true)
 
                         return (
                       <div
